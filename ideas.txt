@@ -1,0 +1,3 @@
+-- Guessing mode: Start with words mostly revealed, try guessing the title
+-- Add voting for the best wikipedia pages
+//TODO(leo): ajouter mots "clés"
