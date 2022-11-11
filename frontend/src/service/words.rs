@@ -1,6 +1,7 @@
 use super::fetch::Fetch;
 use crate::entities::interfaces::Status;
-use common::models::WordResult;
+use crate::entities::interfaces::WordResult;
+// use common::models::WordResult;
 use crate::API_URL;
 
 pub async fn query(word: &str) -> Result<WordResult, Status> {

@@ -2,16 +2,18 @@ use yew::prelude::*;
 use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use crate::entities::interfaces::Status;
-use common::models::{Article, WordResult};
+use crate::entities::interfaces::{Article, WordResult};
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
+use crate::hamming::same_root;
 
-//TODO(leo): handle féminin/masculin
-//TODO(leo): handle pluriel
-//TODO(leo): handle numbers
+//TODO(leo): handle féminin/masculin --ish
+//TODO(leo): handle pluriel --ish
+//TODO(leo): handle majuscules sur mots par défaut ! -- ish
+//TODO(leo): gaps should always represent length of hidden number -- ish
+//TODO(leo): mettre vert nouveaux mots -- ish
+//TODO(leo): handle numbers -- change model !!
 //TODO(leo): nombre lettres
-//TODO(leo): gaps should always represent length of hidden number
-//TODO(leo): mettre vert nouveaux mots
-//TODO(leo): Victoire !!
+//TODO(leo): Victoire !! -- ish
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 struct StringAndPos {
@@ -36,6 +38,7 @@ struct HiddenText {
     text: VString,
     revealed: VIndex,
     new_revelations: VIndex,
+    fully_revealed: bool,
 }
 
 
@@ -45,14 +48,17 @@ struct Page {
     title: HiddenText,
     content: HiddenText,
     input: String,
-    victory: bool,
-    reveal_called_once: bool,
 }
 
 impl Page {
-    fn reveal(&mut self, word_res: &WordResult) {
-        self.title.reveal(word_res);
+    fn reveal(&mut self, word_res: &WordResult) -> bool {
+        let title_fully_revealed = self.title.reveal(word_res);
         self.content.reveal(word_res);
+        title_fully_revealed
+    }
+    fn reveal_all(&mut self) {
+        self.title.reveal_all();
+        self.content.reveal_all();
     }
 }
 
@@ -129,7 +135,13 @@ impl HiddenText {
             .collect::<Html>()
     }
 
-    fn reveal(&mut self, word_res: &WordResult) {
+    fn reveal_all(&mut self) {
+        self.revealed = std::iter::repeat(RevealStrength::Revealed).take(self.revealed.len()).collect();
+        self.new_revelations = vec![RevealStrength::NotRevealed; self.revealed.len()];
+        self.fully_revealed = true;
+    }
+
+    fn reveal(&mut self, word_res: &WordResult) -> bool {
         let vec_matches: Vec<_> =
             self.text.clone()
             .into_iter()
@@ -137,6 +149,8 @@ impl HiddenText {
                 let string_hidden_lowercase = string_hidden.to_lowercase();
                 let word_lowercase = word_res.word.to_lowercase();
                 if word_lowercase == string_hidden_lowercase {
+                    RevealStrength::Revealed
+                } else if same_root(&word_lowercase, &string_hidden_lowercase) {
                     RevealStrength::Revealed
                 } else {
                     match word_res.close_words.iter().position(|candidate| candidate.str.to_lowercase() == string_hidden_lowercase) {
@@ -166,7 +180,7 @@ impl HiddenText {
             })
             .collect();
         // log::info!("vec_new_revelation: {:?}", vec_new_revelation);
-        let revealed = vec_matches.into_iter()
+        let revealed: Vec<RevealStrength> = vec_matches.into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {
                 if &reveal_new < reveal_old {
@@ -176,14 +190,22 @@ impl HiddenText {
                 }
             })
             .collect();
-        self.revealed = revealed;
         self.new_revelations = vec_new_revelation;
+        let all_revealed = revealed.iter().all(|rev_strength| matches!(rev_strength, RevealStrength::Revealed));
+        self.revealed = revealed;
+        all_revealed
     }
 }
 
 impl Clone for HiddenText {
     fn clone(&self) -> HiddenText {
-        HiddenText{is_title: self.is_title, text: self.text.clone(), revealed: self.revealed.clone(), new_revelations: self.new_revelations.clone()}
+        HiddenText {
+            is_title: self.is_title,
+            text: self.text.clone(),
+            revealed: self.revealed.clone(),
+            new_revelations: self.new_revelations.clone(),
+            fully_revealed: self.fully_revealed,
+        }
     }
 }
 impl ToString for HiddenText {
@@ -206,43 +228,70 @@ enum ArticleAction {
     Render(Page),
     SetInput(String),
     Reveal(WordResult),
+    RevealAll,
 }
 
 #[derive(PartialEq)]
 struct ArticleState {
     opt_page: Option<Page>,
+    victory: bool,
+    num_moves: u32,
 }
 
 impl Default for ArticleState {
     fn default() -> Self {
-        Self{ opt_page: None }
+        Self { 
+            opt_page: None,  
+            num_moves: 0,
+            victory: false
+        }
     }
 }
 
 impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
-        let new_page = match action {
+        match action {
             ArticleAction::Render(page) => {
-                Some(page.clone())
+                Self { 
+                    opt_page: Some(page.clone()),
+                    num_moves: 0,
+                    victory: false,
+                }.into()
             },
             ArticleAction::SetInput(input) => {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 page_clone.input = input;
-                Some(page_clone)
+                Self { 
+                    opt_page: Some(page_clone),
+                    num_moves: self.num_moves,
+                    victory: self.victory,
+                }.into()
             },
             ArticleAction::Reveal(word_res) => {
                 // TODO(leo): check word exists
                 // TODO(leo): check words close
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 // log::info!("Reveal called !");
-                page_clone.reveal(&word_res);
+                let victory = page_clone.reveal(&word_res);
                 page_clone.input = "".to_string();
-                page_clone.reveal_called_once = true;
-                Some(page_clone)
+                Self { 
+                    opt_page: Some(page_clone),
+                    num_moves: self.num_moves + 1,
+                    victory,
+                }.into()
             },
-        };
-        Self { opt_page: new_page }.into()
+            ArticleAction::RevealAll => {
+                let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
+                // log::info!("Reveal called !");
+                page_clone.reveal_all();
+                Self { 
+                    opt_page: Some(page_clone),
+                    num_moves: self.num_moves + 1,
+                    victory: true,
+                }.into()
+            },
+        }
     }
 }
 #[derive(Properties, Clone, PartialEq)]
@@ -252,7 +301,7 @@ pub struct ArticleProps {
 #[function_component(App)]
 pub fn app() -> Html {
 
-    let state = use_reducer(move || ArticleState{opt_page:None});
+    let state = use_reducer(move || ArticleState::default());
 
     use_effect_with_deps(
         {
@@ -277,6 +326,12 @@ pub fn app() -> Html {
         },
         (),
     );
+    let onclick = {
+        let state = state.clone();
+        Callback::from( move |_| {
+            state.dispatch(ArticleAction::RevealAll);
+        })
+    };
 
     let oninput = {
         let state = state.clone();
@@ -317,11 +372,31 @@ pub fn app() -> Html {
             // log::info!("close: {}", num_close);
             html! {
             <div >
+                {
+                    if state.victory {
+                        let victory_text = format!("Page trouvée en {} coups", state.num_moves); 
+                        html! {<span id="victory"> {victory_text} </span>}
+                    } else {
+                        html!{}
+                    }
+                }
+                <br/>
                 <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
+                {
+                    if state.victory {
+                        html! {
+                            <button onclick={onclick}>
+                                { "Révéler tous les mots" }
+                            </button>
+                        }
+                    } else {
+                        html!{}
+                    }
+                }
                 <br/>
                 {
                 if num_found + num_close == 0 {
-                    if page.reveal_called_once {
+                    if state.num_moves != 0 && !page.content.fully_revealed {
                         html!{<span > {red_emo.to_string()}</span>}
                     } else {
                         html!{}
@@ -346,7 +421,6 @@ pub fn app() -> Html {
     }
 }
 
-// <!-- <span class="w"style="background-color: rgb(51, 51, 51); min-width: 35px; color: rgb(255, 191, 0);">&nbsp;le&nbsp; id="4" </span> -->
 
 fn page_from_json(article: Article) -> Page {
     let title = String::from(article.title + " ");
@@ -369,21 +443,22 @@ fn page_from_json(article: Article) -> Page {
         text: title_vec,
         revealed: revealed_title,
         new_revelations: vec![RevealStrength::NotRevealed; title_vec_len],
+        fully_revealed: false,
     };
     let hidden_content = HiddenText {
         is_title: false,
         text: content_vec,
         revealed: revealed_content,
         new_revelations: vec![RevealStrength::NotRevealed; content_vec_len],
+        fully_revealed: false,
     };
     Page {
         title: hidden_title,
         content: hidden_content,
         input: "".to_string(),
-        reveal_called_once: false,
-        victory: false
     }
 }
+
 fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
     //TODO(léo): handle all pre_revealed words
     let determinants = vec!["le", "la", "les", "un", "une", "des"];

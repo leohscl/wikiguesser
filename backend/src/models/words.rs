@@ -1,3 +1,4 @@
+// use distance::hamming;
 use serde::Serialize;
 use std::fs::File;
 use std::io::BufReader;
@@ -5,15 +6,16 @@ use finalfusion::prelude::*;
 use finalfusion::similarity::WordSimilarity;
 use crate::FILE_MODEL;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct IString {
     pub str: String,
 }
 
 #[derive(Serialize)]
 pub struct WordResult {
-    word: String,
-    results: Vec<IString>,
+    pub word: String,
+    pub close_words: Vec<IString>,
+    pub variants: Vec<IString>,
 }
 impl WordResult {
     pub fn query(word: &str) -> Result<WordResult, diesel::result::Error> {
@@ -25,11 +27,80 @@ impl WordResult {
         let results = embed.word_similarity(word, 1000).expect("Word query failed");
         // iterate through text of the article
         // println!("results: {:?}", results);
-        //TODO(leo): check that we can discard score
         let word_res = results.iter().map(|similarity_res| {
             let str = similarity_res.word().to_string();
             IString{str}
         }).collect();
-        Ok(WordResult{word:word.to_string(), results: word_res})
+        let variants = get_variants(word, &word_res);
+        println!("variants: {:?}", variants);
+        Ok(WordResult{word:word.to_string(), close_words: word_res, variants})
+    }
+}
+
+fn get_variants(word: &str, word_res: &Vec<IString>) -> Vec<IString> {
+    word_res.iter()
+        .take(50)
+        .filter_map(|istr| { 
+            match same_root(istr, word) {
+                true => Some(IString { str: istr.str.clone() }),
+                false => None,
+            }
+        })
+        .collect()
+    // get similar
+}
+
+fn same_root(icandidate: &IString, word: &str) -> bool {
+    let candidate = &icandidate.str;
+    let l_candidate = candidate.len();
+    let l_word = word.len();
+    let distance = hamming_with_normal_size(candidate, word);
+    let distance_f64 = distance as f64;
+    let min_dist = std::cmp::max_by(l_candidate as f64, l_word as f64, |a, b| a.partial_cmp(b).unwrap());
+    match min_dist {
+        x if x == 0.0 => false,
+        _ => {
+            let normalized_dist = distance_f64 / min_dist;
+            // println!("normalized_dist: {}", normalized_dist);
+            normalized_dist < 0.4
+        }
+    }
+}
+fn hamming_with_normal_size(candidate: &str, word: &str) -> usize {
+    let l_candidate = candidate.len();
+    let l_word = word.len();
+    // let mut word = word.clone();
+    // TODO(leo: handle errors)
+    let (candidate_cmp, word_cmp) = if l_candidate < l_word {
+        let padding = l_word - l_candidate;
+        let candidate_cmp = candidate.chars().chain(std::iter::repeat(' ').take(padding)).collect::<String>();
+        (candidate_cmp, word.to_string())
+    } else {
+        let padding = l_candidate - l_word;
+        let word_cmp: String = word.chars().chain(std::iter::repeat(' ').take(padding)).collect();
+        (candidate.to_string(), word_cmp)
+    };
+    // println!("Compared strings: {}, {}", candidate_cmp, word_cmp);
+    // println!("lenghts: {},{}", candidate_cmp.len(), word_cmp.len());
+    let res_distance = hamming(&candidate_cmp, &word_cmp);
+    // println!("res_distance: {:?}", res_distance);
+    res_distance.unwrap()
+}
+fn hamming(candidate: &str, word: &str) -> Result<usize, String> {
+    match candidate.chars().count() == candidate.chars().count() {
+        true => {
+            let dist = candidate.chars()
+                .zip(word.chars())
+                .map(|(c_candidate, c_word)|{
+                    // println!("Compared chars: {}, {}", c_candidate, c_word);
+                    match c_candidate == c_word {
+                        false => 1,
+                        true => 0,
+                    }
+                })
+                .sum();
+            Ok(dist)
+        },
+        false => Err("Error !".to_string())
     }
 }

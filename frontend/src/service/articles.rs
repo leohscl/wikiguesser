@@ -1,5 +1,6 @@
 use super::fetch::Fetch;
-use common::models::Article;
+use crate::entities::interfaces::Article;
+// use common::models::Article;
 use crate::entities::interfaces::Status;
 use crate::API_URL;
 
