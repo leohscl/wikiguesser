@@ -473,7 +473,7 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
             match str.chars().count() {
                 1 => RevealStrength::Revealed,
                 _ => {
-                    if let Some(_) = pre_revealed.iter().position(|candidate| &candidate.to_lowercase() == str) {
+                    if let Some(_) = pre_revealed.iter().position(|candidate| candidate.to_lowercase() == str.to_lowercase()) {
                         RevealStrength::Revealed
                     } else {
                         RevealStrength::NotRevealed
