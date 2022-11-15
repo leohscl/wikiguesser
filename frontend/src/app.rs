@@ -41,8 +41,6 @@ struct HiddenText {
     fully_revealed: bool,
 }
 
-
-
 #[derive(Clone, PartialEq)]
 struct Page {
     title: HiddenText,
@@ -89,12 +87,17 @@ fn render_string(str_to_render: &str, rgb_num: u8, true_word: &str, is_new: bool
             1
         }
     };
+    let render_number_chars = {
+        Callback::from( move |_| {
+            log::info!("Clicked");
+        })
+    };
     let string_with_padding = std::iter::repeat('\u{00a0}').take(padding)
         .chain(str_to_render.chars())
         .chain(std::iter::repeat('\u{00a0}').take(padding))
         .collect::<String>();
     html!{
-        <span style={style}>
+        <span style={style} onclick={render_number_chars}>
             {string_with_padding}
         </span>
     }
@@ -102,6 +105,11 @@ fn render_string(str_to_render: &str, rgb_num: u8, true_word: &str, is_new: bool
 
 impl HiddenText {
     fn render(&self) -> Html {
+        let render_number_chars = {
+            Callback::from( move |_| {
+                log::info!("Clicked");
+            })
+        };
         self.text
             .iter()
             .zip(&self.revealed)
@@ -120,7 +128,7 @@ impl HiddenText {
                             RevealStrength::Distant(str_pos) => {
                                 render_string(&str_pos.str, 132, text, false)
                             },
-                            _ => html!{<span class="w" >{std::iter::repeat('\u{00a0}').take(text.len()).collect::<String>()}</span>},
+                            _ => html!{<span class="w" onclick={render_number_chars.clone()} >{std::iter::repeat('\u{00a0}').take(text.len()).collect::<String>()}</span>},
                         }
                     },
                     RevealStrength::Revealed => {
