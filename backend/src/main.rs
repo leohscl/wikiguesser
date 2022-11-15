@@ -17,7 +17,6 @@ mod models;
 mod schema;
 
 // Constants
-// const API_URL: &str = dotenv!("API_URL");
 const DATABASE_URL: &str = dotenv!("DATABASE_URL");
 const FILE_MODEL: &str = dotenv!("FILE_MODEL");
 

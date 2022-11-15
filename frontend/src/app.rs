@@ -4,7 +4,7 @@ use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use crate::entities::interfaces::Status;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
-use crate::hamming::same_root;
+use crate::similar_word::same_root;
 
 //TODO(leo): handle féminin/masculin --ish
 //TODO(leo): handle pluriel --ish
