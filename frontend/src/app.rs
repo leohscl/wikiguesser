@@ -99,7 +99,6 @@ impl HiddenText {
                             },
                             _ => {
                                 render_string("", 0, text, false)
-                                // html!{<span class="w" onclick={render_number_chars.clone()} >{std::iter::repeat('\u{00a0}').take(text.len()).collect::<String>()}</span>},
                             }
                         }
                     },
