@@ -1,6 +1,7 @@
 use crate::app::App;
 use dotenv_codegen::dotenv;
 pub mod app;
+pub mod hidden_field;
 pub mod similar_word;
 // pub mod components;
 pub mod entities;

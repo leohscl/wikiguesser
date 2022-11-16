@@ -5,6 +5,7 @@ use crate::entities::interfaces::Status;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
 use crate::similar_word::same_root;
+use crate::hidden_field::HiddenField;
 
 //TODO(leo): handle féminin/masculin --ish
 //TODO(leo): handle pluriel --ish
@@ -61,55 +62,23 @@ impl Page {
 }
 
 fn render_string(str_to_render: &str, rgb_num: u8, true_word: &str, is_new: bool) -> Html {
-    let red = {
-        if is_new {
-            255
-        } else {
-            rgb_num
-        }
-    };
-    let green = rgb_num;
-    let blue = {
-        if is_new {
-            0
-        } else {
-            rgb_num
-        }
-    };
-    let style = format!("background-color: rgb(51, 51, 51);color: rgb({}, {}, {});", red, green, blue);
-
-    let padding = {
-        // Add some padding when the true word is a lot bigger
-        // than the close word
-        if true_word.len()+1 > str_to_render.len() {
-            1 + (true_word.len() - str_to_render.len()) / 2 
-        } else {
-            1
-        }
-    };
-    let render_number_chars = {
-        Callback::from( move |_| {
-            log::info!("Clicked");
-        })
-    };
-    let string_with_padding = std::iter::repeat('\u{00a0}').take(padding)
-        .chain(str_to_render.chars())
-        .chain(std::iter::repeat('\u{00a0}').take(padding))
-        .collect::<String>();
     html!{
-        <span style={style} onclick={render_number_chars}>
-            {string_with_padding}
-        </span>
+        <HiddenField 
+            hidden_string={true_word.to_string()}
+            close_word={str_to_render.to_string()}
+            rgb_num={rgb_num}
+            is_new={is_new}
+        />
     }
 }
 
 impl HiddenText {
     fn render(&self) -> Html {
-        let render_number_chars = {
-            Callback::from( move |_| {
-                log::info!("Clicked");
-            })
-        };
+        // let render_number_chars = {
+        //     Callback::from( move |_| {
+        //         log::info!("Clicked");
+        //     })
+        // };
         self.text
             .iter()
             .zip(&self.revealed)
@@ -128,7 +97,10 @@ impl HiddenText {
                             RevealStrength::Distant(str_pos) => {
                                 render_string(&str_pos.str, 132, text, false)
                             },
-                            _ => html!{<span class="w" onclick={render_number_chars.clone()} >{std::iter::repeat('\u{00a0}').take(text.len()).collect::<String>()}</span>},
+                            _ => {
+                                render_string("", 0, text, false)
+                                // html!{<span class="w" onclick={render_number_chars.clone()} >{std::iter::repeat('\u{00a0}').take(text.len()).collect::<String>()}</span>},
+                            }
                         }
                     },
                     RevealStrength::Revealed => {
@@ -478,9 +450,9 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
     vec_text
         .iter()
         .map(|str| {
-            match str.chars().count() {
-                1 => RevealStrength::Revealed,
-                _ => {
+            match str.chars().count() <= 1 {
+                true => RevealStrength::Revealed,
+                false => {
                     if let Some(_) = pre_revealed.iter().position(|candidate| candidate.to_lowercase() == str.to_lowercase()) {
                         RevealStrength::Revealed
                     } else {
