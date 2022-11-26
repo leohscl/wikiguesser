@@ -1,5 +1,5 @@
-use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen::{JsCast, JsValue};
 use ::web_sys::{Request, RequestInit, RequestMode, RequestRedirect, Response};
 // use yew::web_sys;
 
@@ -8,6 +8,7 @@ pub enum Method {
 }
 
 pub async fn fetch(url: String, method:String) -> Result<JsValue, JsValue> {
+    log::info!("building request");
     let mut opts = RequestInit::new();
     opts.method(&method);
     opts.mode(RequestMode::Cors);
@@ -24,8 +25,13 @@ pub async fn fetch(url: String, method:String) -> Result<JsValue, JsValue> {
         .headers()
         .set("Access-Control-Request-Method", &method)?;
 
+    log::info!("request_url {:?}", request.url());
+    log::info!("request_headers {:?}", request.headers());
+    log::info!("request_mode {:?}", request.mode());
     let window = web_sys::window().unwrap();
+
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+    log::info!("resp_value: {:?}", resp_value);
 
     assert!(resp_value.is_instance_of::<Response>());
     let resp: Response = resp_value.dyn_into().unwrap();

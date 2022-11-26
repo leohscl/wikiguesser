@@ -1,5 +1,6 @@
 incr=2
-for start in $(seq 0 $incr 999); do
+num_article=10
+for start in $(seq 0 $incr $num_article); do
     end=$((start + $incr))
     cargo run $start $end
     sleep 1
