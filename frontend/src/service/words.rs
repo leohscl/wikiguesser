@@ -1,6 +1,7 @@
 use super::fetch::Fetch;
 use crate::entities::interfaces::Status;
 use crate::entities::interfaces::{IString,WordResult};
+// use crate::entities::interfaces::WordResult;
 // use common::models::WordResult;
 use crate::API_URL;
 

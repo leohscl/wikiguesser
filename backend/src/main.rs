@@ -36,10 +36,9 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(
                 Cors::default()
-                    .allowed_origin("http://localhost:8080")
-                    .allowed_origin("http://localhost:3333")
                     .allowed_origin("http://localhost:3001")
-                    // .allowed_origin("*")
+                    .allowed_origin("http://localhost:3333")
+                    .allowed_origin("http://localhost:8080")
                     .allowed_methods(vec!["GET", "OPTIONS"])
                     .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
                     .allowed_header(http::header::CONTENT_TYPE)
@@ -53,7 +52,6 @@ async fn main() -> std::io::Result<()> {
             // .route("/articles", web::get().to(handlers::articles::list))
     })
     .bind(("127.0.0.1", 8000))?
-    // .bind(("0.0.0.0", 8000))?
     .run()
     .await
 }
