@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  yew-ui:
+    volumes:
+      - type: bind
+        source: ../
+        target: /wikiguesser
+    build: 
+      dockerfile: ../docker/Dockerfile.yew
+    command: bash -c "cd wikiguesser/frontend && trunk serve"
+    environment:
+      - LOGIN_URL=http://localhost:${ACTIX_PORT:-8080}/login
+    ports:
+      - 8080
+    network_mode: host
+  actix-api:
+    build: 
+      dockerfile: ../docker/Dockerfile.actix
+    command: bash -c "cd wikiguesser/backend && cargo watch -x \"run\""
+    environment:
+      - DATABASE_URL=postgres://postgres:wikiguesser@localhost:5432/articles
+    ports:
+      - 8000
+    volumes:
+      - type: bind
+        source: ../
+        target: /wikiguesser
+      - /wikiguesser/backend/target
+    depends_on:
+      - postgres
+    network_mode: host
+
+  postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_PASSWORD: "wikiguesser"
+      PGPASSWORD: "wikiguesser"
+    ports:
+      - 5432
+    network_mode: host
