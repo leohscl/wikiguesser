@@ -1,4 +1,4 @@
-FROM rust:1.62-slim-bullseye
+FROM rust:latest
 
 RUN apt-get --yes update && apt-get --yes install postgresql postgresql-contrib
 RUN apt-get --yes update && apt-get --yes install libpq-dev
