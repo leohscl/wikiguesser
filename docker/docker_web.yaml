@@ -17,7 +17,7 @@ services:
   actix-api:
     build: 
       dockerfile: ../docker/Dockerfile.actix
-    command: bash -c "cd wikiguesser/backend && cargo watch -x \"run\""
+    command: bash -c "cd wikiguesser/backend && cargo run --release"
     environment:
       - DATABASE_URL=postgres://postgres:wikiguesser@localhost:5432/articles
     ports:

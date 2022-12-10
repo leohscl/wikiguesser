@@ -55,6 +55,7 @@ async fn main() -> std::io::Result<()> {
                     let fifu_file = FILE_MODEL;
                     let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
                     let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
+                    println!("Building model in app data");
                     WordModel {
                         embedding: embed,
                     }
