@@ -1,3 +1,9 @@
+use models::words::WordModel;
+
+use finalfusion::prelude::*;
+use std::fs::File;
+use std::io::BufReader;
+
 #[macro_use]
 extern crate diesel;
 #[macro_use]
@@ -43,6 +49,16 @@ async fn main() -> std::io::Result<()> {
                     .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
                     .allowed_header(http::header::CONTENT_TYPE)
                     .max_age(3600),
+            )
+            .app_data(
+                web::Data::new({
+                    let fifu_file = FILE_MODEL;
+                    let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
+                    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
+                    WordModel {
+                        embedding: embed,
+                    }
+                })
             )
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())

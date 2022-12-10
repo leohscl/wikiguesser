@@ -1,10 +1,11 @@
 // use distance::hamming;
 use serde::Serialize;
-use std::fs::File;
-use std::io::BufReader;
 use finalfusion::prelude::*;
 use finalfusion::similarity::WordSimilarity;
-use crate::FILE_MODEL;
+
+pub struct WordModel {
+    pub embedding: Embeddings<VocabWrap, StorageViewWrap>,
+}
 
 #[derive(Debug, Serialize)]
 pub struct IString {
@@ -18,11 +19,9 @@ pub struct WordResult {
     pub variants: Vec<IString>,
 }
 impl WordResult {
-    pub fn query(word: &str) -> Result<WordResult, diesel::result::Error> {
+    pub fn query(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<WordResult, diesel::result::Error> {
         // let article = Article::get(id, connection)?;
-        let fifu_file = FILE_MODEL;
-        let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
-        let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
+        // let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
         //TODO(leo): handle error !
         let results = embed.word_similarity(word, 1000).expect("Word query failed");
         // iterate through text of the article
