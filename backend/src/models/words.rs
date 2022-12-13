@@ -2,6 +2,7 @@
 use serde::Serialize;
 use finalfusion::prelude::*;
 use finalfusion::similarity::WordSimilarity;
+use crate::NUM_WORD_RESULTS;
 
 pub struct WordModel {
     pub embedding: Embeddings<VocabWrap, StorageViewWrap>,
@@ -20,10 +21,8 @@ pub struct WordResult {
 }
 impl WordResult {
     pub fn query(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<WordResult, diesel::result::Error> {
-        // let article = Article::get(id, connection)?;
-        // let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
         //TODO(leo): handle error !
-        let results = embed.word_similarity(word, 1000).expect("Word query failed");
+        let results = embed.word_similarity(word, NUM_WORD_RESULTS).expect("Word query failed");
         // iterate through text of the article
         // println!("results: {:?}", results);
         let word_res = results.iter().map(|similarity_res| {
@@ -37,16 +36,25 @@ impl WordResult {
 }
 
 fn get_variants(word: &str, word_res: &Vec<IString>) -> Vec<IString> {
-    word_res.iter()
+    let iter_opt_variants = word_res.iter()
         .take(50)
-        .filter_map(|istr| { 
+        .flat_map(|istr| { 
             match same_root(istr, word) {
-                true => Some(IString { str: istr.str.clone() }),
-                false => None,
+                true => [Some(IString { str: istr.str.clone() }), get_ligature_variants(&istr.str)],
+                false => [None, None],
             }
-        })
+        });
+    std::iter::once(get_ligature_variants(word)).chain(iter_opt_variants)
+        .filter_map(|variant| variant)
         .collect()
-    // get similar
+}
+
+fn get_ligature_variants(word: &str) -> Option<IString> {
+    if word.contains("oe") {
+        Some(IString{str: str::replace(word, "oe", "œ")})
+    } else {
+        None
+    }
 }
 
 fn same_root(icandidate: &IString, word: &str) -> bool {

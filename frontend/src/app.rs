@@ -7,14 +7,8 @@ use crate::service::{articles::get_one_article, words::query, future::handle_fut
 use crate::similar_word::same_root;
 use crate::hidden_field::HiddenField;
 
-//TODO(leo): handle féminin/masculin --ish
-//TODO(leo): handle pluriel --ish
-//TODO(leo): handle majuscules sur mots par défaut ! -- ish
-//TODO(leo): gaps should always represent length of hidden number -- ish
 //TODO(leo): mettre vert nouveaux mots -- ish
-//TODO(leo): handle numbers -- change model !!
-//TODO(leo): nombre lettres
-//TODO(leo): Victoire !! -- ish
+//TODO(leo): Victoire !! -- ADD link to wikipedia
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 struct StringAndPos {
@@ -103,7 +97,7 @@ impl HiddenText {
                         }
                     },
                     RevealStrength::Revealed => {
-                        let green_style = format!("background-color: rgb(200, {}, 200);color: rgb(0, {}, 0);", 250, 100);
+                        let green_style = format!("background-color: rgb(200, {}, 200);color: rgb(0, {}, 0);", 250, 50);
                         html!{<span style={green_style}> {text}</span>}
                     },
                     RevealStrength::VeryClose(str_pos)=> { render_string(&str_pos.str, 232, text, true) },
