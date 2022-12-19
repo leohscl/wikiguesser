@@ -18,8 +18,6 @@ services:
     build: 
       dockerfile: ../docker/Dockerfile.actix
     command: bash -c "cd wikiguesser/backend && cargo run --release"
-    environment:
-      - DATABASE_URL=postgres://postgres:wikiguesser@localhost:5432/articles
     ports:
       - 8000
     volumes:

@@ -20,7 +20,7 @@ struct JsonArticle {
 }
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-const DATABASE_URL: &str = dotenv!("DATABASE_URL");
+const ARTICLE_DATABASE_URL: &str = dotenv!("ARTICLE_DATABASE_URL");
 
 #[derive(Debug, Eq, PartialEq)]
 struct PageInfo {
@@ -47,7 +47,7 @@ async fn main() {
     // println!("With text:\n{contents}");
     let data: Vec<JsonArticle> = serde_json::from_str(&contents).expect("Json should parse");
     // let future_insert = insert_articles(&data[0..1]);
-    let manager = ConnectionManager::<PgConnection>::new(DATABASE_URL);
+    let manager = ConnectionManager::<PgConnection>::new(ARTICLE_DATABASE_URL);
     let pool: Pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");

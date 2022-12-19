@@ -5,10 +5,11 @@ use crate::entities::interfaces::Status;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
 use crate::similar_word::same_root;
-use crate::hidden_field::HiddenField;
+use super::hidden_field::HiddenField;
 
 //TODO(leo): mettre vert nouveaux mots -- ish
-//TODO(leo): Victoire !! -- ADD link to wikipedia
+//TODO(leo): Victoire !! -- ADD link to wikipedia ?
+
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 struct StringAndPos {
@@ -24,6 +25,7 @@ enum RevealStrength {
     Distant(StringAndPos),
     NotRevealed,
 }
+
 type VString = Vec<String>;
 type VIndex = Vec<RevealStrength>;
 
@@ -68,11 +70,6 @@ fn render_string(str_to_render: &str, rgb_num: u8, true_word: &str, is_new: bool
 
 impl HiddenText {
     fn render(&self) -> Html {
-        // let render_number_chars = {
-        //     Callback::from( move |_| {
-        //         log::info!("Clicked");
-        //     })
-        // };
         self.text
             .iter()
             .zip(&self.revealed)
@@ -152,7 +149,6 @@ impl HiddenText {
                 }
             })
             .collect();
-        // log::info!("vec_new_revelation: {:?}", vec_new_revelation);
         let revealed: Vec<RevealStrength> = vec_matches.into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {
@@ -181,6 +177,7 @@ impl Clone for HiddenText {
         }
     }
 }
+
 impl ToString for HiddenText {
     fn to_string(&self) -> String {
         self.text
@@ -271,8 +268,8 @@ impl Reducible for ArticleState {
 pub struct ArticleProps {
     pub id: i32,
 }
-#[function_component(App)]
-pub fn app() -> Html {
+#[function_component(GuessingPage)]
+pub fn guessing_page() -> Html {
 
     let state = use_reducer(move || ArticleState::default());
 
@@ -285,7 +282,6 @@ pub fn app() -> Html {
                     match data {
                         Ok(article) => {
                             let state = state.clone();
-                            // log::info!("Article: {:?}", article);
                             let page = page_from_json(article);
                             state.dispatch(ArticleAction::Render(page));
                         }
@@ -458,9 +454,10 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
 }
 fn create_string_vector(text: String) -> VString {
     // TODO(leo): handle other separators
+    let processed_text = text.replace("\n\n\n", "").to_string();
     let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-'];
     let separator_indexes: Vec<_> = [0].into_iter().chain(
-        text
+        processed_text
         .char_indices()
         .filter_map(|(index, char)| {
             match separators.iter().find(|c| *c == &char) {
@@ -472,7 +469,6 @@ fn create_string_vector(text: String) -> VString {
         })
         .flatten())
         .collect();
-    // log::info!("Constructed separators: {:?}", separator_indexes);
     separator_indexes
         .windows(2)
         .map(|slice| {

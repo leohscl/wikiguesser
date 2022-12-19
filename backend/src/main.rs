@@ -23,7 +23,7 @@ mod models;
 mod schema;
 
 // Constants
-const DATABASE_URL: &str = dotenv!("DATABASE_URL");
+const ARTICLE_DATABASE_URL: &str = dotenv!("ARTICLE_DATABASE_URL");
 const FILE_MODEL: &str = dotenv!("FILE_MODEL");
 const NUM_WORD_RESULTS: usize = 300;
 
@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
     #[cfg(debug_assertions)]
     std::env::set_var("RUST_LOG", "actix_web=debug");
 
-    let manager = ConnectionManager::<PgConnection>::new(DATABASE_URL);
+    let manager = ConnectionManager::<PgConnection>::new(ARTICLE_DATABASE_URL);
     let pool: Pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
@@ -57,7 +57,6 @@ async fn main() -> std::io::Result<()> {
                     let fifu_file = FILE_MODEL;
                     let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
                     let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
-                    println!("Building model in app data");
                     WordModel {
                         embedding: embed,
                     }
