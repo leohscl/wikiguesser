@@ -42,7 +42,7 @@ pub fn signup() -> Html {
     };
     
     let validate_signup = {
-        let state = state.clone();
+        let _state = state.clone();
         Callback::from( move |_| {
             log::info!("Button clicked !")
         })

@@ -18,8 +18,4 @@ pub async fn get_one(pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
         .await
         .map(|article| HttpResponse::Ok().json(article))
         .map_err(DatabaseError)?)
-    // Ok(web::block(move || Article::get(&825979, &mut connection))
-    //     .await
-    //     .map(|article| HttpResponse::Ok().json(article))
-    //     .map_err(DatabaseError)?)
 }

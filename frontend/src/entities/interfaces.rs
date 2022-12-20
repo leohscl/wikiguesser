@@ -1,5 +1,6 @@
 use serde::Serialize;
 use serde::Deserialize;
+use chrono::NaiveDate;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Article {
@@ -27,3 +28,20 @@ pub enum Status {
     Error,
     Unknown,
 }
+
+pub struct JsonUser {
+    email: String,
+    password: String,
+}
+
+#[derive(Deserialize)]
+pub struct User {
+    id: i32,
+    id_session: i64,
+    t_email: String,
+    t_password: String,
+    t_ip_address: String,
+    d_visit_first: NaiveDate,
+}
+
+

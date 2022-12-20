@@ -22,7 +22,6 @@ pub async fn get_article(id: &i32) -> Result<Article, Status> {
     let json = Fetch::get(url).await;
     log::info!("json: {:?}", json);
     match json {
-        // Ok(json) => Ok(json.into_serde::<Article>().unwrap()),
         Ok(json) => Ok(serde_wasm_bindgen::from_value::<Article>(json).unwrap()),
         Err(_err) => Err(Status::Error),
     }

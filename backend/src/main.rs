@@ -1,5 +1,4 @@
 use models::words::WordModel;
-
 use finalfusion::prelude::*;
 use std::fs::File;
 use std::io::BufReader;
@@ -23,7 +22,7 @@ mod models;
 mod schema;
 
 // Constants
-const ARTICLE_DATABASE_URL: &str = dotenv!("ARTICLE_DATABASE_URL");
+const DATABASE_URL: &str = dotenv!("DATABASE_URL");
 const FILE_MODEL: &str = dotenv!("FILE_MODEL");
 const NUM_WORD_RESULTS: usize = 300;
 
@@ -34,7 +33,7 @@ async fn main() -> std::io::Result<()> {
     #[cfg(debug_assertions)]
     std::env::set_var("RUST_LOG", "actix_web=debug");
 
-    let manager = ConnectionManager::<PgConnection>::new(ARTICLE_DATABASE_URL);
+    let manager = ConnectionManager::<PgConnection>::new(DATABASE_URL);
     let pool: Pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
@@ -67,7 +66,9 @@ async fn main() -> std::io::Result<()> {
             .route("/words/{word}", web::get().to(handlers::words::query))
             .route("/articles/{id}", web::get().to(handlers::articles::get))
             .route("/articles/random/pick", web::get().to(handlers::articles::get_one))
-            // .route("/articles", web::get().to(handlers::articles::list))
+            .route("/users", web::get().to(handlers::users::get_users))
+            .route("/users/{email}", web::get().to(handlers::users::get_user))
+            .route("/users", web::post().to(handlers::users::create))
     })
     .bind(("127.0.0.1", 8000))?
     .run()

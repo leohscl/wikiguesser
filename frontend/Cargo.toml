@@ -14,6 +14,7 @@ wasm-logger = "^0"
 log = "^0.4"
 gloo = "0.8.0"
 finalfusion = "0.16"
+chrono = { version = "0.4.22", features = ["serde"]}
 getrandom = { version = "0.2", features = ["js"] }
 serde = { version = "^1.0", features = ["derive"]}
 serde-wasm-bindgen = "0.4"

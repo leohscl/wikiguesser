@@ -6,6 +6,18 @@ CREATE TABLE IF NOT EXISTS articles
         title         TEXT NOT NULL,
         content       TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS public.users (
+    id serial NOT NULL,
+    id_session int8 NOT NULL,
+    t_email VARCHAR(128) UNIQUE NOT NULL,
+    t_password VARCHAR(128) NOT NULL,
+    t_ip_address VARCHAR(32) NOT NULL,
+    -- d_visit_first DATE NOT NULL,
+    -- d_visit_last DATE NOT NULL,
+    -- b_enabled bool NOT NULL,
+    CONSTRAINT users_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS users_id_idx ON public.users USING btree (id);
 
 /* INSERT INTO articles */
 /*             (id, */

@@ -9,7 +9,6 @@ use serde::Serialize;
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable)]
 pub struct Article {
     pub id: i32,
-    // pub pub_date: String,
     pub wiki_id: i32,
     pub title: String,
     pub content: String,
