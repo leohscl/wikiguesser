@@ -1,8 +1,8 @@
  
 pub mod components;
-pub mod similar_word;
 pub mod entities;
 pub mod service;
+pub mod utils;
 // use crate::guessing_page::GuessingPage;
 use components::app::App;
 use dotenv_codegen::dotenv;

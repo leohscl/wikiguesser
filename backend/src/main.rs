@@ -45,8 +45,11 @@ async fn main() -> std::io::Result<()> {
                     .allowed_origin("http://localhost:3001")
                     .allowed_origin("http://localhost:3333")
                     .allowed_origin("http://localhost:8080")
+                    .allowed_origin("http://localhost:8080/signup/")
+                    .allowed_origin("http://localhost:8080/login")
                     .allowed_origin("http://127.0.0.1:8080")
-                    .allowed_methods(vec!["GET", "OPTIONS"])
+                    .allowed_origin("http://127.0.0.1:8080/signup/")
+                    .allowed_methods(vec!["GET", "OPTIONS", "POST"])
                     .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
                     .allowed_header(http::header::CONTENT_TYPE)
                     .max_age(3600),
@@ -66,12 +69,11 @@ async fn main() -> std::io::Result<()> {
             .route("/words/{word}", web::get().to(handlers::words::query))
             .route("/articles/{id}", web::get().to(handlers::articles::get))
             .route("/articles/random/pick", web::get().to(handlers::articles::get_one))
-            .route("/users", web::get().to(handlers::users::get_users))
+            .route("/users/", web::get().to(handlers::users::get_users))
             .route("/users/{email}", web::get().to(handlers::users::get_user))
-            .route("/users", web::post().to(handlers::users::create))
+            .route("/users/", web::post().to(handlers::users::create))
     })
     .bind(("127.0.0.1", 8000))?
     .run()
     .await
 }
-

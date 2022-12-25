@@ -29,19 +29,20 @@ pub enum Status {
     Unknown,
 }
 
-pub struct JsonUser {
-    email: String,
-    password: String,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InputUser {
+    pub email: String,
+    pub password: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct User {
-    id: i32,
-    id_session: i64,
-    t_email: String,
-    t_password: String,
-    t_ip_address: String,
-    d_visit_first: NaiveDate,
+    pub id: i32,
+    pub id_session: i64,
+    pub t_email: String,
+    pub t_password: String,
+    pub t_ip_address: String,
+    pub d_visit_first: NaiveDate,
 }
 
 

@@ -1,29 +1,43 @@
+use std::cmp::Ordering;
+
 use yew::prelude::*;
 use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use crate::entities::interfaces::Status;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
-use crate::similar_word::same_root;
+use crate::utils::similar_word::same_root;
+use crate::entities::interfaces::User;
 use super::hidden_field::HiddenField;
 
 //TODO(leo): mettre vert nouveaux mots -- ish
 //TODO(leo): Victoire !! -- ADD link to wikipedia ?
 
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct StringAndPos {
     str: String,
     pos: usize,
 }
 
-#[derive(Clone, PartialEq, PartialOrd, Ord, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 enum RevealStrength {
     Revealed,
     VeryClose(StringAndPos),
     Close(StringAndPos),
     Distant(StringAndPos),
     NotRevealed,
+}
+
+impl PartialOrd for StringAndPos {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.pos.partial_cmp(&other.pos)
+    }
+}
+impl Ord for StringAndPos {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.pos.cmp(&other.pos)
+    }
 }
 
 type VString = Vec<String>;
@@ -127,6 +141,7 @@ impl HiddenText {
                         None => RevealStrength::NotRevealed,
                         Some(position) => {
                             let str_pos = StringAndPos{str:word_lowercase, pos: position};
+                            log::info!("position: {}", position);
                             if position < 10 {
                                 RevealStrength::VeryClose(str_pos)
                             } else if position < 100 {
@@ -139,6 +154,8 @@ impl HiddenText {
                 }
             })
             .collect();
+        log::info!("matches: {:?}", vec_matches);
+        log::info!("old_reveal: {:?}", self.revealed);
         let vec_new_revelation: Vec<_> = vec_matches.clone().into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {
@@ -206,6 +223,7 @@ struct ArticleState {
     opt_page: Option<Page>,
     victory: bool,
     num_moves: u32,
+    opt_user: Option<User>,
 }
 
 impl Default for ArticleState {
@@ -213,7 +231,8 @@ impl Default for ArticleState {
         Self { 
             opt_page: None,  
             num_moves: 0,
-            victory: false
+            victory: false,
+            opt_user: None,
         }
     }
 }
@@ -227,6 +246,7 @@ impl Reducible for ArticleState {
                     opt_page: Some(page.clone()),
                     num_moves: 0,
                     victory: false,
+                    opt_user: self.opt_user.clone(),
                 }.into()
             },
             ArticleAction::SetInput(input) => {
@@ -236,6 +256,7 @@ impl Reducible for ArticleState {
                     opt_page: Some(page_clone),
                     num_moves: self.num_moves,
                     victory: self.victory,
+                    opt_user: self.opt_user.clone(),
                 }.into()
             },
             ArticleAction::Reveal(word_res) => {
@@ -249,6 +270,7 @@ impl Reducible for ArticleState {
                     opt_page: Some(page_clone),
                     num_moves: self.num_moves + 1,
                     victory,
+                    opt_user: self.opt_user.clone(),
                 }.into()
             },
             ArticleAction::RevealAll => {
@@ -257,20 +279,22 @@ impl Reducible for ArticleState {
                 page_clone.reveal_all();
                 Self { 
                     opt_page: Some(page_clone),
-                    num_moves: self.num_moves + 1,
+                    num_moves: self.num_moves,
                     victory: true,
+                    opt_user: self.opt_user.clone(),
                 }.into()
             },
         }
     }
 }
-#[derive(Properties, Clone, PartialEq)]
-pub struct ArticleProps {
-    pub id: i32,
-}
-#[function_component(GuessingPage)]
-pub fn guessing_page() -> Html {
 
+#[derive(Properties, PartialEq, Debug)]
+pub struct GuessingPageProps {
+    pub opt_user: Option<User>,
+}
+
+#[function_component(GuessingPage)]
+pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let state = use_reducer(move || ArticleState::default());
 
     use_effect_with_deps(
@@ -384,6 +408,14 @@ pub fn guessing_page() -> Html {
                 <div id="content">
                     { page.content.render() }
                 </div>
+                    // TODO(leo): replace with a like button
+                {
+                    if let Some(_user) = &props.opt_user {
+                        html! {<span > {"User logged in !"}</span>}
+                    } else {
+                        html!{}
+                    }
+                }
             </div>
             }
         },
@@ -493,7 +525,6 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
             match data {
                 Ok(word_res) => {
                     let state = state.clone();
-                    // log::info!("query result: {:?}", word_res);
                     state.dispatch(ArticleAction::Reveal(word_res));
                 }
                 Err(_) => {

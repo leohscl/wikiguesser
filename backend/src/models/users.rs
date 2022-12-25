@@ -26,15 +26,19 @@ impl User {
         Ok(all_users)
     }
 
-    pub fn get_by_email(connection: &mut PgConnection, email: &str) -> Result<Vec<User>, diesel::result::Error>{
+    pub fn get_by_email(connection: &mut PgConnection, email: &str) -> Result<User, diesel::result::Error>{
         let query = users::table.into_boxed();
         let query = query.filter(users::t_email.eq(email));
         let results = query.load::<User>(connection)?;
         println!("User(s): {:?}", results);
-        Ok(results)
+        if let Some(user) = results.into_iter().next() {
+            Ok(user)
+        } else {
+            Err(diesel::result::Error::NotFound)
+        }
     }
 
-    pub fn create(connection: &mut PgConnection, user: web::Json<InputUser>) -> Result<(), diesel::result::Error>{
+    pub fn create(connection: &mut PgConnection, user: web::Json<InputUser>) -> Result<User, diesel::result::Error>{
         let naive_date_time = chrono::Local::now().date_naive();
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();
@@ -49,6 +53,6 @@ impl User {
         diesel::insert_into(users::table)
             .values(&new_user)
             .execute(connection)?;
-        Ok(())
+        Ok(new_user)
     }
 }

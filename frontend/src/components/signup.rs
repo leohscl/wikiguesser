@@ -1,6 +1,10 @@
 use yew::prelude::*;
 use web_sys::{InputEvent, HtmlInputElement};
 use regex::Regex;
+use crate::service::future::handle_future;
+use crate::service::users::create_user;
+use crate::entities::interfaces::Status;
+use crate::entities::interfaces::{User, InputUser};
 
 struct SignupState {
     email: String,
@@ -25,8 +29,6 @@ pub fn signup() -> Html {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
             state.set(SignupState{email: value.clone(), password: state.password.clone()});
-            let valid = state.is_valid();
-            log::info!("Valid: {}", valid);
         })
     };
 
@@ -36,15 +38,24 @@ pub fn signup() -> Html {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
             state.set(SignupState{email: state.email.clone(), password: value.clone()});
-            let valid = state.is_valid();
-            log::info!("Valid: {}", valid);
         })
     };
     
     let validate_signup = {
-        let _state = state.clone();
+        let state = state.clone();
         Callback::from( move |_| {
-            log::info!("Button clicked !")
+            let user = InputUser{email: state.email.clone(), password: state.password.clone()};
+            let future = async move { create_user(&user).await };
+            handle_future(future, move |data: Result<User, Status>| {
+                match data {
+                    Ok(user) => {
+                        log::info!("User: {:?}", user)
+                    }
+                    Err(_) => {
+                        log::info!("Error loading the data !");
+                    },
+                };
+            });
         })
     };
 
