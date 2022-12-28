@@ -7,9 +7,9 @@ use crate::API_URL;
 
 pub async fn query(word: &str) -> Result<WordResult, Status> {
     // check if word is a number
-    log::info!("word: {}", word);
+    // log::info!("word: {}", word);
     if let Ok(num) = word.parse::<i32>() {
-        log::info!("num: {}", num);
+        // log::info!("num: {}", num);
         let close_words: Vec<_> = (1..500).flat_map(|n| {
         // let close_words: Vec<_> = (1..5).flat_map(|n| {
             [num + n, num - n].into_iter()
@@ -21,7 +21,7 @@ pub async fn query(word: &str) -> Result<WordResult, Status> {
             close_words,
             variants: vec![],
         };
-        log::info!("word_res: {:?}", word_res);
+        // log::info!("word_res: {:?}", word_res);
         Ok(word_res)
     } else {
         let url = format!("{}/words/{}", API_URL, word);

@@ -1,7 +1,7 @@
 use diesel::PgConnection;
 use diesel::r2d2::ConnectionManager;
 use dotenv_codegen::dotenv;
-use common::models::Article;
+use crate::models::Article;
 use serde::Deserialize;
 
 use crate::op::create_article;
@@ -67,6 +67,23 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
     let ids_str = jarticle.id.to_string();
     let params_content = api.params_into(&[
         ("action", "query"),
+        ("format", "json"),
+        ("pageids", &ids_str),
+        ("prop", "pageviews"),
+        ("pvipdays", "10"),
+    ]);
+    // extract view count
+    let res_content = api.get_query_api_json(&params_content).await.unwrap();
+    let raw_page = &res_content["query"]["pages"];
+    println!("raw_page: {:?}", raw_page);
+    let date = "2022-12-26";
+    let views = &raw_page[&ids_str]["pageviews"][date]
+        .as_i64()
+        .expect("Query conversion to string failed");
+    // println!("views: {:?}", views);
+
+    let params_content = api.params_into(&[
+        ("action", "query"),
         ("prop", "extracts"),
         ("format", "json"),
         ("exsentences", "10"),
@@ -75,9 +92,9 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
         ("formatversion", "2"),
         ("explaintext", "true"),
     ]);
-    // println!("params_content: {:?}", params_content);
+    println!("params_content: {:?}", params_content);
     let res_content = api.get_query_api_json(&params_content).await.unwrap();
-    // println!("res_content: {:?}", res_content);
+    println!("res_content: {:?}", res_content);
     let raw_page = &res_content["query"]["pages"][0];
     let title_raw_str = raw_page["title"]
         .as_str()
@@ -87,7 +104,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
         .expect("Query conversion to string failed").to_string();
     let id_i32 = jarticle.id;
     let parsed_content = parse_raw_content(content_raw_str);
-    let article = Article{id:id_i32, wiki_id:id_i32, title:title_raw_str, content:parsed_content};
+    let article = Article{id:id_i32, wiki_id:id_i32, title:title_raw_str, content:parsed_content, views: *views as i32};
     create_article(conn, article)
 }
 // async fn insert_articles(data: &[JsonArticle]) {

@@ -326,6 +326,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         })
     };
 
+    let onclick_like = {
+        let _state = state.clone();
+        Callback::from( move |_| {
+            log::info!("Click from like button !");
+        })
+    };
+
     let oninput = {
         let state = state.clone();
         Callback::from( move |input_event: InputEvent| {
@@ -411,7 +418,12 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     // TODO(leo): replace with a like button
                 {
                     if let Some(_user) = &props.opt_user {
-                        html! {<span > {"User logged in !"}</span>}
+                        // html! {<span > {"User logged in !"}</span>}
+                        html!{
+                            <button onclick={onclick_like}>
+                                { "Like" }
+                            </button>
+                        }
                     } else {
                         html!{}
                     }

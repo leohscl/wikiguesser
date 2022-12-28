@@ -6,6 +6,7 @@ diesel::table! {
         wiki_id -> Int4,
         title -> Text,
         content -> Text,
+        views -> Int4,
     }
 }
 
