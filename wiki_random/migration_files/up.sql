@@ -20,6 +20,13 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS users_id_idx ON public.users USING btree (id);
 
+CREATE TABLE IF NOT EXISTS categories
+(
+        id            SERIAL PRIMARY KEY,
+        article_id    INTEGER NOT NULL,
+        category      TEXT NOT NULL,
+);
+
 /* INSERT INTO articles */
 /*             (id, */
 /*              wiki_id, */
