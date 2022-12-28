@@ -9,7 +9,7 @@ pub enum Method {
 }
 
 pub async fn fetch(url: String, method:String, opt_body:Option<&JsValue>) -> Result<JsValue, JsValue> {
-    log::info!("building request");
+    // log::info!("building request");
     let mut opts = RequestInit::new();
     opts.method(&method);
     opts.mode(RequestMode::Cors);
@@ -30,13 +30,13 @@ pub async fn fetch(url: String, method:String, opt_body:Option<&JsValue>) -> Res
         .set("Access-Control-Request-Method", &method)?;
 
 
-    log::info!("request_url {:?}", request.url());
-    log::info!("request_headers {:?}", request.headers());
-    log::info!("request_mode {:?}", request.mode());
+    // log::info!("request_url {:?}", request.url());
+    // log::info!("request_headers {:?}", request.headers());
+    // log::info!("request_mode {:?}", request.mode());
     let window = web_sys::window().unwrap();
 
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
-    log::info!("resp_value: {:?}", resp_value);
+    // log::info!("resp_value: {:?}", resp_value);
 
     assert!(resp_value.is_instance_of::<Response>());
     let resp: Response = resp_value.dyn_into().unwrap();

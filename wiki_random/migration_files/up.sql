@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS articles
         -- pub_date      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         wiki_id       INTEGER NOT NULL,
         title         TEXT NOT NULL,
-        content       TEXT NOT NULL
+        content       TEXT NOT NULL,
+        views         INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS public.users (
     id serial NOT NULL,
