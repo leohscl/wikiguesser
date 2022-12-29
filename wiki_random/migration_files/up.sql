@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS categories
 (
         id            SERIAL PRIMARY KEY,
         article_id    INTEGER NOT NULL,
-        category      TEXT NOT NULL,
+        category      TEXT NOT NULL
 );
 
 /* INSERT INTO articles */

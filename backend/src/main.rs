@@ -69,6 +69,8 @@ async fn main() -> std::io::Result<()> {
             .route("/words/{word}", web::get().to(handlers::words::query))
             .route("/articles/{id}", web::get().to(handlers::articles::get))
             .route("/articles/random/pick", web::get().to(handlers::articles::get_one))
+            .route("/articles/random_in/{category}", web::get().to(handlers::articles::get_one_incl_filter))
+            .route("/articles/random_out/{category}", web::get().to(handlers::articles::get_one_excl_filter))
             .route("/users/", web::get().to(handlers::users::get_users))
             .route("/users/{email}", web::get().to(handlers::users::get_user))
             .route("/users/", web::post().to(handlers::users::create))

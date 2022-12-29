@@ -18,3 +18,4 @@ serde = { version = "1.0", features = ["derive"] }
 diesel = { version = "2.0.2", features = ["postgres", "r2d2", "chrono"] }
 dotenv_codegen = "0.15.0"
 common = { path = "../common/" }
+rand = "0.8.5"

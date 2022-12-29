@@ -2,9 +2,12 @@ use diesel::PgConnection;
 use diesel::r2d2::ConnectionManager;
 use dotenv_codegen::dotenv;
 use crate::models::Article;
+use crate::models::Category;
 use serde::Deserialize;
+use rand::Rng;
 
 use crate::op::create_article;
+use crate::op::create_category;
 use std::fs;
 use std::env;
 
@@ -16,6 +19,7 @@ mod schema;
 struct JsonArticle {
     id: i32,
     // title: String,
+    categories: Vec<String>,
     // random: f32,
 }
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
@@ -40,7 +44,8 @@ async fn main() {
         .expect("There should be 2 command line arguments")
         .parse::<usize>()
         .expect("first argument should be usize !");
-    let file_path = "sample.json";
+    // let file_path = "sample.json";
+    let file_path = "sample_cat.json";
     println!("In file {}", file_path);
     let contents = fs::read_to_string(file_path)
         .expect("Should have been able to read the file");
@@ -105,43 +110,15 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
     let id_i32 = jarticle.id;
     let parsed_content = parse_raw_content(content_raw_str);
     let article = Article{id:id_i32, wiki_id:id_i32, title:title_raw_str, content:parsed_content, views: *views as i32};
-    create_article(conn, article)
+    // create_article(conn, &article);
+    // TODO: create category in file
+    let mut rng = rand::thread_rng();
+    for category_name in jarticle.categories.clone().into_iter() {
+        let id_cat: i32 = rng.gen(); 
+        let category_link = Category{id: id_cat, article_id: jarticle.id, category: category_name};
+        create_category(conn, &category_link);
+    }
 }
-// async fn insert_articles(data: &[JsonArticle]) {
-//     let api = mediawiki::api::Api::new("https://fr.wikipedia.org/w/api.php").await.unwrap();
-//     let ids_vec: Vec<_> = data.iter()
-//         .map(|jarticle| {
-//             jarticle.id.to_string()
-//         })
-//         .collect();
-//     let params_content = api.params_into(&[
-//         ("action", "query"),
-//         ("prop", "extracts"),
-//         ("format", "json"),
-//         ("exsentences", "10"),
-//         ("exsectionformat", "wiki"),
-//         ("pageids", &ids_vec.join("|")),
-//         ("formatversion", "2"),
-//         ("explaintext", "true"),
-//     ]);
-//     // println!("params_content: {:?}", params_content);
-//     let res_content = api.get_query_api_json(&params_content).await.unwrap();
-//     // println!("res_content: {:?}", res_content);
-//     let length_slice = data.len();
-//     for index_article in 0..length_slice {
-//         let raw_page = &res_content["query"]["pages"][index_article];
-//         let title_raw_str = raw_page["title"]
-//             .as_str()
-//             .expect("Query conversion to string failed").to_string();
-//         let content_raw_str = raw_page["extract"]
-//             .as_str()
-//             .expect("Query conversion to string failed").to_string();
-//         let id_i32 = data[index_article].id;
-//         let parsed_content = parse_raw_content(content_raw_str);
-//         let article = Article{id:id_i32, wiki_id:id_i32, title:title_raw_str, content:parsed_content};
-//         println!("Article: {:?}", article);
-//     }
-// }
 
 fn parse_raw_content(res_content: String) -> String {
     let splitted = res_content.split("==");
