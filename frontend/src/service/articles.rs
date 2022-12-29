@@ -5,8 +5,12 @@ use crate::entities::interfaces::Status;
 use crate::API_URL;
 
 
-pub async fn get_one_article() -> Result<Article, Status> {
-    let url = format!("{}/articles/random/pick", API_URL);
+pub async fn get_one_article(opt_cat: Option<String>) -> Result<Article, Status> {
+    let url = if let Some(cat) = opt_cat {
+        format!("{}/articles/random_in/{}", API_URL, cat)
+    } else {
+        format!("{}/articles/random/pick", API_URL)
+    };
     // log::info!("url: {}", url);
     let json = Fetch::get(url).await;
     log::info!("json: {:?}", json);

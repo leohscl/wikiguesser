@@ -9,11 +9,13 @@ use crate::entities::interfaces::User;
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
     #[at("/")]
-    GuessingPage,
+    GuessingPageDefault,
     #[at("/signup")]
     Signup,
     #[at("/login")]
     Login,
+    #[at("/geo")]
+    GuessingPageGeo,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -60,10 +62,18 @@ pub fn app() -> Html {
                         <Login {cb_user_login} />
                     }
                 },
-                Route::GuessingPage => {
+                Route::GuessingPageDefault => {
                     let opt_user = state.opt_user.clone();
+                    let opt_cat: Option<String> = None;
                     html! {
-                        <GuessingPage {opt_user} />
+                        <GuessingPage {opt_user} {opt_cat}/>
+                    }
+                },
+                Route::GuessingPageGeo => {
+                    let opt_user = state.opt_user.clone();
+                    let opt_cat: Option<String> = Some("Geographie".to_string());
+                    html! {
+                        <GuessingPage {opt_user} {opt_cat}/>
                     }
                 },
                 Route::NotFound => html! { <h1>{ "404" }</h1> },

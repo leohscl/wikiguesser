@@ -46,7 +46,7 @@ async fn main() {
         .expect("first argument should be usize !");
     // let file_path = "sample.json";
     let file_path = "sample_cat.json";
-    println!("In file {}", file_path);
+    // println!("In file {}", file_path);
     let contents = fs::read_to_string(file_path)
         .expect("Should have been able to read the file");
     // println!("With text:\n{contents}");
@@ -80,7 +80,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
     // extract view count
     let res_content = api.get_query_api_json(&params_content).await.unwrap();
     let raw_page = &res_content["query"]["pages"];
-    println!("raw_page: {:?}", raw_page);
+    // println!("raw_page: {:?}", raw_page);
     let date = "2022-12-26";
     let views = &raw_page[&ids_str]["pageviews"][date]
         .as_i64()
@@ -97,7 +97,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
         ("formatversion", "2"),
         ("explaintext", "true"),
     ]);
-    println!("params_content: {:?}", params_content);
+    // println!("params_content: {:?}", params_content);
     let res_content = api.get_query_api_json(&params_content).await.unwrap();
     println!("res_content: {:?}", res_content);
     let raw_page = &res_content["query"]["pages"][0];
@@ -110,7 +110,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
     let id_i32 = jarticle.id;
     let parsed_content = parse_raw_content(content_raw_str);
     let article = Article{id:id_i32, wiki_id:id_i32, title:title_raw_str, content:parsed_content, views: *views as i32};
-    // create_article(conn, &article);
+    create_article(conn, &article);
     // TODO: create category in file
     let mut rng = rand::thread_rng();
     for category_name in jarticle.categories.clone().into_iter() {

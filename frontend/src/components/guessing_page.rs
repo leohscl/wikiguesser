@@ -291,6 +291,7 @@ impl Reducible for ArticleState {
 #[derive(Properties, PartialEq, Debug)]
 pub struct GuessingPageProps {
     pub opt_user: Option<User>,
+    pub opt_cat: Option<String>,
 }
 
 #[function_component(GuessingPage)]
@@ -299,9 +300,10 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
 
     use_effect_with_deps(
         {
+            let opt_cat = props.opt_cat.clone();
             let state = state.clone();
             move |_| {
-                let future = async move { get_one_article().await };
+                let future = async move { get_one_article(opt_cat).await };
                 handle_future(future, move |data: Result<Article, Status>| {
                     match data {
                         Ok(article) => {

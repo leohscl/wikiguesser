@@ -52,6 +52,7 @@ impl Article {
         };
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..vec_article.len());
+        println!("Nombre d'articles: {}", vec_article.len());
         let article = vec_article.get(index).expect("There should be a first element").clone();
         Ok(article)
     }

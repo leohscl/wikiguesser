@@ -8,7 +8,7 @@ services:
         target: /wikiguesser
     build:
         dockerfile: ../wiki_random/Dockerfile
-    command: bash -c "sleep 15 && cd wikiguesser/wiki_random/ && bash diesel_setup.sh && bash populate_database.sh"
+    command: bash -c "sleep 15 && cd wikiguesser/wiki_random/ && rm -rf migrations && bash drop_database.sh && bash diesel_setup.sh && bash populate_database.sh"
     depends_on:
       - postgres
     network_mode: host
