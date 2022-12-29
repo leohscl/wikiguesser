@@ -9,8 +9,6 @@ services:
     build:
         dockerfile: ../wiki_random/Dockerfile
     command: bash -c "sleep 15 && cd wikiguesser/wiki_random/ && bash diesel_setup.sh && bash populate_database.sh"
-    environment:
-      DATABASE_URL: "${DATABASE_URL:-postgres://postgres:wikiguesser@localhost:5432/articles}"
     depends_on:
       - postgres
     network_mode: host
