@@ -335,6 +335,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         })
     };
 
+    let onclick_give_up = {
+        let state = state.clone();
+        Callback::from( move |_| {
+            state.dispatch(ArticleAction::RevealAll);
+        })
+    };
+
     let oninput = {
         let state = state.clone();
         Callback::from( move |input_event: InputEvent| {
@@ -417,7 +424,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 <div id="content">
                     { page.content.render() }
                 </div>
-                    // TODO(leo): replace with a like button
                 {
                     if let Some(_user) = &props.opt_user {
                         // html! {<span > {"User logged in !"}</span>}
@@ -430,6 +436,10 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         html!{}
                     }
                 }
+                    //TODO: add confirmation to button
+                <button onclick={onclick_give_up}>
+                    { "Give up" }
+                </button>
             </div>
             }
         },
