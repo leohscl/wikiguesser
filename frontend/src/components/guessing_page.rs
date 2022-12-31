@@ -141,7 +141,7 @@ impl HiddenText {
                         None => RevealStrength::NotRevealed,
                         Some(position) => {
                             let str_pos = StringAndPos{str:word_lowercase, pos: position};
-                            log::info!("position: {}", position);
+                            // log::info!("position: {}", position);
                             if position < 10 {
                                 RevealStrength::VeryClose(str_pos)
                             } else if position < 100 {
@@ -154,8 +154,8 @@ impl HiddenText {
                 }
             })
             .collect();
-        log::info!("matches: {:?}", vec_matches);
-        log::info!("old_reveal: {:?}", self.revealed);
+        // log::info!("matches: {:?}", vec_matches);
+        // log::info!("old_reveal: {:?}", self.revealed);
         let vec_new_revelation: Vec<_> = vec_matches.clone().into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {

@@ -71,6 +71,7 @@ async fn main() -> std::io::Result<()> {
             .route("/articles/random/pick", web::get().to(handlers::articles::get_one))
             .route("/articles/random_in/{category}", web::get().to(handlers::articles::get_one_incl_filter))
             .route("/articles/random_out/{category}", web::get().to(handlers::articles::get_one_excl_filter))
+            .route("/completion/{user_id}/{article_id}", web::get().to(handlers::articles::get_one_excl_filter))
             .route("/users/", web::get().to(handlers::users::get_users))
             .route("/users/{email}", web::get().to(handlers::users::get_user))
             .route("/users/", web::post().to(handlers::users::create))

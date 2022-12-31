@@ -73,7 +73,7 @@ pub fn signup(props: &LoginProps) -> Html {
                                 true => {
                                     props.cb_user_login.emit(user.clone());
                                     log::info!("match !");
-                                    history.push(Route::GuessingPageDefault);
+                                    history.push(Route::LaunchPage);
                                 },
                                 false => log::info!("no match !"),
                             }

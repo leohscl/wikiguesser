@@ -1,21 +1,47 @@
+use std::fmt::Display;
+use std::str::FromStr;
+
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+use super::launch_page::LaunchPage;
 use super::guessing_page::GuessingPage;
 use super::login::Login;
 use super::signup::Signup;
 use crate::entities::interfaces::User;
 
+#[derive(Clone, PartialEq, Debug)]
+pub struct StringWrap {
+    pub cat: String,
+}
+
+impl Display for StringWrap {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.cat.fmt(f)
+    }
+}
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParseStringWrapError;
+
+impl FromStr for StringWrap {
+    type Err = ParseStringWrapError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(StringWrap{cat: s.to_string()})
+    }
+}
+
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
     #[at("/")]
-    GuessingPageDefault,
+    LaunchPage,
     #[at("/signup")]
     Signup,
     #[at("/login")]
     Login,
     #[at("/geo")]
     GuessingPageGeo,
+    #[at("/guess/:opt_str")]
+    GuessingPage {opt_str: StringWrap},
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -62,9 +88,26 @@ pub fn app() -> Html {
                         <Login {cb_user_login} />
                     }
                 },
-                Route::GuessingPageDefault => {
+                Route::LaunchPage => {
+                    html! {
+                        <LaunchPage />
+                    }
+                }
+                // Route::GuessingPageDefault => {
+                //     let opt_user = state.opt_user.clone();
+                //     let opt_cat: Option<String> = None;
+                //     html! {
+                //         <GuessingPage {opt_user} {opt_cat}/>
+                //     }
+                // },
+                Route::GuessingPage {opt_str} => {
+
                     let opt_user = state.opt_user.clone();
-                    let opt_cat: Option<String> = None;
+                    let opt_cat = if opt_str.cat == "Default" {
+                        None
+                    } else {
+                        Some(opt_str.cat.clone())
+                    };
                     html! {
                         <GuessingPage {opt_user} {opt_cat}/>
                     }

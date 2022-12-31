@@ -27,6 +27,13 @@ CREATE TABLE IF NOT EXISTS categories
         category      TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS completed_pages
+(
+        id            SERIAL PRIMARY KEY,
+        user_id       INTEGER NOT NULL,
+        article_id    INTEGER NOT NULL
+);
+
 /* INSERT INTO articles */
 /*             (id, */
 /*              wiki_id, */

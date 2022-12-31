@@ -30,6 +30,7 @@ features = [
   "Request",
   "RequestInit",
   "RequestMode",
+  "HtmlSelectElement",
   "Response",
   "Window",
 ]
