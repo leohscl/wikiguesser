@@ -216,6 +216,7 @@ enum ArticleAction {
     SetInput(String),
     Reveal(WordResult),
     RevealAll,
+    Reset,
 }
 
 #[derive(PartialEq)]
@@ -284,6 +285,9 @@ impl Reducible for ArticleState {
                     opt_user: self.opt_user.clone(),
                 }.into()
             },
+            ArticleAction::Reset => {
+                Self::default().into()
+            }
         }
     }
 }
@@ -342,6 +346,29 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         })
     };
 
+    let onclick_new_page = {
+        let state = state.clone();
+        let opt_cat = props.opt_cat.clone();
+        Callback::from( move |_| {
+            state.dispatch(ArticleAction::Reset);
+            let opt_cat = opt_cat.clone();
+            let state = state.clone();
+            let future = async move { get_one_article(opt_cat).await };
+            handle_future(future, move |data: Result<Article, Status>| {
+                match data {
+                    Ok(article) => {
+                        let state = state.clone();
+                        let page = page_from_json(article);
+                        state.dispatch(ArticleAction::Render(page));
+                    }
+                    Err(_) => {
+                        log::info!("Error loading the data !");
+                    },
+                };
+            });
+        })
+    };
+
     let oninput = {
         let state = state.clone();
         Callback::from( move |input_event: InputEvent| {
@@ -364,6 +391,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let green_emo = '🟩';
     let orange_emo = '🟧';
     let red_emo = '🟥';
+    let victory = state.victory;
     match &(*state.clone()).opt_page {
         None => html!{<span>{"Chargement.."}</span>},
         Some(page) => {
@@ -382,7 +410,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             html! {
             <div >
                 {
-                    if state.victory {
+                    if victory {
                         let victory_text = format!("Page trouvée en {} coups", state.num_moves); 
                         html! {<span id="victory"> {victory_text} </span>}
                     } else {
@@ -392,7 +420,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 <br/>
                 <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
                 {
-                    if state.victory {
+                    if victory {
                         html! {
                             <button onclick={onclick}>
                                 { "Révéler tous les mots" }
@@ -440,6 +468,17 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 <button onclick={onclick_give_up}>
                     { "Give up" }
                 </button>
+                {
+                    if victory {
+                        html! {
+                            <button onclick={onclick_new_page}>
+                                { "Try another page !" }
+                            </button>
+                        }
+                    } else {
+                        html!{}
+                    }
+                }
             </div>
             }
         },
@@ -451,16 +490,10 @@ fn page_from_json(article: Article) -> Page {
     let title = String::from(article.title + " ");
     let content = String::from(article.content + " ");
 
-    // log::info!("Constructing vector title");
     let title_vec = create_string_vector(title);
-    // log::info!("Constructing vector content");
     let content_vec = create_string_vector(content);
-    // log::info!("Constructing reveal title");
     let revealed_title = initialize_revealed_vector(&title_vec);
-    // log::info!("Constructing reveal content");
     let revealed_content = initialize_revealed_vector(&content_vec);
-    // log::info!("All constructed");
-    // set length = 1 words to Revealed
     let title_vec_len = title_vec.len();
     let content_vec_len = content_vec.len();
     let hidden_title = HiddenText {
@@ -488,10 +521,10 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
     //TODO(léo): handle all pre_revealed words
     let determinants = vec!["le", "la", "les", "un", "une", "des"];
     let pronoms = vec!["ce", "ces", "de", "du"];
-    let avoir_conj = vec!["eu", "aura"];
-    let etre_conj = vec!["était", "sera"];
+    let avoir_conj = vec!["eu", "aura", "a"];
+    let etre_conj = vec!["était", "sera", "est"];
     let conjonction_coord = vec!["et", "en"];
-    let pre_revealed: Vec<_> = [determinants,pronoms,avoir_conj,etre_conj, conjonction_coord].concat();
+    let pre_revealed: Vec<_> = [determinants, pronoms, avoir_conj, etre_conj, conjonction_coord].concat();
     vec_text
         .iter()
         .map(|str| {
@@ -511,6 +544,7 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
 fn create_string_vector(text: String) -> VString {
     // TODO(leo): handle other separators
     let processed_text = text.replace("\n\n\n", "").to_string();
+    let processed_text = processed_text.replace("()", "").to_string();
     let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-'];
     let separator_indexes: Vec<_> = [0].into_iter().chain(
         processed_text
