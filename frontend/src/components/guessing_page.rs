@@ -296,6 +296,7 @@ impl Reducible for ArticleState {
 pub struct GuessingPageProps {
     pub opt_user: Option<User>,
     pub opt_cat: Option<String>,
+    pub dummy: bool,
 }
 
 #[function_component(GuessingPage)]
@@ -304,22 +305,30 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
 
     use_effect_with_deps(
         {
+            let dummy = props.dummy;
             let opt_cat = props.opt_cat.clone();
             let state = state.clone();
             move |_| {
-                let future = async move { get_one_article(opt_cat).await };
-                handle_future(future, move |data: Result<Article, Status>| {
-                    match data {
-                        Ok(article) => {
-                            let state = state.clone();
-                            let page = page_from_json(article);
-                            state.dispatch(ArticleAction::Render(page));
-                        }
-                        Err(_) => {
-                            log::info!("Error loading the data !");
-                        },
-                    };
-                });
+                if !dummy {
+                    let future = async move { get_one_article(opt_cat).await };
+                    handle_future(future, move |data: Result<Article, Status>| {
+                        match data {
+                            Ok(article) => {
+                                let state = state.clone();
+                                let page = page_from_json(article);
+                                state.dispatch(ArticleAction::Render(page));
+                            }
+                            Err(_) => {
+                                log::info!("Error loading the data !");
+                            },
+                        };
+                    });
+                } else {
+                    let state = state.clone();
+                    let article = Article { id: 1, wiki_id: 2, title: "thé".to_string(), content: "thé".to_string() };
+                    let page = page_from_json(article);
+                    state.dispatch(ArticleAction::Render(page));
+                }
                 || {}
             }
         },

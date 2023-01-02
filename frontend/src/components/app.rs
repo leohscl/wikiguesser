@@ -38,8 +38,8 @@ pub enum Route {
     Signup,
     #[at("/login")]
     Login,
-    #[at("/geo")]
-    GuessingPageGeo,
+    #[at("/dummy")]
+    GuessingPageDummy,
     #[at("/guess/:opt_str")]
     GuessingPage {opt_str: StringWrap},
     #[not_found]
@@ -108,15 +108,17 @@ pub fn app() -> Html {
                     } else {
                         Some(opt_str.cat.clone())
                     };
+                    let dummy = false;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat}/>
+                        <GuessingPage {opt_user} {opt_cat} {dummy}/>
                     }
                 },
-                Route::GuessingPageGeo => {
+                Route::GuessingPageDummy => {
                     let opt_user = state.opt_user.clone();
-                    let opt_cat: Option<String> = Some("Geographie".to_string());
+                    let opt_cat: Option<String> = None;
+                    let dummy = true;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat}/>
+                        <GuessingPage {opt_user} {opt_cat} {dummy}/>
                     }
                 },
                 Route::NotFound => html! { <h1>{ "404" }</h1> },
