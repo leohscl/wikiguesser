@@ -27,6 +27,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    reports (id) {
+        id -> Int4,
+        article_id -> Int4,
+        report_cat -> Text,
+        description -> Text,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Int4,
         id_session -> Int8,
@@ -41,5 +50,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     articles,
     categories,
     completed_pages,
+    reports,
     users,
 );
