@@ -9,6 +9,7 @@ use crate::service::{articles::get_one_article, words::query, future::handle_fut
 use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
 use super::hidden_field::HiddenField;
+use gloo::dialogs::confirm;
 
 //TODO(leo): mettre vert nouveaux mots -- ish
 //TODO(leo): Victoire !! -- ADD link to wikipedia ?
@@ -351,7 +352,9 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let onclick_give_up = {
         let state = state.clone();
         Callback::from( move |_| {
-            state.dispatch(ArticleAction::RevealAll);
+            if confirm("Are you sure you want to give up ?") {
+                state.dispatch(ArticleAction::RevealAll);
+            }
         })
     };
 
