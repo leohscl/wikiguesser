@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS reports
 (
         id            SERIAL PRIMARY KEY,
         article_id    INTEGER NOT NULL,
-        report_cat     TEXT NOT NULL,
+        report_cat    TEXT NOT NULL,
+        date          DATE NOT NULL,
         description   TEXT NOT NULL
 );
 

@@ -1,3 +1,4 @@
+// use diesel::dsl::date;
 use serde::Serialize;
 use crate::handlers::reports::InputReport;
 use crate::schema::reports;
@@ -13,12 +14,19 @@ pub struct Report {
     pub article_id: i32,
     pub report_cat: String,
     pub description: String,
+    pub date: chrono::NaiveDate,
 }
 impl Report {
     pub fn create(connection: &mut PgConnection, report: &InputReport) -> Result<Report, diesel::result::Error>{
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();
-        let report = Report{id, article_id: report.article_id, report_cat: report.report_cat.to_owned(), description: report.description.to_owned() };
+        let report = Report{
+            id,
+            article_id: report.article_id,
+            report_cat: report.report_cat.to_owned(),
+            description: report.description.to_owned(),
+            date: report.date,
+        };
         diesel::insert_into(reports::table)
             .values(&report)
             .execute(connection)?;

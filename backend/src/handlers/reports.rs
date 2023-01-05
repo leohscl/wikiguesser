@@ -8,6 +8,7 @@ pub struct InputReport {
     pub article_id: i32,
     pub report_cat: String,
     pub description: String,
+    pub date: chrono::NaiveDate,
 }
 
 // /reports/

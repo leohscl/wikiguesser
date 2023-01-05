@@ -31,6 +31,7 @@ diesel::table! {
         id -> Int4,
         article_id -> Int4,
         report_cat -> Text,
+        date -> Date,
         description -> Text,
     }
 }
