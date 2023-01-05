@@ -73,7 +73,7 @@ async fn main() -> std::io::Result<()> {
             .route("/articles/random_out/{category}", web::get().to(handlers::articles::get_one_excl_filter))
             // .route("/completion/{user_id}/{article_id}", web::get().to(handlers::articles::get_one_excl_filter))
             .route("/reports/{article_id}", web::get().to(handlers::reports::get_article_reports))
-            .route("/reports/", web::get().to(handlers::reports::create))
+            .route("/reports/", web::post().to(handlers::reports::create))
             .route("/reports/", web::get().to(handlers::reports::get_all))
             .route("/users/", web::get().to(handlers::users::get_users))
             .route("/users/{email}", web::get().to(handlers::users::get_user))

@@ -19,6 +19,7 @@ pub async fn create(pool: web::Data<Pool>, user: web::Json<InputReport>) -> Resu
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
 }
+
 // /reports/{article_id}
 pub async fn get_article_reports(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
@@ -27,6 +28,8 @@ pub async fn get_article_reports(pool: web::Data<Pool>, id: web::Path<i32>) -> R
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
 }
+
+// /reports/
 pub async fn get_all(pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Report::get_all(&mut connection))
