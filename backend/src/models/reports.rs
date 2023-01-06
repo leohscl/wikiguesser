@@ -13,8 +13,8 @@ pub struct Report {
     pub id: i32,
     pub article_id: i32,
     pub report_cat: String,
-    pub description: String,
     pub date: chrono::NaiveDate,
+    pub description: String,
 }
 impl Report {
     pub fn create(connection: &mut PgConnection, report: &InputReport) -> Result<Report, diesel::result::Error>{
