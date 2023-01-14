@@ -27,6 +27,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    games (id) {
+        id -> Int4,
+        article_id -> Int4,
+        ip_or_email -> Text,
+        is_ip -> Bool,
+        is_finished -> Bool,
+        words -> Text,
+    }
+}
+
+diesel::table! {
     reports (id) {
         id -> Int4,
         article_id -> Int4,
@@ -51,6 +62,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     articles,
     categories,
     completed_pages,
+    games,
     reports,
     users,
 );

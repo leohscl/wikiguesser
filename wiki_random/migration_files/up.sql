@@ -14,8 +14,6 @@ CREATE TABLE IF NOT EXISTS public.users (
     t_password VARCHAR(128) NOT NULL,
     t_ip_address VARCHAR(32) NOT NULL,
     d_visit_first DATE NOT NULL,
-    -- d_visit_last DATE NOT NULL,
-    -- b_enabled bool NOT NULL,
     CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS users_id_idx ON public.users USING btree (id);
@@ -41,24 +39,12 @@ CREATE TABLE IF NOT EXISTS reports
         date          DATE NOT NULL,
         description   TEXT NOT NULL
 );
-
-/* INSERT INTO articles */
-/*             (id, */
-/*              wiki_id, */
-/*              title, */
-/*              content) */
-/* VALUES      (45288, */
-/*              45288, */
-/*              'Echinoidea', */
-/*              'Les Oursins sont un groupe d''animaux marins, formant la classe */
-/* des Echinoidea au sein de l''embranchement des échinodermes. Ils sont aussi */
-/* appelés par les scientifiques Échinoïdes ou Échinides.  Ce sont des invertébrés */
-/* de forme arrondie au corps recouvert de piquants, ce qui leur vaut d''être */
-/* parfois désignés, par analogie, par l''expression populaire de hérissons de mer */
-/* et plus rarement par l''expression vieillie de châtaignes de mer.  Comme leurs */
-/* proches parents les concombres de mer et les étoiles de mer, ces organismes */
-/* benthiques à l''état adulte ont une larve planctonique. ' */
-/* ); */
-
-
-
+CREATE TABLE IF NOT EXISTS games
+(
+        id            SERIAL PRIMARY KEY,
+        article_id    INTEGER NOT NULL,
+        ip_or_email   TEXT NOT NULL,
+        is_ip         BOOLEAN NOT NULL,
+        is_finished   BOOLEAN NOT NULL,
+        words         TEXT NOT NULL
+);
