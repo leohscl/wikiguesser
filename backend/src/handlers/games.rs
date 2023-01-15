@@ -2,6 +2,7 @@ use actix_web::{web, HttpResponse, HttpRequest, Error};
 use crate::errors::database_error::DatabaseError;
 use crate::Pool;
 use crate::models::games::Game;
+use crate::models::words::WordModel;
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,8 +28,16 @@ pub struct StringPost {
 // }
 // /games/get/{ip_or_email}
 // pub async fn get(req: HttpRequest, pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
-pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, article_id: web::Path<i32>, email: web::Path<String>) -> Result<HttpResponse, Error> {
+
+// /games/get_or_create/{article_id}/{email}
+pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, arguments: web::Path<(i32, String)>) -> Result<HttpResponse, Error> {
     println!("Request: {:?}", req);
+    if let Some(val) = req.peer_addr() {
+        println!("Address {:?}", val.ip());
+    };
+    let val = req.connection_info();
+    println!("Address {:?}", val);
+    let (article_id, email) = arguments.to_owned();
     let is_ip = &email.to_string() == "none";
     let ip_or_email = if is_ip {
         let host_value = req.headers().get(actix_web::http::header::HOST).expect("Header should contain host");
@@ -39,7 +48,7 @@ pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, article_id: 
     };
     // let ip_or_email = String::from("test");
     let mut connection = pool.get().unwrap();
-    let input_game = InputGame{article_id: *article_id, ip_or_email, is_ip};
+    let input_game = InputGame{article_id, ip_or_email, is_ip};
     Ok(web::block(move || Game::get_or_create(&mut connection, &input_game))
         .await
         .map(|user| HttpResponse::Ok().json(user))
@@ -47,10 +56,10 @@ pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, article_id: 
 }
 
 // /games/update/{word}
-pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>) -> Result<HttpResponse, Error> {
+pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
     println!("updating game id {}", id);
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string))
+    Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
         .await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)

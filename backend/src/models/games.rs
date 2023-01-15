@@ -1,9 +1,11 @@
+use crate::models::words::WordResult;
 use crate::{schema::*, handlers::games::InputGame};
 use diesel::{PgConnection, QueryDsl};
 use crate::diesel::RunQueryDsl;
 use crate::diesel::ExpressionMethods;
 use serde::Serialize;
 use rand::Rng;
+use crate::models::words::WordModel;
 
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable, Insertable)]
 pub struct Game {
@@ -52,19 +54,20 @@ impl Game {
         Ok(results.into_iter().next())
     }
 
-    pub fn update_with_id(connection: &mut PgConnection, game_id: i32, word: &str) -> Result<Game, diesel::result::Error> {
+    pub fn update_with_id(connection: &mut PgConnection, game_id: i32, word: &str, word_model: &WordModel) -> Result<WordResult, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::id.eq(game_id));
         let results = query.load::<Game>(connection)?;
         println!("Game: {:?}", results);
-        if let Some(game) = results.into_iter().next() {
-            Self::update(connection, &game, word)
+        if let Some(_game) = results.into_iter().next() {
+            // Self::update(connection, &game, word)
+            WordResult::query(word, &word_model.embedding)
         } else {
             Err(diesel::result::Error::NotFound)
         }
     }
 
-    fn update(connection: &mut PgConnection, game: &Game, word: &str) -> Result<Game, diesel::result::Error> {
+    fn _update(connection: &mut PgConnection, game: &Game, word: &str) -> Result<Game, diesel::result::Error> {
         let updated_words = game.words.to_owned() + " " + word;
         let updated_game = diesel::update(game)
             .set(games::words.eq(updated_words.to_owned()))
