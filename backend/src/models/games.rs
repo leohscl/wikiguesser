@@ -7,6 +7,12 @@ use serde::Serialize;
 use rand::Rng;
 use crate::models::words::WordModel;
 
+#[derive(Debug, Serialize, Clone)]
+pub struct OngoingGame {
+    game: Game,
+    all_results: Vec<WordResult>,
+}
+
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable, Insertable)]
 pub struct Game {
     id: i32,
@@ -34,16 +40,18 @@ impl Game {
             .execute(connection)?;
         Ok(new_game)
     }
-    pub fn get_or_create(connection: &mut PgConnection, input_game: &InputGame) -> Result<Game, diesel::result::Error> {
+    pub fn get_or_create(connection: &mut PgConnection, input_game: &InputGame) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let results = query.load::<Game>(connection)?;
         println!("Game: {:?}", results);
-        if let Some(game) = results.into_iter().next() {
-            Ok(game)
+        let game = if let Some(game) = results.into_iter().next() {
+            game
         } else {
-            Self::create(connection, input_game)
-        }
+            Self::create(connection, input_game)?
+        };
+        let all_results = Self::get_all_results(&game);
+        Ok(OngoingGame{ game, all_results })
     }
 
     pub fn get(connection: &mut PgConnection, ip_or_email: &str) -> Result<Option<Game>, diesel::result::Error> {
@@ -73,5 +81,11 @@ impl Game {
             .set(games::words.eq(updated_words.to_owned()))
             .get_result::<Game>(connection)?;
         Ok(updated_game)
+    }
+
+
+    fn get_all_results(game: &Game) -> Vec<WordResult> {
+        let words_to_query: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+        todo!();
     }
 }

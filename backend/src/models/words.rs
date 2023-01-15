@@ -8,12 +8,12 @@ pub struct WordModel {
     pub embedding: Embeddings<VocabWrap, StorageViewWrap>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct IString {
     pub str: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Clone)]
 pub struct WordResult {
     pub word: String,
     pub close_words: Vec<IString>,
