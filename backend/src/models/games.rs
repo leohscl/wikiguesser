@@ -12,6 +12,7 @@ use super::articles::Article;
 #[derive(Debug, Serialize, Clone)]
 pub struct OngoingGame {
     game: Game,
+    article: Article,
     all_results: Vec<Option<WordResult>>,
 }
 
@@ -54,8 +55,11 @@ impl Game {
         } else {
             Self::create(connection, input_game)?
         };
+        println!("Trying to get results");
         let all_results = Self::get_all_results(&game, word_model)?;
-        Ok(OngoingGame{ game, all_results })
+        println!("Trying to get article");
+        let article = Article::get(game.article_id, connection)?;
+        Ok(OngoingGame{ game, article, all_results })
     }
 
     pub fn get(connection: &mut PgConnection, ip_or_email: &str) -> Result<Option<Game>, diesel::result::Error> {
@@ -64,6 +68,11 @@ impl Game {
         let results = query.load::<Game>(connection)?;
         println!("Game: {:?}", results);
         Ok(results.into_iter().next())
+    }
+
+    pub fn delete(connection: &mut PgConnection, game_id: i32) -> Result<(), diesel::result::Error> {
+        diesel::delete(games::table.filter(games::id.eq(game_id))).execute(connection)?;
+        Ok(())
     }
 
     pub fn update_with_id(connection: &mut PgConnection, game_id: i32, word: &str, word_model: &WordModel) -> Result<Option<WordResult>, diesel::result::Error> {

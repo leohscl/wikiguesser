@@ -5,6 +5,7 @@ use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use crate::entities::interfaces::Status;
 use crate::entities::interfaces::{Article, WordResult};
+use crate::service::games::get_game;
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
 use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
@@ -311,7 +312,8 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             let state = state.clone();
             move |_| {
                 if !dummy {
-                    let future = async move { get_one_article(opt_cat).await };
+                    // let future = async move { get_one_article(opt_cat).await };
+                    let future = async move { get_game().await };
                     handle_future(future, move |data: Result<Article, Status>| {
                         match data {
                             Ok(article) => {

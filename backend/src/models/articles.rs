@@ -19,7 +19,7 @@ pub struct Article {
 joinable!(categories -> articles (article_id));
 
 impl Article {
-    pub fn get(id: &i32, connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
+    pub fn get(id: i32, connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
         let article = articles::table.find(id).first::<Article>(connection)?;
         Ok(article)
     }

@@ -84,6 +84,7 @@ async fn main() -> std::io::Result<()> {
 
             .route("/games/get_or_create/{email}", web::get().to(handlers::games::get_or_create))
             .route("/games/update/{id}", web::post().to(handlers::games::update))
+            .route("/games/{id}", web::delete().to(handlers::games::delete))
             // .route("/games/update/{word}", web::post().to(handlers::games::update))
             // .route("/games/create/", web::post().to(handlers::games::create))
             // .route("/games/{email}", web::get().to(handlers::users::get_user))

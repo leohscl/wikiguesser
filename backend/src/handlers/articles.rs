@@ -7,7 +7,7 @@ use {
 // /articles/{id}/
 pub async fn get(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Article::get(&id, &mut connection))
+    Ok(web::block(move || Article::get(*id, &mut connection))
         .await
         .map(|article| HttpResponse::Ok().json(article))
         .map_err(DatabaseError)?)

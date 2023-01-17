@@ -52,6 +52,15 @@ pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, email: web::
         .map_err(DatabaseError)?)
 }
 
+// /games/{id}
+pub async fn delete(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, Error> {
+    println!("deleting game id {}", id);
+    let mut connection = pool.get().unwrap();
+    Ok(web::block(move || Game::delete(&mut connection, *id))
+        .await
+        .map(|user| HttpResponse::Ok().json(user))
+        .map_err(DatabaseError)?)
+}
 // /games/update/id
 pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
     println!("updating game id {}", id);
