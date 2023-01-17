@@ -28,7 +28,6 @@ impl Article {
         // let vec_article = articles::table.filter(articles::views.gt(50)).load::<Article>(connection)?;
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..vec_article.len());
-        println!("Number of articles passing filter: {}", vec_article.len());
         let article = vec_article.get(index).expect("There should be a first element").clone();
         Ok(article)
     }

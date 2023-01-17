@@ -591,11 +591,13 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
         let future = async move { query(&word.to_lowercase()).await };
-        handle_future(future, move |data: Result<WordResult, Status>| {
+        handle_future(future, move |data: Result<Option<WordResult>, Status>| {
             match data {
-                Ok(word_res) => {
+                Ok(opt_word_res) => {
                     let state = state.clone();
-                    state.dispatch(ArticleAction::Reveal(word_res));
+                    if let Some(word_res) = opt_word_res {
+                        state.dispatch(ArticleAction::Reveal(word_res));
+                    }
                 }
                 Err(_) => {
                     log::info!("Error loading the data !");

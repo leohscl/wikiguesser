@@ -20,18 +20,24 @@ pub struct WordResult {
     pub variants: Vec<IString>,
 }
 impl WordResult {
-    pub fn query(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<WordResult, diesel::result::Error> {
-        //TODO(leo): handle error !
-        let results = embed.word_similarity(word, NUM_WORD_RESULTS).expect("Word query failed");
+    pub fn query(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<Option<WordResult>, diesel::result::Error> {
+        let opt_results = embed.word_similarity(word, NUM_WORD_RESULTS);
         // iterate through text of the article
         // println!("results: {:?}", results);
-        let word_res = results.iter().map(|similarity_res| {
-            let str = similarity_res.word().to_string();
-            IString{str}
-        }).collect();
-        let variants = get_variants(word, &word_res);
-        println!("variants: {:?}", variants);
-        Ok(WordResult{word:word.to_string(), close_words: word_res, variants})
+        if let Some(results) = opt_results {
+            let word_res = results.iter().map(|similarity_res| {
+                let str = similarity_res.word().to_string();
+                IString{str}
+            }).collect();
+            let variants = get_variants(word, &word_res);
+            println!("variants: {:?}", variants);
+            Ok(Some(WordResult{word:word.to_string(), close_words: word_res, variants}))
+        } else {
+            Ok(None)
+        }
+    }
+    pub fn query_multiple(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
+        words.iter().map(|word| Self::query(word, embed)).collect()
     }
 }
 

@@ -4,7 +4,6 @@
 backend/Cargo.lock
 backend/data/corrected_model_fr.fifu
 backend/target/
-backend/test_backend.sh
 common/Cargo.lock
 common/Dockerfile
 common/migrations/

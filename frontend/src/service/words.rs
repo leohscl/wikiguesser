@@ -5,7 +5,7 @@ use crate::entities::interfaces::{IString,WordResult};
 // use common::models::WordResult;
 use crate::API_URL;
 
-pub async fn query(word: &str) -> Result<WordResult, Status> {
+pub async fn query(word: &str) -> Result<Option<WordResult>, Status> {
     // check if word is a number
     // log::info!("word: {}", word);
     if let Ok(num) = word.parse::<i32>() {
@@ -22,7 +22,7 @@ pub async fn query(word: &str) -> Result<WordResult, Status> {
             variants: vec![],
         };
         // log::info!("word_res: {:?}", word_res);
-        Ok(word_res)
+        Ok(Some(word_res))
     } else {
         let url = format!("{}/words/{}", API_URL, word);
         // log::info!("url: {}", url);
@@ -30,7 +30,7 @@ pub async fn query(word: &str) -> Result<WordResult, Status> {
         // log::info!("json: {:?}", json);
         match json {
             // Ok(json) => Ok(json.into_serde::<WordResult>().unwrap()),
-            Ok(json) => Ok(serde_wasm_bindgen::from_value::<WordResult>(json).unwrap()),
+            Ok(json) => Ok(serde_wasm_bindgen::from_value::<Option<WordResult>>(json).unwrap()),
             Err(_err) => Err(Status::Error),
         }
     }
