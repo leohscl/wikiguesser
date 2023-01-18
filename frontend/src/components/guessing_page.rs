@@ -3,9 +3,9 @@ use std::cmp::Ordering;
 use yew::prelude::*;
 use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
-use crate::entities::interfaces::Status;
+use crate::entities::interfaces::{Status, OngoingGame};
 use crate::entities::interfaces::{Article, WordResult};
-use crate::service::games::get_game;
+use crate::service::games::{get_game, self};
 use crate::service::{articles::get_one_article, words::query, future::handle_future};
 use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
@@ -314,12 +314,18 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 if !dummy {
                     // let future = async move { get_one_article(opt_cat).await };
                     let future = async move { get_game().await };
-                    handle_future(future, move |data: Result<Article, Status>| {
+                    handle_future(future, move |data: Result<OngoingGame, Status>| {
                         match data {
-                            Ok(article) => {
+                            Ok(ongoing_game) => {
                                 let state = state.clone();
+                                let article = ongoing_game.article;
                                 let page = page_from_json(article);
                                 state.dispatch(ArticleAction::Render(page));
+                                for opt_res in ongoing_game.all_results.into_iter() {
+                                    if let Some(word_res) = opt_res {
+                                        state.dispatch(ArticleAction::Reveal(word_res));
+                                    }
+                                }
                             }
                             Err(_) => {
                                 log::info!("Error loading the data !");
@@ -592,7 +598,8 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
     if let Some(_page) = &(*state).opt_page {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
-        let future = async move { query(&word.to_lowercase()).await };
+        // let future = async move { query(&word.to_lowercase()).await };
+        let future = async move { games::update_game(&word.to_lowercase()).await };
         handle_future(future, move |data: Result<Option<WordResult>, Status>| {
             match data {
                 Ok(opt_word_res) => {

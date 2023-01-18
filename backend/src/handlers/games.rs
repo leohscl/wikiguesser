@@ -31,20 +31,10 @@ pub struct StringPost {
 // /games/get_or_create/{email}
 pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, email: web::Path<String>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
     println!("Request: {:?}", req);
-    if let Some(val) = req.peer_addr() {
-        println!("Address {:?}", val.ip());
-    };
     let val = req.connection_info();
     println!("Address {:?}", val);
-    let is_ip = &email.to_string() == "none";
-    let ip_or_email = if is_ip {
-        let host_value = req.headers().get(actix_web::http::header::HOST).expect("Header should contain host");
-        println!("host_value: {:?}", host_value);
-        String::from(host_value.to_str().expect("Ip adress"))
-    } else {
-        email.to_owned()
-    };
     let mut connection = pool.get().unwrap();
+    let (is_ip, ip_or_email) = get_ip_or_email(&req, &email);
     let input_game = InputGame{ip_or_email, is_ip};
     Ok(web::block(move || Game::get_or_create(&mut connection, &input_game, &model))
         .await
@@ -61,12 +51,29 @@ pub async fn delete(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpRes
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
 }
-// /games/update/id
-pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
-    println!("updating game id {}", id);
+// /games/update/{email}
+pub async fn update(req: HttpRequest, pool: web::Data<Pool>, email: web::Path<String>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
+    let (_, ip_or_email) = get_ip_or_email(&req, &email);
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
+    Ok(web::block(move || Game::update_with_id(&mut connection, &ip_or_email, &word.string, &model))
         .await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
+}
+fn get_ip_or_email(req: &HttpRequest, email: &str) -> (bool, String) {
+    let is_ip = &email.to_string() == "none";
+    let ip_or_email = if is_ip {
+        get_ip(&req)
+    } else {
+        email.to_owned()
+    };
+    (is_ip, ip_or_email)
+}
+fn get_ip(req: &HttpRequest) -> String {
+    let host_value = req.headers().get(actix_web::http::header::HOST).expect("Header should contain host");
+    println!("host_value: {:?}", host_value);
+    String::from(host_value.to_str().expect("Ip adress"))
+    // if let Some(val) = req.peer_addr() {
+    //     println!("Address {:?}", val.ip());
+    // };
 }

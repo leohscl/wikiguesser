@@ -75,9 +75,9 @@ impl Game {
         Ok(())
     }
 
-    pub fn update_with_id(connection: &mut PgConnection, game_id: i32, word: &str, word_model: &WordModel) -> Result<Option<WordResult>, diesel::result::Error> {
+    pub fn update_with_id(connection: &mut PgConnection, ip_or_email: &str, word: &str, word_model: &WordModel) -> Result<Option<WordResult>, diesel::result::Error> {
         let query = games::table.into_boxed();
-        let query = query.filter(games::id.eq(game_id));
+        let query = query.filter(games::ip_or_email.eq(ip_or_email));
         let results = query.load::<Game>(connection)?;
         println!("Game: {:?}", results);
         if let Some(game) = results.into_iter().next() {
