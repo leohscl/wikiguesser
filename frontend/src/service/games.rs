@@ -1,13 +1,23 @@
 use super::fetch::Fetch;
-use crate::entities::interfaces::Article;
 use crate::entities::interfaces::OngoingGame;
+use crate::entities::interfaces::Game;
 use crate::entities::interfaces::Status;
 use crate::API_URL;
 use crate::entities::interfaces::WordResult;
+use crate::entities::interfaces::GamePrompt;
 
-pub async fn get_game() -> Result<OngoingGame, Status> {
-    let url = format!("{}/games/get_or_create/none", API_URL);
-    let res_json = Fetch::get(url).await;
+pub async fn get_game(opt_cat: Option<String>) -> Result<OngoingGame, Status> {
+    let url = format!("{}/games/get_or_create", API_URL);
+    let cat = if let Some(category) = opt_cat {
+        category
+    } else {
+        "None".to_string()
+    };
+    let email = "None".to_string();
+    let game_prompt_str = format!("{{\"cat\": \"{}\", \"email\":\"{}\"}}", cat, email);
+    let js_game_prompt = wasm_bindgen::JsValue::from_str(&game_prompt_str);
+    log::info!("json: {:?}", js_game_prompt);
+    let res_json = Fetch::post(url, &js_game_prompt).await;
     log::info!("json: {:?}", res_json);
     match res_json {
         Ok(json) => Ok(serde_wasm_bindgen::from_value::<OngoingGame>(json).unwrap()),
@@ -15,8 +25,18 @@ pub async fn get_game() -> Result<OngoingGame, Status> {
     }
 }
 
-pub async fn update_game(word: &str) -> Result<Option<WordResult>, Status> {
-    let url = format!("{}/games/update/none", API_URL);
+pub async fn finish_game(id: i32) -> Result<Game, Status> {
+    let url = format!("{}/games/finish/{}", API_URL, id);
+    let res_json = Fetch::get(url).await;
+    log::info!("json: {:?}", res_json);
+    match res_json {
+        Ok(json) => Ok(serde_wasm_bindgen::from_value::<Game>(json).unwrap()),
+        Err(_err) => Err(Status::Error),
+    }
+}
+
+pub async fn update_game(id: i32, word: &str) -> Result<Option<WordResult>, Status> {
+    let url = format!("{}/games/update/{}", API_URL, id);
     let string_word = format!("{{\"string\": \"{}\"}}", word);
     let jsword = wasm_bindgen::JsValue::from_str(&string_word);
     let res_json = Fetch::post(url, &jsword).await;

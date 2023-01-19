@@ -1,5 +1,5 @@
 use actix_web::{web, HttpResponse, HttpRequest, Error};
-use crate::errors::database_error::DatabaseError;
+use crate::{errors::database_error::DatabaseError, models::games::GamePrompt};
 use crate::Pool;
 use crate::models::games::Game;
 use crate::models::words::WordModel;
@@ -16,33 +16,31 @@ pub struct StringPost {
     string: String,
 }
 
-// pub async fn create(pool: web::Data<Pool>, input_game: web::Json<InputGame>) -> Result<HttpResponse, Error> {
-//     println!("Posting game !");
-//     println!("input_game: {:?}", input_game);
-//     let mut connection = pool.get().unwrap();
-//     Ok(web::block(move || Game::create(&mut connection, input_game))
-//         .await
-//         .map(|user| HttpResponse::Ok().json(user))
-//         .map_err(DatabaseError)?)
-// }
-// /games/get/{ip_or_email}
-// pub async fn get(req: HttpRequest, pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
-
 // /games/get_or_create/{email}
-pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, email: web::Path<String>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
+pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
     println!("Request: {:?}", req);
     let val = req.connection_info();
     println!("Address {:?}", val);
     let mut connection = pool.get().unwrap();
-    let (is_ip, ip_or_email) = get_ip_or_email(&req, &email);
+    let opt_email = if game_prompt.email == "None" {
+        None
+    } else {
+        Some(game_prompt.email.to_string())
+    };
+    let opt_cat = if game_prompt.cat == "None" {
+        None
+    } else {
+        Some(game_prompt.cat.to_string())
+    };
+    let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
     let input_game = InputGame{ip_or_email, is_ip};
-    Ok(web::block(move || Game::get_or_create(&mut connection, &input_game, &model))
+    Ok(web::block(move || Game::get_or_create(&mut connection, &input_game, &model, &opt_cat))
         .await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
 }
 
-// /games/{id}
+// /games/finish/{id}
 pub async fn delete(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, Error> {
     println!("deleting game id {}", id);
     let mut connection = pool.get().unwrap();
@@ -51,23 +49,28 @@ pub async fn delete(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpRes
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
 }
-// /games/update/{email}
-pub async fn update(req: HttpRequest, pool: web::Data<Pool>, email: web::Path<String>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
-    let (_, ip_or_email) = get_ip_or_email(&req, &email);
+// /games/finish/{id}
+pub async fn finish(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Game::update_with_id(&mut connection, &ip_or_email, &word.string, &model))
+    Ok(web::block(move || Game::finish(&mut connection, *id))
         .await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
 }
-fn get_ip_or_email(req: &HttpRequest, email: &str) -> (bool, String) {
-    let is_ip = &email.to_string() == "none";
-    let ip_or_email = if is_ip {
-        get_ip(&req)
+// /games/update/{id}
+pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
+    let mut connection = pool.get().unwrap();
+    Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
+        .await
+        .map(|user| HttpResponse::Ok().json(user))
+        .map_err(DatabaseError)?)
+}
+fn get_ip_or_email(req: &HttpRequest, opt_email: &Option<String>) -> (bool, String) {
+    if let Some(email) = opt_email {
+        (false, email.to_string())
     } else {
-        email.to_owned()
-    };
-    (is_ip, ip_or_email)
+        (true, get_ip(&req))
+    }
 }
 fn get_ip(req: &HttpRequest) -> String {
     let host_value = req.headers().get(actix_web::http::header::HOST).expect("Header should contain host");

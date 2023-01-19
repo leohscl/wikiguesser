@@ -82,9 +82,10 @@ async fn main() -> std::io::Result<()> {
             .route("/users/{email}", web::get().to(handlers::users::get_user))
             .route("/users/", web::post().to(handlers::users::create))
 
-            .route("/games/get_or_create/{email}", web::get().to(handlers::games::get_or_create))
-            .route("/games/update/{email}", web::post().to(handlers::games::update))
-            .route("/games/{id}", web::delete().to(handlers::games::delete))
+            .route("/games/get_or_create", web::post().to(handlers::games::get_or_create))
+            .route("/games/update/{id}", web::post().to(handlers::games::update))
+            .route("/games/delete/{id}", web::delete().to(handlers::games::delete))
+            .route("/games/finish/{id}", web::get().to(handlers::games::finish))
             // .route("/games/update/{word}", web::post().to(handlers::games::update))
             // .route("/games/create/", web::post().to(handlers::games::create))
             // .route("/games/{email}", web::get().to(handlers::users::get_user))

@@ -54,11 +54,17 @@ pub struct OngoingGame {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Game {
-    id: i32,
+    pub id: i32,
     article_id: i32,
     ip_or_email: String,
     is_ip: bool,
     is_finished: bool,
     words: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct GamePrompt {
+    pub cat: String,
+    pub email: String,
 }
 

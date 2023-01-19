@@ -3,10 +3,10 @@ use std::cmp::Ordering;
 use yew::prelude::*;
 use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
-use crate::entities::interfaces::{Status, OngoingGame};
+use crate::entities::interfaces::{Status, OngoingGame, Game};
 use crate::entities::interfaces::{Article, WordResult};
-use crate::service::games::{get_game, self};
-use crate::service::{articles::get_one_article, words::query, future::handle_future};
+use crate::service::games::{get_game, self, finish_game};
+use crate::service::future::handle_future;
 use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
 use super::hidden_field::HiddenField;
@@ -214,7 +214,7 @@ impl ToString for HiddenText {
 }
 
 enum ArticleAction {
-    Render(Page),
+    Render(Page, Option<i32>),
     SetInput(String),
     Reveal(WordResult),
     RevealAll,
@@ -227,6 +227,7 @@ struct ArticleState {
     victory: bool,
     num_moves: u32,
     opt_user: Option<User>,
+    opt_game_id: Option<i32>,
 }
 
 impl Default for ArticleState {
@@ -236,6 +237,7 @@ impl Default for ArticleState {
             num_moves: 0,
             victory: false,
             opt_user: None,
+            opt_game_id: None,
         }
     }
 }
@@ -244,12 +246,13 @@ impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
-            ArticleAction::Render(page) => {
+            ArticleAction::Render(page, opt_game_id) => {
                 Self { 
                     opt_page: Some(page.clone()),
                     num_moves: 0,
                     victory: false,
                     opt_user: self.opt_user.clone(),
+                    opt_game_id,
                 }.into()
             },
             ArticleAction::SetInput(input) => {
@@ -260,6 +263,7 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves,
                     victory: self.victory,
                     opt_user: self.opt_user.clone(),
+                    opt_game_id: self.opt_game_id.clone(),
                 }.into()
             },
             ArticleAction::Reveal(word_res) => {
@@ -268,12 +272,28 @@ impl Reducible for ArticleState {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 // log::info!("Reveal called !");
                 let victory = page_clone.reveal(&word_res);
+                if victory {
+                    if let Some(id) = self.opt_game_id {
+                        let future = async move { finish_game(id).await };
+                        handle_future(future, move |data: Result<Game, Status>| {
+                            match data {
+                                Ok(game) => {
+                                    log::info!("Game finished: {:?}", game);
+                                }
+                                Err(_) => {
+                                    log::info!("Error loading the data !");
+                                },
+                            };
+                        });
+                    }
+                }
                 page_clone.input = "".to_string();
                 Self { 
                     opt_page: Some(page_clone),
                     num_moves: self.num_moves + 1,
                     victory,
                     opt_user: self.opt_user.clone(),
+                    opt_game_id: self.opt_game_id.clone(),
                 }.into()
             },
             ArticleAction::RevealAll => {
@@ -285,6 +305,7 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves,
                     victory: true,
                     opt_user: self.opt_user.clone(),
+                    opt_game_id: self.opt_game_id.clone(),
                 }.into()
             },
             ArticleAction::Reset => {
@@ -313,14 +334,14 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             move |_| {
                 if !dummy {
                     // let future = async move { get_one_article(opt_cat).await };
-                    let future = async move { get_game().await };
+                    let future = async move { get_game(opt_cat).await };
                     handle_future(future, move |data: Result<OngoingGame, Status>| {
                         match data {
                             Ok(ongoing_game) => {
                                 let state = state.clone();
                                 let article = ongoing_game.article;
                                 let page = page_from_json(article);
-                                state.dispatch(ArticleAction::Render(page));
+                                state.dispatch(ArticleAction::Render(page, Some(ongoing_game.game.id)));
                                 for opt_res in ongoing_game.all_results.into_iter() {
                                     if let Some(word_res) = opt_res {
                                         state.dispatch(ArticleAction::Reveal(word_res));
@@ -336,7 +357,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     let state = state.clone();
                     let article = Article { id: 1, wiki_id: 2, title: "thé".to_string(), content: "thé".to_string() };
                     let page = page_from_json(article);
-                    state.dispatch(ArticleAction::Render(page));
+                    state.dispatch(ArticleAction::Render(page, None));
                 }
                 || {}
             }
@@ -373,13 +394,19 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             state.dispatch(ArticleAction::Reset);
             let opt_cat = opt_cat.clone();
             let state = state.clone();
-            let future = async move { get_one_article(opt_cat).await };
-            handle_future(future, move |data: Result<Article, Status>| {
+            let future = async move { get_game(opt_cat).await };
+            handle_future(future, move |data: Result<OngoingGame, Status>| {
                 match data {
-                    Ok(article) => {
+                    Ok(ongoing_game) => {
                         let state = state.clone();
+                        let article = ongoing_game.article;
                         let page = page_from_json(article);
-                        state.dispatch(ArticleAction::Render(page));
+                        state.dispatch(ArticleAction::Render(page, Some(ongoing_game.game.id)));
+                        for opt_res in ongoing_game.all_results.into_iter() {
+                            if let Some(word_res) = opt_res {
+                                state.dispatch(ArticleAction::Reveal(word_res));
+                            }
+                        }
                     }
                     Err(_) => {
                         log::info!("Error loading the data !");
@@ -599,7 +626,8 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
         // let future = async move { query(&word.to_lowercase()).await };
-        let future = async move { games::update_game(&word.to_lowercase()).await };
+        let id = state.opt_game_id.expect("There should be a game id");
+        let future = async move { games::update_game(id, &word.to_lowercase()).await };
         handle_future(future, move |data: Result<Option<WordResult>, Status>| {
             match data {
                 Ok(opt_word_res) => {
