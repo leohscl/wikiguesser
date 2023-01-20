@@ -52,11 +52,6 @@ struct AppState {
     opt_user: Option<User>,
 }
 
-#[derive(Properties, PartialEq, Debug)]
-pub struct AppProps {
-    pub opt_user: Option<User>,
-}
-
 fn user_logged_in(appstate: &AppState) -> bool {
     match appstate.opt_user {
         Some(_)=> true,
@@ -72,7 +67,7 @@ pub fn app() -> Html {
         Callback::from(move |user: User| {
             let greeting = format!("Hey, {} !", user.t_email);
             log::info!("{}", greeting);
-            state.set(AppState { opt_user: Some(user) });
+            state.set(AppState { opt_user: Some(user)});
         })
     };
     let switch = {
@@ -131,23 +126,15 @@ pub fn app() -> Html {
                 <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
                     <div class="navbar-brand">
                         <h1 class="navbar-item is-size-3">{ "Wikifind" }</h1>
-                        // <button class={classes!("navbar-burger", "burger", active_class)}
-                        //     aria-label="menu" aria-expanded="false"
-                        //     onclick={link.callback(|_| Msg::ToggleNavbar)}
-                        // >
-                        //     <span aria-hidden="true"></span>
-                        //     <span aria-hidden="true"></span>
-                        //     <span aria-hidden="true"></span>
-                        // </button>
                         <div class="navbar-start">
                         {
                             if user_logged_in(&state) {
                                 html!{}
                             } else {
                                 html!{
-                                    <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
-                                        { "Login" }
-                                    </Link<Route>>
+                                    //<Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                    //    { "Login" }
+                                    //</Link<Route>>
                                 }
                             }
                         }

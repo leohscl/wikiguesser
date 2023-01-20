@@ -71,6 +71,18 @@ impl Game {
         let article = Article::get(game.article_id, connection)?;
         Ok(OngoingGame{ game, article, all_results })
     }
+    pub fn get_ongoing(connection: &mut PgConnection, input_game: &InputGame) -> Result<Option<Game>, diesel::result::Error> {
+        let query = games::table.into_boxed();
+        let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
+        let query = query.filter(games::is_finished.eq(false));
+        let results = query.load::<Game>(connection)?;
+        println!("Game: {:?}", results);
+        if let Some(game) = results.into_iter().next() {
+            Ok(Some(game))
+        } else {
+            Ok(None)
+        }
+    }
 
     pub fn get(connection: &mut PgConnection, ip_or_email: &str) -> Result<Option<Game>, diesel::result::Error> {
         let query = games::table.into_boxed();

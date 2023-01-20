@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde::Deserialize;
 use chrono::NaiveDate;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Article {
     pub id: i32,
     pub wiki_id: i32,
@@ -10,12 +10,12 @@ pub struct Article {
     pub content: String,
 }
 
-#[derive(Deserialize, Serialize, Debug) ]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct IString {
     pub str: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct WordResult {
     pub word: String,
     pub close_words: Vec<IString>,
@@ -45,14 +45,14 @@ pub struct User {
     pub d_visit_first: NaiveDate,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct OngoingGame {
     pub game: Game,
     pub article: Article,
     pub all_results: Vec<Option<WordResult>>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct Game {
     pub id: i32,
     article_id: i32,

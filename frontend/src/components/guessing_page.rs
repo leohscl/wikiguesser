@@ -1,6 +1,5 @@
-use std::cmp::Ordering;
-
 use yew::prelude::*;
+use yew_router::prelude::*;
 use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use crate::entities::interfaces::{Status, OngoingGame, Game};
@@ -9,8 +8,10 @@ use crate::service::games::{get_game, self, finish_game};
 use crate::service::future::handle_future;
 use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
+use super::app::Route;
 use super::hidden_field::HiddenField;
 use gloo::dialogs::confirm;
+use std::cmp::Ordering;
 
 //TODO(leo): mettre vert nouveaux mots -- ish
 //TODO(leo): Victoire !! -- ADD link to wikipedia ?
@@ -218,7 +219,6 @@ enum ArticleAction {
     SetInput(String),
     Reveal(WordResult),
     RevealAll,
-    Reset,
 }
 
 #[derive(PartialEq)]
@@ -298,8 +298,20 @@ impl Reducible for ArticleState {
             },
             ArticleAction::RevealAll => {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
-                // log::info!("Reveal called !");
                 page_clone.reveal_all();
+                if let Some(id) = self.opt_game_id {
+                    let future = async move { finish_game(id).await };
+                    handle_future(future, move |data: Result<Game, Status>| {
+                        match data {
+                            Ok(game) => {
+                                log::info!("Game finished: {:?}", game);
+                            }
+                            Err(_) => {
+                                log::info!("Error loading the data !");
+                            },
+                        };
+                    });
+                }
                 Self { 
                     opt_page: Some(page_clone),
                     num_moves: self.num_moves,
@@ -308,9 +320,6 @@ impl Reducible for ArticleState {
                     opt_game_id: self.opt_game_id.clone(),
                 }.into()
             },
-            ArticleAction::Reset => {
-                Self::default().into()
-            }
         }
     }
 }
@@ -387,33 +396,33 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         })
     };
 
+    let history = use_history().unwrap();
     let onclick_new_page = {
-        let state = state.clone();
-        let opt_cat = props.opt_cat.clone();
         Callback::from( move |_| {
-            state.dispatch(ArticleAction::Reset);
-            let opt_cat = opt_cat.clone();
-            let state = state.clone();
-            let future = async move { get_game(opt_cat).await };
-            handle_future(future, move |data: Result<OngoingGame, Status>| {
-                match data {
-                    Ok(ongoing_game) => {
-                        let state = state.clone();
-                        let article = ongoing_game.article;
-                        let page = page_from_json(article);
-                        state.dispatch(ArticleAction::Render(page, Some(ongoing_game.game.id)));
-                        for opt_res in ongoing_game.all_results.into_iter() {
-                            if let Some(word_res) = opt_res {
-                                state.dispatch(ArticleAction::Reveal(word_res));
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        log::info!("Error loading the data !");
-                    },
-                };
-            });
+            history.push(Route::LaunchPage);
         })
+        //     let opt_cat = opt_cat.clone();
+        //     let state = state.clone();
+        //     let future = async move { get_game(opt_cat).await };
+        //     handle_future(future, move |data: Result<OngoingGame, Status>| {
+        //         match data {
+        //             Ok(ongoing_game) => {
+        //                 let state = state.clone();
+        //                 let article = ongoing_game.article;
+        //                 let page = page_from_json(article);
+        //                 state.dispatch(ArticleAction::Render(page, Some(ongoing_game.game.id)));
+        //                 for opt_res in ongoing_game.all_results.into_iter() {
+        //                     if let Some(word_res) = opt_res {
+        //                         state.dispatch(ArticleAction::Reveal(word_res));
+        //                     }
+        //                 }
+        //             }
+        //             Err(_) => {
+        //                 log::info!("Error loading the data !");
+        //             },
+        //         };
+        //     });
+        // })
     };
 
     let oninput = {

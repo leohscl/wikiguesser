@@ -16,6 +16,25 @@ pub struct StringPost {
     string: String,
 }
 
+// /games/get_ongoing
+pub async fn get_ongoing(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>) -> Result<HttpResponse, Error> {
+    println!("Request: {:?}", req);
+    let val = req.connection_info();
+    println!("Address {:?}", val);
+    let mut connection = pool.get().unwrap();
+    let opt_email = if game_prompt.email == "None" {
+        None
+    } else {
+        Some(game_prompt.email.to_string())
+    };
+    let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
+    let input_game = InputGame{ip_or_email, is_ip};
+    Ok(web::block(move || Game::get_ongoing(&mut connection, &input_game))
+        .await
+        .map(|user| HttpResponse::Ok().json(user))
+        .map_err(DatabaseError)?)
+}
+
 // /games/get_or_create/{email}
 pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
     println!("Request: {:?}", req);
