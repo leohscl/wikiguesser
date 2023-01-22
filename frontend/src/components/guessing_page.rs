@@ -88,39 +88,58 @@ fn render_string(str_to_render: &str, rgb_num: u8, true_word: &str, is_new: bool
 
 impl HiddenText {
     fn render(&self) -> Html {
-        self.text
+        let html_in = self.text
             .iter()
             .zip(&self.revealed)
             .zip(&self.new_revelations)
             .map(|((text, revealed), new_reveal)| {
-                match new_reveal {
-                    RevealStrength::NotRevealed => {
-                        match revealed {
-                            RevealStrength::Revealed => html!{<span>{text}</span>},
-                            RevealStrength::VeryClose(str_pos) => {
-                                render_string(&str_pos.str, 230, text, false)
-                            },
-                            RevealStrength::Close(str_pos)=> {
-                                render_string(&str_pos.str, 196, text, false)
-                            },
-                            RevealStrength::Distant(str_pos) => {
-                                render_string(&str_pos.str, 132, text, false)
-                            },
-                            _ => {
-                                render_string("", 0, text, false)
+                if text == &"\n" {
+                    html!{<p><div/><div/></p>}
+                } else if text == "" {
+                    html!{}
+                } else {
+                    match new_reveal {
+                        RevealStrength::NotRevealed => {
+                            match revealed {
+                                RevealStrength::Revealed => html!{<span>{text}</span>},
+                                RevealStrength::VeryClose(str_pos) => {
+                                    render_string(&str_pos.str, 230, text, false)
+                                },
+                                RevealStrength::Close(str_pos)=> {
+                                    render_string(&str_pos.str, 196, text, false)
+                                },
+                                RevealStrength::Distant(str_pos) => {
+                                    render_string(&str_pos.str, 132, text, false)
+                                },
+                                _ => {
+                                    render_string("", 0, text, false)
+                                }
                             }
-                        }
-                    },
-                    RevealStrength::Revealed => {
-                        let green_style = format!("background-color: rgb(200, {}, 200);color: rgb(0, {}, 0);", 250, 50);
-                        html!{<span style={green_style}> {text}</span>}
-                    },
-                    RevealStrength::VeryClose(str_pos)=> { render_string(&str_pos.str, 232, text, true) },
-                    RevealStrength::Close(str_pos) => { render_string(&str_pos.str, 182, text, true) },
-                    RevealStrength::Distant(str_pos) => { render_string(&str_pos.str, 122, text, true) },
+                        },
+                        RevealStrength::Revealed => {
+                            let green_style = format!("background-color: rgb(200, {}, 200);color: rgb(0, {}, 0);", 250, 50);
+                            html!{<span style={green_style}> {text}</span>}
+                        },
+                        RevealStrength::VeryClose(str_pos)=> { render_string(&str_pos.str, 232, text, true) },
+                        RevealStrength::Close(str_pos) => { render_string(&str_pos.str, 182, text, true) },
+                        RevealStrength::Distant(str_pos) => { render_string(&str_pos.str, 122, text, true) },
+                    }
                 }
             })
-            .collect::<Html>()
+            .collect::<Html>();
+        if self.is_title {
+            html!{
+                <h2>
+                    {html_in}
+                </h2>
+            }
+        } else {
+            html!{
+                <p align="justified" class="content">
+                    {html_in}
+                </p>
+            }
+        }
     }
 
     fn reveal_all(&mut self) {
@@ -453,121 +472,119 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             }
             // log::info!("close: {}", num_close);
             html! {
-            <div >
-                {
-                    if victory {
-                        let victory_text = format!("Page trouvée en {} coups", state.num_moves); 
-                        html! {<span id="victory"> {victory_text} </span>}
-                    } else {
-                        html!{}
-                    }
-                }
-                <br/>
-                <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
-                {
-                    if victory {
-                        html! {
-                            <button onclick={onclick}>
-                                { "Révéler tous les mots" }
-                            </button>
-                        }
-                    } else {
-                        html!{}
-                    }
-                }
-                <br/>
-                {
-                if num_found + num_close == 0 {
-                    if state.num_moves != 0 && !page.content.fully_revealed {
-                        html!{<span > {red_emo.to_string()}</span>}
-                    } else {
-                        html!{}
-                    }
-                } else {
-                    html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
-                }
-                }
-
-                <br/>
-                <div id="title">
-                    { page.title.render() }
-                </div>
-                <br/>
-                <br/>
-                <div id="content">
-                    { page.content.render() }
-                </div>
-                {
-                    if let Some(_user) = &props.opt_user {
-                        // html! {<span > {"User logged in !"}</span>}
-                        html!{
-                            <button onclick={onclick_like}>
-                                { "Like" }
-                            </button>
-                        }
-                    } else {
-                        html!{}
-                    }
-                }
-                {
-                    if victory {
-                        html!{}
-                    } else {
-                        html! {
-                            <button onclick={onclick_give_up}>
-                                { "Give up" }
-                            </button>
+                <p align="justified" class="content">
+                    {
+                        if victory {
+                            let victory_text = format!("Page trouvée en {} coups", state.num_moves); 
+                            html! {<span id="victory"> {victory_text} </span>}
+                        } else {
+                            html!{}
                         }
                     }
-                }
-                {
-                    if victory {
-                        html! {
-                            <button onclick={onclick_report_page}>
-                                { "Report an issue" }
-                            </button>
-                        }
-                    } else {
-                        html!{}
-                    }
-                }
-                //{
-                //    if victory {
-                //        html! {
-                //            <button onclick={onclick_rate_page}>
-                //                { "Rate the page !" }
-                //            </button>
-                //        }
-                //    } else {
-                //        html!{}
-                //    }
-                //}
-                {
-                    if victory {
-                        html! {
-                            <button onclick={onclick_new_page}>
-                                { "Try another page !" }
-                            </button>
-                        }
-                    } else {
-                        html!{}
-                    }
-                }
-                {
-                    if victory {
-                        if let Some(ongoing_game) = &state.opt_game {
-                            let article_id = ongoing_game.article.id;
+                    <div/>
+                    <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
+                    {
+                        if victory {
                             html! {
-                                <Rating {article_id}/>
+                                <button onclick={onclick}>
+                                    { "Révéler tous les mots" }
+                                </button>
                             }
                         } else {
                             html!{}
                         }
-                    } else {
-                        html!{}
                     }
-                }
-            </div>
+                    <div/>
+                    {
+                    if num_found + num_close == 0 {
+                        if state.num_moves != 0 && !page.content.fully_revealed {
+                            html!{<span > {red_emo.to_string()}</span>}
+                        } else {
+                            html!{}
+                        }
+                    } else {
+                        html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
+                    }
+                    }
+
+                    <div/>
+                    <div id="title">
+                        { page.title.render() }
+                    </div>
+                    <div id="content" class="content">
+                        { page.content.render() }
+                    </div>
+                    {
+                        if let Some(_user) = &props.opt_user {
+                            // html! {<span > {"User logged in !"}</span>}
+                            html!{
+                                <button onclick={onclick_like}>
+                                    { "Like" }
+                                </button>
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
+                    {
+                        if victory {
+                            html!{}
+                        } else {
+                            html! {
+                                <button onclick={onclick_give_up}>
+                                    { "Give up" }
+                                </button>
+                            }
+                        }
+                    }
+                    {
+                        if victory {
+                            html! {
+                                <button onclick={onclick_report_page}>
+                                    { "Report an issue" }
+                                </button>
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
+                    //{
+                    //    if victory {
+                    //        html! {
+                    //            <button onclick={onclick_rate_page}>
+                    //                { "Rate the page !" }
+                    //            </button>
+                    //        }
+                    //    } else {
+                    //        html!{}
+                    //    }
+                    //}
+                    {
+                        if victory {
+                            html! {
+                                <button onclick={onclick_new_page}>
+                                    { "Try another page !" }
+                                </button>
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
+                    {
+                        if victory {
+                            if let Some(ongoing_game) = &state.opt_game {
+                                let article_id = ongoing_game.article.id;
+                                html! {
+                                    <Rating {article_id}/>
+                                }
+                            } else {
+                                html!{}
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
+                </p>
             }
         },
     }
@@ -632,7 +649,7 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
 fn create_string_vector(text: String) -> VString {
     let processed_text = text.replace("\n\n\n", "").to_string();
     let processed_text = processed_text.replace("()", "").to_string();
-    let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-'];
+    let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-', '\n'];
     let separator_indexes: Vec<_> = [0].into_iter().chain(
         processed_text
         .char_indices()
@@ -651,11 +668,8 @@ fn create_string_vector(text: String) -> VString {
         .map(|slice| {
             let start = *slice.get(0).expect("slice should have 2 elements");
             let end = *slice.get(1).expect("slice should have 2 elements");
-            // log::info!("Slices processed, start:{}, end:{}", start, end);
             let chunk = &text[start..end];
-            // log::info!("Processed string:{}", chunk);
             let chunk_string = chunk.to_string();
-            // log::info!("Processed string:{}", chunk_string);
             chunk_string
         })
         .map(|str| str.to_string())

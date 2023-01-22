@@ -1,6 +1,14 @@
 body {
     background:"blue";
+    padding-top: 10px;
+    padding-left: 70px;
+    padding-right: 70px;
 }
+br {
+  margin:1em ;/* FF for instance */
+  line-height:1em;/* chrome for instance */
+}
+
 .form {
 	display: flex;
 	flex-direction: row;
@@ -22,6 +30,11 @@ body {
     display: inline-block;
     text-align: center;
     transition: color .3s linear, background-color .5s linear;
+}
+div.content {
+}
+p.content {
+  margin:100;
 }
 input, #signin, #sync {
     font-size: 1.1em;
