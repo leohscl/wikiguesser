@@ -129,7 +129,7 @@ impl HiddenText {
             .collect::<Html>();
         if self.is_title {
             html!{
-                <h2>
+                <h2 class="title">
                     {html_in}
                 </h2>
             }

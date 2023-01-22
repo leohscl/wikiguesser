@@ -58,54 +58,70 @@ pub fn rating(props: &RatingProps) -> Html {
     let onclick_1 = {
         let state = state.clone();
         Callback::from( move |_| {
-            state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::One) })
+            if !state.rating_sent {
+                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::One) })
+            }
         })
     };
     let onclick_2 = {
         let state = state.clone();
         Callback::from( move |_| {
-            state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Two) })
+            if !state.rating_sent {
+                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Two) })
+            }
         })
     };
     let onclick_3 = {
         let state = state.clone();
         Callback::from( move |_| {
-            state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Three) })
+            if !state.rating_sent {
+                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Three) })
+            }
         })
     };
     let onclick_4 = {
         let state = state.clone();
         Callback::from( move |_| {
-            state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Four) })
+            if !state.rating_sent {
+                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Four) })
+            }
         })
     };
     let onclick_5 = {
         let state = state.clone();
         Callback::from( move |_| {
             log::info!("5 clicked!");
-            state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Five) })
+            if !state.rating_sent {
+                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Five) })
+            }
         })
     };
 
     let disabled = state.rating_sent || state.opt_rate.is_none();
     html! {
         <div >
-            <div class="rating">
-                <input type="radio" name="rating" value="5" id="5" onclick={onclick_5}/>
-                <label for="5" value='\u{2606}' />
-                <input type="radio" name="rating" value="4" id="4" onclick={onclick_4}/>
-                <label for="4" value='\u{2606}' />
-                <input type="radio" name="rating" value="3" id="3" onclick={onclick_3}/>
-                <label for="3" value='\u{2606}' />
-                <input type="radio" name="rating" value="2" id="2" onclick={onclick_2}/>
-                <label for="2" value='\u{2606}' />
-                <input type="radio" name="rating" value="1" id="1" onclick={onclick_1}/>
-                <label for="1" value='\u{2606}' />
-            </div>
+            <div class="rate" >
+                <input type="radio" onclick={onclick_5} checked={is_clicked(Rate::Five,state.opt_rate.clone())}  id="star5" name="rate" value="5" />
+                <label for="star5" title="text">{"5 stars"}</label>
+                <input type="radio" onclick={onclick_4} checked={is_clicked(Rate::Four,state.opt_rate.clone())}  id="star4" name="rate" value="4" />
+                <label for="star4" title="text">{"4 stars"}</label>
+                <input type="radio" onclick={onclick_3} checked={is_clicked(Rate::Three,state.opt_rate.clone())}  id="star3" name="rate" value="3" />
+                <label for="star3" title="text">{"3 stars"}</label>
+                <input type="radio" onclick={onclick_2} checked={is_clicked(Rate::Two,state.opt_rate.clone())} id="star2" name="rate" value="2" />
+                <label for="star2" title="text">{"2 stars"}</label>
+                <input type="radio" onclick={onclick_1} checked={is_clicked(Rate::One,state.opt_rate.clone())} id="star1" name="rate" value="1" />
+                <label for="star1" title="text">{"1 star"}</label>
+              </div>
             <button onclick={onclick_send_rating} disabled={disabled}>
                 { "Submit rating" }
             </button>
         </div>
     }
 }
-
+fn is_clicked(rate_fixed: Rate, opt_rate: Option<Rate>) -> bool {
+    if let Some(rate) = opt_rate {
+        rate == rate_fixed
+    } else {
+        false
+    }
+}
