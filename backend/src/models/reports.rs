@@ -13,19 +13,20 @@ pub struct Report {
     pub id: i32,
     pub article_id: i32,
     pub report_cat: String,
-    pub date: chrono::NaiveDate,
+    pub date: chrono::NaiveDateTime,
     pub description: String,
 }
 impl Report {
     pub fn create(connection: &mut PgConnection, report: &InputReport) -> Result<Report, diesel::result::Error>{
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();
+        let naive_date_time = chrono::Utc::now().naive_utc();
         let report = Report{
             id,
             article_id: report.article_id,
             report_cat: report.report_cat.to_owned(),
             description: report.description.to_owned(),
-            date: report.date,
+            date: naive_date_time,
         };
         diesel::insert_into(reports::table)
             .values(&report)

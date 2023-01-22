@@ -215,7 +215,7 @@ impl ToString for HiddenText {
 }
 
 enum ArticleAction {
-    Render(Page, Option<i32>),
+    Render(Page, Option<OngoingGame>),
     SetInput(String),
     Reveal(WordResult),
     RevealAll,
@@ -227,7 +227,7 @@ struct ArticleState {
     victory: bool,
     num_moves: u32,
     opt_user: Option<User>,
-    opt_game_id: Option<i32>,
+    opt_game: Option<OngoingGame>,
 }
 
 impl Default for ArticleState {
@@ -237,7 +237,7 @@ impl Default for ArticleState {
             num_moves: 0,
             victory: false,
             opt_user: None,
-            opt_game_id: None,
+            opt_game: None,
         }
     }
 }
@@ -246,13 +246,13 @@ impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
-            ArticleAction::Render(page, opt_game_id) => {
+            ArticleAction::Render(page, opt_game) => {
                 Self { 
                     opt_page: Some(page.clone()),
                     num_moves: 0,
                     victory: false,
                     opt_user: self.opt_user.clone(),
-                    opt_game_id,
+                    opt_game,
                 }.into()
             },
             ArticleAction::SetInput(input) => {
@@ -263,7 +263,7 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves,
                     victory: self.victory,
                     opt_user: self.opt_user.clone(),
-                    opt_game_id: self.opt_game_id.clone(),
+                    opt_game: self.opt_game.clone(),
                 }.into()
             },
             ArticleAction::Reveal(word_res) => {
@@ -273,8 +273,8 @@ impl Reducible for ArticleState {
                 // log::info!("Reveal called !");
                 let victory = page_clone.reveal(&word_res);
                 if victory {
-                    if let Some(id) = self.opt_game_id {
-                        let future = async move { finish_game(id).await };
+                    if let Some(ongoing_game) = self.opt_game.clone() {
+                        let future = async move { finish_game(ongoing_game.game.id).await };
                         handle_future(future, move |data: Result<Game, Status>| {
                             match data {
                                 Ok(game) => {
@@ -293,14 +293,14 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves + 1,
                     victory,
                     opt_user: self.opt_user.clone(),
-                    opt_game_id: self.opt_game_id.clone(),
+                    opt_game: self.opt_game.clone(),
                 }.into()
             },
             ArticleAction::RevealAll => {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 page_clone.reveal_all();
-                if let Some(id) = self.opt_game_id {
-                    let future = async move { finish_game(id).await };
+                if let Some(ongoing_game) = self.opt_game.clone() {
+                    let future = async move { finish_game(ongoing_game.game.id).await };
                     handle_future(future, move |data: Result<Game, Status>| {
                         match data {
                             Ok(game) => {
@@ -317,7 +317,7 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves,
                     victory: true,
                     opt_user: self.opt_user.clone(),
-                    opt_game_id: self.opt_game_id.clone(),
+                    opt_game: self.opt_game.clone(),
                 }.into()
             },
         }
@@ -348,9 +348,9 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         match data {
                             Ok(ongoing_game) => {
                                 let state = state.clone();
-                                let article = ongoing_game.article;
+                                let article = ongoing_game.article.clone();
                                 let page = page_from_json(article);
-                                state.dispatch(ArticleAction::Render(page, Some(ongoing_game.game.id)));
+                                state.dispatch(ArticleAction::Render(page, Some(ongoing_game.clone())));
                                 for opt_res in ongoing_game.all_results.into_iter() {
                                     if let Some(word_res) = opt_res {
                                         state.dispatch(ArticleAction::Reveal(word_res));
@@ -397,32 +397,20 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     };
 
     let history = use_history().unwrap();
+    let onclick_report_page = {
+        let state = state.clone();
+        let history = history.clone();
+        Callback::from( move |_| {
+            if let Some(ongoing_game) = &state.opt_game {
+                history.push(Route::ReportForm{ article_id: ongoing_game.article.id });
+            }
+        })
+    };
+
     let onclick_new_page = {
         Callback::from( move |_| {
             history.push(Route::LaunchPage);
         })
-        //     let opt_cat = opt_cat.clone();
-        //     let state = state.clone();
-        //     let future = async move { get_game(opt_cat).await };
-        //     handle_future(future, move |data: Result<OngoingGame, Status>| {
-        //         match data {
-        //             Ok(ongoing_game) => {
-        //                 let state = state.clone();
-        //                 let article = ongoing_game.article;
-        //                 let page = page_from_json(article);
-        //                 state.dispatch(ArticleAction::Render(page, Some(ongoing_game.game.id)));
-        //                 for opt_res in ongoing_game.all_results.into_iter() {
-        //                     if let Some(word_res) = opt_res {
-        //                         state.dispatch(ArticleAction::Reveal(word_res));
-        //                     }
-        //                 }
-        //             }
-        //             Err(_) => {
-        //                 log::info!("Error loading the data !");
-        //             },
-        //         };
-        //     });
-        // })
     };
 
     let oninput = {
@@ -520,10 +508,39 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         html!{}
                     }
                 }
-                    //TODO: add confirmation to button
-                <button onclick={onclick_give_up}>
-                    { "Give up" }
-                </button>
+                {
+                    if victory {
+                        html!{}
+                    } else {
+                        html! {
+                            <button onclick={onclick_give_up}>
+                                { "Give up" }
+                            </button>
+                        }
+                    }
+                }
+                {
+                    if victory {
+                        html! {
+                            <button onclick={onclick_report_page}>
+                                { "Report an issue" }
+                            </button>
+                        }
+                    } else {
+                        html!{}
+                    }
+                }
+                //{
+                //    if victory {
+                //        html! {
+                //            <button onclick={onclick_rate_page}>
+                //                { "Rate the page !" }
+                //            </button>
+                //        }
+                //    } else {
+                //        html!{}
+                //    }
+                //}
                 {
                     if victory {
                         html! {
@@ -598,7 +615,6 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
         .collect()
 }
 fn create_string_vector(text: String) -> VString {
-    // TODO(leo): handle other separators
     let processed_text = text.replace("\n\n\n", "").to_string();
     let processed_text = processed_text.replace("()", "").to_string();
     let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-'];
@@ -635,8 +651,8 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
         // let future = async move { query(&word.to_lowercase()).await };
-        let id = state.opt_game_id.expect("There should be a game id");
-        let future = async move { games::update_game(id, &word.to_lowercase()).await };
+        let ongoing_game = state.opt_game.clone().expect("There should be a game");
+        let future = async move { games::update_game(ongoing_game.game.id, &word.to_lowercase()).await };
         handle_future(future, move |data: Result<Option<WordResult>, Status>| {
             match data {
                 Ok(opt_word_res) => {

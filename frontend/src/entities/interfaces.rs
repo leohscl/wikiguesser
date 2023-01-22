@@ -68,3 +68,9 @@ pub struct GamePrompt {
     pub email: String,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct InputReport {
+    pub article_id: i32,
+    pub report_cat: String,
+    pub description: String,
+}

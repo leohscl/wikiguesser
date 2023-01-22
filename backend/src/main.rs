@@ -24,7 +24,7 @@ mod schema;
 // Constants
 const DATABASE_URL: &str = dotenv!("DATABASE_URL");
 const FILE_MODEL: &str = dotenv!("FILE_MODEL");
-const NUM_WORD_RESULTS: usize = 1000;
+const NUM_WORD_RESULTS: usize = 300;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -75,8 +75,8 @@ async fn main() -> std::io::Result<()> {
             // .route("/completion/{user_id}/{article_id}", web::get().to(handlers::articles::get_one_excl_filter))
 
             .route("/reports/{article_id}", web::get().to(handlers::reports::get_article_reports))
-            .route("/reports/", web::post().to(handlers::reports::create))
-            .route("/reports/", web::get().to(handlers::reports::get_all))
+            .route("/reports", web::post().to(handlers::reports::create))
+            .route("/reports", web::get().to(handlers::reports::get_all))
 
             .route("/users/", web::get().to(handlers::users::get_users))
             .route("/users/{email}", web::get().to(handlers::users::get_user))

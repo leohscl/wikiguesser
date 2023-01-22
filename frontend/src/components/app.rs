@@ -7,6 +7,7 @@ use yew_router::prelude::*;
 use super::launch_page::LaunchPage;
 use super::guessing_page::GuessingPage;
 use super::login::Login;
+use super::report_page::ReportPage;
 use super::signup::Signup;
 use crate::entities::interfaces::User;
 
@@ -38,6 +39,8 @@ pub enum Route {
     Signup,
     #[at("/login")]
     Login,
+    #[at("/report/:article_id")]
+    ReportForm {article_id: i32},
     #[at("/dummy")]
     GuessingPageDummy,
     #[at("/guess/:opt_str")]
@@ -88,13 +91,12 @@ pub fn app() -> Html {
                         <LaunchPage />
                     }
                 }
-                // Route::GuessingPageDefault => {
-                //     let opt_user = state.opt_user.clone();
-                //     let opt_cat: Option<String> = None;
-                //     html! {
-                //         <GuessingPage {opt_user} {opt_cat}/>
-                //     }
-                // },
+                Route::ReportForm {article_id} => {
+                    let article_id = article_id.clone();
+                    html! {
+                        <ReportPage {article_id}/>
+                    }
+                },
                 Route::GuessingPage {opt_str} => {
 
                     let opt_user = state.opt_user.clone();

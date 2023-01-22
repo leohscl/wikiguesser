@@ -31,12 +31,19 @@ CREATE TABLE IF NOT EXISTS completed_pages
         user_id       INTEGER NOT NULL,
         article_id    INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS ratings
+(
+        id            SERIAL PRIMARY KEY,
+        article_id    INTEGER NOT NULL,
+        rating        INTEGER NOT NULL,
+        date          TIMESTAMP NOT NULL,
+);
 CREATE TABLE IF NOT EXISTS reports
 (
         id            SERIAL PRIMARY KEY,
         article_id    INTEGER NOT NULL,
         report_cat    TEXT NOT NULL,
-        date          DATE NOT NULL,
+        date          TIMESTAMP NOT NULL,
         description   TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS games

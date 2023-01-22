@@ -4,3 +4,4 @@ pub mod hidden_field;
 pub mod login;
 pub mod signup;
 pub mod launch_page;
+pub mod report_page;
