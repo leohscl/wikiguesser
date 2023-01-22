@@ -38,6 +38,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    ratings (id) {
+        id -> Int4,
+        article_id -> Int4,
+        rating -> Int4,
+        date -> Timestamp,
+    }
+}
+
+diesel::table! {
     reports (id) {
         id -> Int4,
         article_id -> Int4,
@@ -63,6 +72,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     categories,
     completed_pages,
     games,
+    ratings,
     reports,
     users,
 );

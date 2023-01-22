@@ -11,12 +11,12 @@ pub struct InputReport {
 }
 
 // /reports/
-pub async fn create(pool: web::Data<Pool>, user: web::Json<InputReport>) -> Result<HttpResponse, Error> {
+pub async fn create(pool: web::Data<Pool>, report: web::Json<InputReport>) -> Result<HttpResponse, Error> {
     println!("Posting report !");
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Report::create(&mut connection, &user))
+    Ok(web::block(move || Report::create(&mut connection, &report))
         .await
-        .map(|user| HttpResponse::Ok().json(user))
+        .map(|report| HttpResponse::Ok().json(report))
         .map_err(DatabaseError)?)
 }
 
@@ -25,7 +25,7 @@ pub async fn get_article_reports(pool: web::Data<Pool>, id: web::Path<i32>) -> R
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Report::get_article_reports(&mut connection, *id))
         .await
-        .map(|user| HttpResponse::Ok().json(user))
+        .map(|report| HttpResponse::Ok().json(report))
         .map_err(DatabaseError)?)
 }
 
@@ -34,6 +34,6 @@ pub async fn get_all(pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Report::get_all(&mut connection))
         .await
-        .map(|user| HttpResponse::Ok().json(user))
+        .map(|report| HttpResponse::Ok().json(report))
         .map_err(DatabaseError)?)
 }

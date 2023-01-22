@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS ratings
         id            SERIAL PRIMARY KEY,
         article_id    INTEGER NOT NULL,
         rating        INTEGER NOT NULL,
-        date          TIMESTAMP NOT NULL,
+        date          TIMESTAMP NOT NULL
 );
 CREATE TABLE IF NOT EXISTS reports
 (

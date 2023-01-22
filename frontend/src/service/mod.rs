@@ -5,3 +5,4 @@ pub mod future;
 pub mod users;
 pub mod games;
 pub mod reports;
+pub mod ratings;

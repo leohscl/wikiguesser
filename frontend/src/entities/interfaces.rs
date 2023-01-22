@@ -74,3 +74,8 @@ pub struct InputReport {
     pub report_cat: String,
     pub description: String,
 }
+#[derive(Debug, Serialize, Deserialize)]
+pub struct InputRatings {
+    pub article_id: i32,
+    pub rating: i32,
+}

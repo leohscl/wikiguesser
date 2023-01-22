@@ -21,7 +21,7 @@ impl Report {
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();
         let naive_date_time = chrono::Utc::now().naive_utc();
-        let report = Report{
+        let report = Report {
             id,
             article_id: report.article_id,
             report_cat: report.report_cat.to_owned(),

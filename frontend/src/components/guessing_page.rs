@@ -10,6 +10,7 @@ use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
 use super::app::Route;
 use super::hidden_field::HiddenField;
+use super::rating::Rating;
 use gloo::dialogs::confirm;
 use std::cmp::Ordering;
 
@@ -547,6 +548,20 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                             <button onclick={onclick_new_page}>
                                 { "Try another page !" }
                             </button>
+                        }
+                    } else {
+                        html!{}
+                    }
+                }
+                {
+                    if victory {
+                        if let Some(ongoing_game) = &state.opt_game {
+                            let article_id = ongoing_game.article.id;
+                            html! {
+                                <Rating {article_id}/>
+                            }
+                        } else {
+                            html!{}
                         }
                     } else {
                         html!{}
