@@ -135,7 +135,7 @@ impl HiddenText {
             }
         } else {
             html!{
-                <p align="justified" class="content">
+                <p align="justified" >
                     {html_in}
                 </p>
             }

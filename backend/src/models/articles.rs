@@ -24,8 +24,7 @@ impl Article {
         Ok(article)
     }
     pub fn get_one(connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
-        let vec_article = articles::table.filter(articles::views.gt(100)).load::<Article>(connection)?;
-        // let vec_article = articles::table.filter(articles::views.gt(50)).load::<Article>(connection)?;
+        let vec_article = articles::table.filter(articles::views.gt(10000)).load::<Article>(connection)?;
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..vec_article.len());
         let article = vec_article.get(index).expect("There should be a first element").clone();
