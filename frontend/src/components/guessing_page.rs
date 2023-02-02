@@ -384,7 +384,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     });
                 } else {
                     let state = state.clone();
-                    let article = Article { id: 1, wiki_id: 2, title: "thé".to_string(), content: "thé".to_string() };
+                    let article = Article { id: 1, wiki_id: 2, title: "thé".to_string(), content: "thé".to_string(), views: 0 };
                     let page = page_from_json(article);
                     state.dispatch(ArticleAction::Render(page, None));
                 }
@@ -459,6 +459,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     match &(*state.clone()).opt_page {
         None => html!{<span>{"Chargement.."}</span>},
         Some(page) => {
+            let views_string = if let Some(game) = &state.opt_game {
+                log::info!("Views found");
+                let daily_views = game.article.views / 30;
+                "daily views: ".to_string() + &daily_views.to_string()
+            } else {
+                "".to_string()
+            };
             // let new_revelations = &page.new_revelations;
             let content_new = &page.content.new_revelations;
             let mut num_found = 0;
@@ -579,6 +586,15 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                 }
                             } else {
                                 html!{}
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
+                    {
+                        if victory {
+                            html! {
+                                <b> {views_string}</b>
                             }
                         } else {
                             html!{}
