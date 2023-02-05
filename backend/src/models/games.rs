@@ -1,3 +1,4 @@
+
 use crate::models::words::WordResult;
 use crate::{schema::*, handlers::games::InputGame};
 use diesel::{PgConnection, QueryDsl};
@@ -7,8 +8,8 @@ use serde::Serialize;
 use serde::Deserialize;
 use rand::Rng;
 use crate::models::words::WordModel;
-
 use super::articles::Article;
+
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GamePrompt {
@@ -56,6 +57,7 @@ impl Game {
             .execute(connection)?;
         Ok(new_game)
     }
+
     pub fn get_or_create(connection: &mut PgConnection, input_game: &InputGame, word_model: &WordModel, opt_cat: &Option<String>) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
@@ -111,6 +113,7 @@ impl Game {
             Err(diesel::result::Error::NotFound)
         }
     }
+
 
     pub fn update_with_id(connection: &mut PgConnection, id: i32, word: &str, word_model: &WordModel) -> Result<Option<WordResult>, diesel::result::Error> {
         let query = games::table.into_boxed();

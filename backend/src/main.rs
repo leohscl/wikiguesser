@@ -24,7 +24,7 @@ mod schema;
 // Constants
 const DATABASE_URL: &str = dotenv!("DATABASE_URL");
 const FILE_MODEL: &str = dotenv!("FILE_MODEL");
-const NUM_WORD_RESULTS: usize = 300;
+const NUM_WORD_RESULTS: usize = 1000;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -72,6 +72,8 @@ async fn main() -> std::io::Result<()> {
             .route("/articles/random/pick", web::get().to(handlers::articles::get_one))
             .route("/articles/random_in/{category}", web::get().to(handlers::articles::get_one_incl_filter))
             .route("/articles/random_out/{category}", web::get().to(handlers::articles::get_one_excl_filter))
+            .route("/articles/dummy_engine/", web::get().to(handlers::articles::get_dummy_engine))
+            .route("/articles/get_engine/{article_id}", web::get().to(handlers::articles::get_engine))
 
             .route("/ratings", web::post().to(handlers::ratings::create))
 
