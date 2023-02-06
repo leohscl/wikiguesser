@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use serde::Serialize;
 use serde::Deserialize;
 use chrono::NaiveDate;
@@ -79,4 +80,15 @@ pub struct InputReport {
 pub struct InputRatings {
     pub article_id: i32,
     pub rating: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+pub struct StringAndPos {
+    pub str: String,
+    pub pos: usize,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
+pub struct GameEngine {
+    pub reveals: HashMap<String, Vec<StringAndPos>>,
 }

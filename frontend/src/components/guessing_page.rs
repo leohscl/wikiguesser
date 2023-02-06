@@ -2,9 +2,10 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 use web_sys::{Event, InputEvent, HtmlInputElement};
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
-use crate::entities::interfaces::{Status, OngoingGame, Game};
+use crate::entities::interfaces::{Status, OngoingGame, Game, GameEngine, StringAndPos};
 use crate::entities::interfaces::{Article, WordResult};
 use crate::service::games::{get_game, self, finish_game};
+use crate::service::articles::get_engine;
 use crate::service::future::handle_future;
 use crate::utils::similar_word::same_root;
 use crate::entities::interfaces::User;
@@ -12,17 +13,13 @@ use super::app::Route;
 use super::hidden_field::HiddenField;
 use super::rating::Rating;
 use gloo::dialogs::confirm;
+use std::clone;
 use std::cmp::Ordering;
 
 //TODO(leo): mettre vert nouveaux mots -- ish
 //TODO(leo): Victoire !! -- ADD link to wikipedia ?
 
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct StringAndPos {
-    str: String,
-    pos: usize,
-}
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 enum RevealStrength {
@@ -64,6 +61,11 @@ struct Page {
 }
 
 impl Page {
+    fn reveal_with_engine(&mut self, word: &str, result_engine: &Vec<StringAndPos>) -> bool {
+        let title_fully_revealed = self.title.reveal_with_engine(word, result_engine);
+        self.content.reveal_with_engine(word, result_engine);
+        title_fully_revealed
+    }
     fn reveal(&mut self, word_res: &WordResult) -> bool {
         let title_fully_revealed = self.title.reveal(word_res);
         self.content.reveal(word_res);
@@ -148,6 +150,63 @@ impl HiddenText {
         self.fully_revealed = true;
     }
 
+    fn reveal_with_engine(&mut self, word: &str, result_engine: &Vec<StringAndPos>) -> bool {
+        todo!();
+        // let vec_matches: Vec<_> =
+        //     self.text.clone()
+        //     .into_iter()
+        //     .map(|string_hidden| {
+        //         let string_hidden_lowercase = string_hidden.to_lowercase();
+        //         let word_lowercase = word_res.word.to_lowercase();
+        //         if word_lowercase == string_hidden_lowercase {
+        //             RevealStrength::Revealed
+        //         } else if same_root(&word_lowercase, &string_hidden_lowercase) {
+        //             RevealStrength::Revealed
+        //         } else {
+        //             match word_res.close_words.iter().position(|candidate| candidate.str.to_lowercase() == string_hidden_lowercase) {
+        //                 None => RevealStrength::NotRevealed,
+        //                 Some(position) => {
+        //                     let str_pos = StringAndPos{str:word_lowercase, pos: position};
+        //                     // log::info!("position: {}", position);
+        //                     if position < 10 {
+        //                         RevealStrength::VeryClose(str_pos)
+        //                     } else if position < 100 {
+        //                         RevealStrength::Close(str_pos)
+        //                     } else {
+        //                         RevealStrength::Distant(str_pos)
+        //                     } 
+        //                 },
+        //             }
+        //         }
+        //     })
+        //     .collect();
+        // // log::info!("matches: {:?}", vec_matches);
+        // // log::info!("old_reveal: {:?}", self.revealed);
+        // let vec_new_revelation: Vec<_> = vec_matches.clone().into_iter()
+        //     .zip(self.revealed.iter())
+        //     .map(|(reveal_new, reveal_old)| {
+        //         if &reveal_new < reveal_old {
+        //             reveal_new
+        //         } else {
+        //             RevealStrength::NotRevealed
+        //         }
+        //     })
+        //     .collect();
+        // let revealed: Vec<RevealStrength> = vec_matches.into_iter()
+        //     .zip(self.revealed.iter())
+        //     .map(|(reveal_new, reveal_old)| {
+        //         if &reveal_new < reveal_old {
+        //             reveal_new
+        //         } else {
+        //             reveal_old.clone()
+        //         }
+        //     })
+        //     .collect();
+        // self.new_revelations = vec_new_revelation;
+        // let all_revealed = revealed.iter().all(|rev_strength| matches!(rev_strength, RevealStrength::Revealed));
+        // self.revealed = revealed;
+        // all_revealed
+    }
     fn reveal(&mut self, word_res: &WordResult) -> bool {
         let vec_matches: Vec<_> =
             self.text.clone()
@@ -235,9 +294,11 @@ impl ToString for HiddenText {
 }
 
 enum ArticleAction {
-    Render(Page, Option<OngoingGame>),
+    Render(Page, Option<OngoingGame>, Option<GameEngine>),
     SetInput(String),
     Reveal(WordResult),
+    RevealWithEngine(String),
+    SetEngine(GameEngine),
     RevealAll,
 }
 
@@ -248,6 +309,7 @@ struct ArticleState {
     num_moves: u32,
     opt_user: Option<User>,
     opt_game: Option<OngoingGame>,
+    opt_engine: Option<GameEngine>,
 }
 
 impl Default for ArticleState {
@@ -258,6 +320,7 @@ impl Default for ArticleState {
             victory: false,
             opt_user: None,
             opt_game: None,
+            opt_engine: None,
         }
     }
 }
@@ -266,13 +329,24 @@ impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
-            ArticleAction::Render(page, opt_game) => {
+            ArticleAction::SetEngine(game_engine) => {
+                Self { 
+                    opt_page: self.opt_page.clone(),
+                    num_moves: self.num_moves,
+                    victory: self.victory,
+                    opt_user: self.opt_user.clone(),
+                    opt_game: self.opt_game.clone(),
+                    opt_engine: Some(game_engine),
+                }.into()
+            }
+            ArticleAction::Render(page, opt_game, opt_engine) => {
                 Self { 
                     opt_page: Some(page.clone()),
                     num_moves: 0,
                     victory: false,
                     opt_user: self.opt_user.clone(),
                     opt_game,
+                    opt_engine: opt_engine,
                 }.into()
             },
             ArticleAction::SetInput(input) => {
@@ -284,13 +358,37 @@ impl Reducible for ArticleState {
                     victory: self.victory,
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
+                    opt_engine: self.opt_engine.clone(),
                 }.into()
+            },
+            ArticleAction::RevealWithEngine(word) => {
+                let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
+                let engine = self.opt_engine.clone().expect("There should be an engine now..");
+                if let Some(result) = engine.reveals.get(&word) {
+                    let victory = page_clone.reveal_with_engine(&word, result);
+                    Self { 
+                        opt_page: Some(page_clone),
+                        num_moves: self.num_moves + 1,
+                        victory,
+                        opt_user: self.opt_user.clone(),
+                        opt_game: self.opt_game.clone(),
+                        opt_engine: self.opt_engine.clone(),
+                    }.into()
+                } else  {
+                    Self { 
+                        opt_page: Some(page_clone),
+                        num_moves: self.num_moves,
+                        victory: false,
+                        opt_user: self.opt_user.clone(),
+                        opt_game: self.opt_game.clone(),
+                        opt_engine: self.opt_engine.clone(),
+                    }.into()
+                }
             },
             ArticleAction::Reveal(word_res) => {
                 // TODO(leo): check word exists
                 // TODO(leo): check words close
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
-                // log::info!("Reveal called !");
                 let victory = page_clone.reveal(&word_res);
                 if victory {
                     if let Some(ongoing_game) = self.opt_game.clone() {
@@ -314,6 +412,7 @@ impl Reducible for ArticleState {
                     victory,
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
+                    opt_engine: self.opt_engine.clone(),
                 }.into()
             },
             ArticleAction::RevealAll => {
@@ -338,6 +437,7 @@ impl Reducible for ArticleState {
                     victory: true,
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
+                    opt_engine: None,
                 }.into()
             },
         }
@@ -363,19 +463,35 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             move |_| {
                 if !dummy {
                     // let future = async move { get_one_article(opt_cat).await };
+                    let state = state.clone();
                     let future = async move { get_game(opt_cat).await };
                     handle_future(future, move |data: Result<OngoingGame, Status>| {
                         match data {
                             Ok(ongoing_game) => {
-                                let state = state.clone();
+                                let state_1 = state.clone();
                                 let article = ongoing_game.article.clone();
                                 let page = page_from_json(article);
-                                state.dispatch(ArticleAction::Render(page, Some(ongoing_game.clone())));
-                                for opt_res in ongoing_game.all_results.into_iter() {
-                                    if let Some(word_res) = opt_res {
-                                        state.dispatch(ArticleAction::Reveal(word_res));
-                                    }
-                                }
+                                let article_id = ongoing_game.article.id;
+                                let future = async move { get_engine(article_id).await };
+                                let state = state.clone();
+                                let all_results = ongoing_game.all_results.clone();
+                                handle_future(future, move |data: Result<GameEngine, Status>| {
+                                    match data {
+                                        Ok(game_engine) => {
+                                            log::info!("Game engine loaded: {:?}", game_engine);
+                                            // state_1.dispatch(ArticleAction::SetEngine(game_engine));
+                                            state_1.dispatch(ArticleAction::Render(page.clone(), Some(ongoing_game.clone()), Some(game_engine)));
+                                            for opt_res in all_results.clone().into_iter() {
+                                                if let Some(word_res) = opt_res {
+                                                    state.dispatch(ArticleAction::Reveal(word_res));
+                                                }
+                                            }
+                                        }
+                                        Err(_) => {
+                                            log::info!("Error loading game engine!");
+                                        },
+                                    };
+                                });
                             }
                             Err(_) => {
                                 log::info!("Error loading the data !");
@@ -386,14 +502,14 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     let state = state.clone();
                     let article = Article { id: 1, wiki_id: 2, title: "thé".to_string(), content: "thé".to_string(), views: 0 };
                     let page = page_from_json(article);
-                    state.dispatch(ArticleAction::Render(page, None));
+                    state.dispatch(ArticleAction::Render(page, None, None));
                 }
                 || {}
             }
         },
         (),
     );
-    let onclick = {
+    let onclick_reveal_all = {
         let state = state.clone();
         Callback::from( move |_| {
             state.dispatch(ArticleAction::RevealAll);
@@ -493,7 +609,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         if victory {
                             html! {
-                                <button onclick={onclick}>
+                                <button onclick={onclick_reveal_all}>
                                     { "Révéler tous les mots" }
                                 </button>
                             }
