@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::cmp::Ordering;
 use serde::Serialize;
 use serde::Deserialize;
 use chrono::NaiveDate;
@@ -76,6 +77,7 @@ pub struct InputReport {
     pub report_cat: String,
     pub description: String,
 }
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputRatings {
     pub article_id: i32,
@@ -86,6 +88,17 @@ pub struct InputRatings {
 pub struct StringAndPos {
     pub str: String,
     pub pos: usize,
+}
+
+impl PartialOrd for StringAndPos {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.pos.partial_cmp(&other.pos)
+    }
+}
+impl Ord for StringAndPos {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.pos.cmp(&other.pos)
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
