@@ -114,8 +114,9 @@ impl Article {
         Self::create_engine(&content_vec, embed)
     }
 
-    fn create_engine(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<GameEngine, diesel::result::Error> {
+    pub fn create_engine(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<GameEngine, diesel::result::Error> {
         let mut hash = HashMap::new();
+ 
         let query_results = WordResult::query_multiple(words, embed)?;
         for query_result in query_results.into_iter().filter_map(|r| r) {
             for _word in query_result.variants {

@@ -19,21 +19,39 @@ pub struct WordResult {
     pub close_words: Vec<IString>,
     pub variants: Vec<IString>,
 }
+
 impl WordResult {
     pub fn query(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<Option<WordResult>, diesel::result::Error> {
-        let opt_results = embed.word_similarity(word, NUM_WORD_RESULTS);
-        // iterate through text of the article
-        // println!("results: {:?}", results);
-        if let Some(results) = opt_results {
-            let word_res = results.iter().map(|similarity_res| {
-                let str = similarity_res.word().to_string();
-                IString{str}
-            }).collect();
-            let variants = get_variants(word, &word_res);
-            println!("variants: {:?}", variants);
-            Ok(Some(WordResult{word:word.to_string(), close_words: word_res, variants}))
+        // skip quering if word is a number
+        if let Ok(num) = word.parse::<i32>() {
+            let close_words: Vec<_> = (1..500).flat_map(|n| {
+                [num + n, num - n].into_iter()
+            })
+            .map(|n| IString{str:n.to_string()})
+            .collect();
+            let word_res = WordResult {
+                word: word.to_string(),
+                close_words,
+                variants: vec![],
+            };
+            Ok(Some(word_res))
+        // skip quering if word is common
+        // } else if let Some(res) = {
         } else {
-            Ok(None)
+            let opt_results = embed.word_similarity(word, NUM_WORD_RESULTS);
+            // iterate through text of the article
+            // println!("results: {:?}", results);
+            if let Some(results) = opt_results {
+                let word_res = results.iter().map(|similarity_res| {
+                    let str = similarity_res.word().to_string();
+                    IString{str}
+                }).collect();
+                let variants = get_variants(word, &word_res);
+                println!("variants: {:?}", variants);
+                Ok(Some(WordResult{word:word.to_string(), close_words: word_res, variants}))
+            } else {
+                Ok(None)
+            }
         }
     }
     pub fn query_multiple(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {

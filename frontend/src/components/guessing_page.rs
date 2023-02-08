@@ -114,7 +114,7 @@ impl Reducible for ArticleState {
                 let (result, num_moves) = if let Some(res) = engine.reveals.get(&word) {
                     (res, self.num_moves + 1)
                 } else {
-                    (&empty_vec, self.num_moves)
+                    (&empty_vec, self.num_moves + 1)
                 };
                 let victory = page_clone.reveal_with_engine(&word, result);
                 if victory {
@@ -521,15 +521,14 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
     if let Some(_page) = &(*state).opt_page {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
-        state.dispatch(ArticleAction::RevealWithEngine(word.clone()));
         let ongoing_game = state.opt_game.clone().expect("There should be a game");
+        state.dispatch(ArticleAction::RevealWithEngine(word.clone()));
         let future = async move { games::update_game(ongoing_game.game.id, &word.to_lowercase()).await };
         handle_future(future, move |data: Result<Option<WordResult>, Status>| {
             match data {
                 Ok(opt_word_res) => {
                     // let state = state.clone();
                     if let Some(_word_res) = opt_word_res {
-                        // state.dispatch(ArticleAction::Reveal(word_res));
                     }
                 }
                 Err(_) => {
