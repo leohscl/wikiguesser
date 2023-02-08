@@ -13,11 +13,6 @@ use super::app::Route;
 use super::rating::Rating;
 use gloo::dialogs::confirm;
 
-//TODO(leo): mettre vert nouveaux mots -- ish
-//TODO(leo): Victoire !! -- ADD link to wikipedia ?
-
-
-
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum RevealStrength {
     Revealed,
@@ -26,11 +21,6 @@ pub enum RevealStrength {
     Distant(StringAndPos),
     NotRevealed,
 }
-
-
-type VString = Vec<String>;
-type VIndex = Vec<RevealStrength>;
-
 
 #[derive(Clone, PartialEq)]
 struct Page {
@@ -65,7 +55,6 @@ enum ArticleAction {
     SetInput(String),
     _Reveal(WordResult),
     RevealWithEngine(String),
-    _SetEngine(GameEngine),
     RevealAll,
 }
 
@@ -96,16 +85,6 @@ impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
-            ArticleAction::_SetEngine(game_engine) => {
-                Self { 
-                    opt_page: self.opt_page.clone(),
-                    num_moves: self.num_moves,
-                    victory: self.victory,
-                    opt_user: self.opt_user.clone(),
-                    opt_game: self.opt_game.clone(),
-                    opt_engine: Some(game_engine),
-                }.into()
-            }
             ArticleAction::Render(page, opt_game, opt_engine) => {
                 Self { 
                     opt_page: Some(page.clone()),
@@ -138,6 +117,21 @@ impl Reducible for ArticleState {
                     (&empty_vec, self.num_moves)
                 };
                 let victory = page_clone.reveal_with_engine(&word, result);
+                if victory {
+                    if let Some(ongoing_game) = self.opt_game.clone() {
+                        let future = async move { finish_game(ongoing_game.game.id).await };
+                        handle_future(future, move |data: Result<Game, Status>| {
+                            match data {
+                                Ok(game) => {
+                                    log::info!("Game finished: {:?}", game);
+                                }
+                                Err(_) => {
+                                    log::info!("Error loading the data !");
+                                },
+                            };
+                        });
+                    }
+                }
                 page_clone.input = "".to_string();
                 Self { 
                     opt_page: Some(page_clone),
@@ -212,6 +206,19 @@ pub struct GuessingPageProps {
     pub dummy: bool,
 }
 
+// Use macro to simplify html
+macro_rules! ifcond {
+    ($cond:expr, $html_vic:expr) => {
+        {
+            if $cond {
+                $html_vic
+            } else {
+                html!{}
+            }
+        }
+    };
+}
+
 #[function_component(GuessingPage)]
 pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let state = use_reducer(move || ArticleState::default());
@@ -240,7 +247,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                     match data {
                                         Ok(game_engine) => {
                                             log::info!("Game engine loaded: {:?}", game_engine);
-                                            // state_1.dispatch(ArticleAction::SetEngine(game_engine));
                                             state_1.dispatch(ArticleAction::Render(page.clone(), Some(ongoing_game.clone()), Some(game_engine)));
                                             for opt_res in all_results.clone().into_iter() {
                                                 if let Some(word_res) = opt_res {
@@ -344,7 +350,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             } else {
                 "".to_string()
             };
-            // let new_revelations = &page.new_revelations;
             let content_new = &page.content.new_revelations;
             let mut num_found = 0;
             let mut num_close = 0;
@@ -355,29 +360,24 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     _ => num_close+=1,
                 }
             }
-            // log::info!("close: {}", num_close);
             html! {
                 <p align="justified" class="content">
                     {
-                        if victory {
-                            let victory_text = format!("Page trouvée en {} coups", state.num_moves); 
-                            html! {<span id="victory"> {victory_text} </span>}
-                        } else {
-                            html!{}
-                        }
+                        ifcond!(
+                            victory,
+                            {
+                                let victory_text = format!("Page trouvée en {} coups", state.num_moves);
+                                html! {<span id="victory"> {victory_text} </span>}
+                            }
+                        )
                     }
                     <div/>
                     <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
                     {
-                        if victory {
-                            html! {
-                                <button onclick={onclick_reveal_all}>
-                                    { "Révéler tous les mots" }
-                                </button>
-                            }
-                        } else {
-                            html!{}
-                        }
+                        ifcond!(
+                            victory,
+                            html! { <button onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
+                        )
                     }
                     <div/>
                     {
@@ -401,7 +401,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     </div>
                     {
                         if let Some(_user) = &props.opt_user {
-                            // html! {<span > {"User logged in !"}</span>}
                             html!{
                                 <button onclick={onclick_like}>
                                     { "Like" }
@@ -412,71 +411,38 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         }
                     }
                     {
-                        if victory {
-                            html!{}
-                        } else {
-                            html! {
-                                <button onclick={onclick_give_up}>
-                                    { "Give up" }
-                                </button>
-                            }
-                        }
+                        ifcond!(
+                            !victory,
+                            html! { <button onclick={onclick_give_up}> { "Give up" } </button> }
+                        )
                     }
                     {
-                        if victory {
-                            html! {
-                                <button onclick={onclick_report_page}>
-                                    { "Report an issue" }
-                                </button>
-                            }
-                        } else {
-                            html!{}
-                        }
-                    }
-                    //{
-                    //    if victory {
-                    //        html! {
-                    //            <button onclick={onclick_rate_page}>
-                    //                { "Rate the page !" }
-                    //            </button>
-                    //        }
-                    //    } else {
-                    //        html!{}
-                    //    }
-                    //}
-                    {
-                        if victory {
-                            html! {
-                                <button onclick={onclick_new_page}>
-                                    { "Try another page !" }
-                                </button>
-                            }
-                        } else {
-                            html!{}
-                        }
+                        ifcond!(
+                            victory,
+                            html! { <button onclick={onclick_report_page}> { "Report an issue" } </button> }
+                        )
                     }
                     {
-                        if victory {
-                            if let Some(ongoing_game) = &state.opt_game {
+                        ifcond!(
+                            victory,
+                            html! { <button onclick={onclick_new_page}> { "Try another page !" } </button> }
+                        )
+                    }
+                    {
+                        {
+                            let html_rating = if let Some(ongoing_game) = &state.opt_game {
                                 let article_id = ongoing_game.article.id;
                                 html! {
                                     <Rating {article_id}/>
                                 }
                             } else {
                                 html!{}
-                            }
-                        } else {
-                            html!{}
+                            };
+                            ifcond!(victory, html_rating)
                         }
                     }
                     {
-                        if victory {
-                            html! {
-                                <b> {views_string}</b>
-                            }
-                        } else {
-                            html!{}
-                        }
+                        ifcond!(victory, html! { <b> {views_string}</b> })
                     }
                 </p>
             }
@@ -516,7 +482,7 @@ fn page_from_json(article: Article) -> Page {
     }
 }
 
-fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
+fn initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
     //TODO(léo): handle all pre_revealed words
     let determinants = vec!["le", "la", "les", "un", "une", "des"];
     let pronoms = vec!["ce", "ces", "de", "du"];
@@ -540,7 +506,7 @@ fn initialize_revealed_vector(vec_text: &VString) -> VIndex {
         })
         .collect()
 }
-fn create_string_vector(text: String) -> VString {
+fn create_string_vector(text: String) -> Vec<String> {
     let processed_text = text.replace("\n\n\n", "").to_string();
     let processed_text = processed_text.replace("()", "").to_string();
     let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-', '\n'];
