@@ -20,3 +20,6 @@ wiki_random/migrations/
 wiki_random/send_db_to_rds.sh
 wiki_random/wikiguesser_dump.sql
 wiki_random/target/
+aws_commands
+backend/sens_test
+backend/tmp
