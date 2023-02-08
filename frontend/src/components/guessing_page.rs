@@ -120,16 +120,7 @@ impl Reducible for ArticleState {
                 if victory {
                     if let Some(ongoing_game) = self.opt_game.clone() {
                         let future = async move { finish_game(ongoing_game.game.id).await };
-                        handle_future(future, move |data: Result<Game, Status>| {
-                            match data {
-                                Ok(game) => {
-                                    log::info!("Game finished: {:?}", game);
-                                }
-                                Err(_) => {
-                                    log::info!("Error loading the data !");
-                                },
-                            };
-                        });
+                        handle_future(future, finish);
                     }
                 }
                 page_clone.input = "".to_string();
@@ -148,16 +139,7 @@ impl Reducible for ArticleState {
                 if victory {
                     if let Some(ongoing_game) = self.opt_game.clone() {
                         let future = async move { finish_game(ongoing_game.game.id).await };
-                        handle_future(future, move |data: Result<Game, Status>| {
-                            match data {
-                                Ok(game) => {
-                                    log::info!("Game finished: {:?}", game);
-                                }
-                                Err(_) => {
-                                    log::info!("Error loading the data !");
-                                },
-                            };
-                        });
+                        handle_future(future, finish);
                     }
                 }
                 page_clone.input = "".to_string();
@@ -175,16 +157,7 @@ impl Reducible for ArticleState {
                 page_clone.reveal_all();
                 if let Some(ongoing_game) = self.opt_game.clone() {
                     let future = async move { finish_game(ongoing_game.game.id).await };
-                    handle_future(future, move |data: Result<Game, Status>| {
-                        match data {
-                            Ok(game) => {
-                                log::info!("Game finished: {:?}", game);
-                            }
-                            Err(_) => {
-                                log::info!("Error loading the data !");
-                            },
-                        };
-                    });
+                    handle_future(future, finish);
                 }
                 Self { 
                     opt_page: Some(page_clone),
@@ -197,6 +170,17 @@ impl Reducible for ArticleState {
             },
         }
     }
+}
+
+fn finish(data: Result<Game, Status>) {
+    match data {
+        Ok(game) => {
+            log::info!("Game finished: {:?}", game);
+        }
+        Err(_) => {
+            log::info!("Error loading the data !");
+        },
+    };
 }
 
 #[derive(Properties, PartialEq, Debug)]
@@ -327,6 +311,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             state.dispatch(ArticleAction::SetInput(value));
         })
     };
+
     let onkeypress = {
         let state = state.clone();
         Callback::from( move |keydown_event: KeyboardEvent| {
@@ -336,6 +321,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             }
         })
     };
+
     let green_emo = '🟩';
     let orange_emo = '🟧';
     let red_emo = '🟥';
@@ -400,15 +386,10 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         { page.content.render() }
                     </div>
                     {
-                        if let Some(_user) = &props.opt_user {
-                            html!{
-                                <button onclick={onclick_like}>
-                                    { "Like" }
-                                </button>
-                            }
-                        } else {
-                            html!{}
-                        }
+                        ifcond!(
+                            props.opt_user.is_some(),
+                            html!{ <button onclick={onclick_like}> { "Like" } </button> }
+                        )
                     }
                     {
                         ifcond!(
@@ -454,7 +435,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
 fn page_from_json(article: Article) -> Page {
     let title = String::from(article.title + " ");
     let content = String::from(article.content + " ");
-
     let title_vec = create_string_vector(title);
     let content_vec = create_string_vector(content);
     let revealed_title = initialize_revealed_vector(&title_vec);
@@ -506,6 +486,7 @@ fn initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
         })
         .collect()
 }
+
 fn create_string_vector(text: String) -> Vec<String> {
     let processed_text = text.replace("\n\n\n", "").to_string();
     let processed_text = processed_text.replace("()", "").to_string();
@@ -535,12 +516,12 @@ fn create_string_vector(text: String) -> Vec<String> {
         .map(|str| str.to_string())
         .collect()
 }
+
 fn trigger_query(state: UseReducerHandle<ArticleState>) {
     if let Some(_page) = &(*state).opt_page {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
         state.dispatch(ArticleAction::RevealWithEngine(word.clone()));
-        // let future = async move { query(&word.to_lowercase()).await };
         let ongoing_game = state.opt_game.clone().expect("There should be a game");
         let future = async move { games::update_game(ongoing_game.game.id, &word.to_lowercase()).await };
         handle_future(future, move |data: Result<Option<WordResult>, Status>| {
