@@ -13,7 +13,6 @@ use super::app::Route;
 use super::hidden_field::HiddenField;
 use super::rating::Rating;
 use gloo::dialogs::confirm;
-use std::clone;
 use std::cmp::Ordering;
 
 //TODO(leo): mettre vert nouveaux mots -- ish
@@ -119,7 +118,7 @@ impl HiddenText {
                             }
                         },
                         RevealStrength::Revealed => {
-                            let green_style = format!("background-color: rgb(200, {}, 200);color: rgb(0, {}, 0);", 250, 50);
+                            let green_style = format!("background-color: rgb(100, {}, 100);color: rgb(0, {}, 0);", 250, 50);
                             html!{<span style={green_style}> {text}</span>}
                         },
                         RevealStrength::VeryClose(str_pos)=> { render_string(&str_pos.str, 232, text, true) },
@@ -149,80 +148,24 @@ impl HiddenText {
         self.new_revelations = vec![RevealStrength::NotRevealed; self.revealed.len()];
         self.fully_revealed = true;
     }
-
-    fn reveal_with_engine(&mut self, word: &str, result_engine: &Vec<StringAndPos>) -> bool {
-        todo!();
-        // let vec_matches: Vec<_> =
-        //     self.text.clone()
-        //     .into_iter()
-        //     .map(|string_hidden| {
-        //         let string_hidden_lowercase = string_hidden.to_lowercase();
-        //         let word_lowercase = word_res.word.to_lowercase();
-        //         if word_lowercase == string_hidden_lowercase {
-        //             RevealStrength::Revealed
-        //         } else if same_root(&word_lowercase, &string_hidden_lowercase) {
-        //             RevealStrength::Revealed
-        //         } else {
-        //             match word_res.close_words.iter().position(|candidate| candidate.str.to_lowercase() == string_hidden_lowercase) {
-        //                 None => RevealStrength::NotRevealed,
-        //                 Some(position) => {
-        //                     let str_pos = StringAndPos{str:word_lowercase, pos: position};
-        //                     // log::info!("position: {}", position);
-        //                     if position < 10 {
-        //                         RevealStrength::VeryClose(str_pos)
-        //                     } else if position < 100 {
-        //                         RevealStrength::Close(str_pos)
-        //                     } else {
-        //                         RevealStrength::Distant(str_pos)
-        //                     } 
-        //                 },
-        //             }
-        //         }
-        //     })
-        //     .collect();
-        // // log::info!("matches: {:?}", vec_matches);
-        // // log::info!("old_reveal: {:?}", self.revealed);
-        // let vec_new_revelation: Vec<_> = vec_matches.clone().into_iter()
-        //     .zip(self.revealed.iter())
-        //     .map(|(reveal_new, reveal_old)| {
-        //         if &reveal_new < reveal_old {
-        //             reveal_new
-        //         } else {
-        //             RevealStrength::NotRevealed
-        //         }
-        //     })
-        //     .collect();
-        // let revealed: Vec<RevealStrength> = vec_matches.into_iter()
-        //     .zip(self.revealed.iter())
-        //     .map(|(reveal_new, reveal_old)| {
-        //         if &reveal_new < reveal_old {
-        //             reveal_new
-        //         } else {
-        //             reveal_old.clone()
-        //         }
-        //     })
-        //     .collect();
-        // self.new_revelations = vec_new_revelation;
-        // let all_revealed = revealed.iter().all(|rev_strength| matches!(rev_strength, RevealStrength::Revealed));
-        // self.revealed = revealed;
-        // all_revealed
-    }
-    fn reveal(&mut self, word_res: &WordResult) -> bool {
-        let vec_matches: Vec<_> =
-            self.text.clone()
+    fn get_word_match_with_engine(&mut self, word: &str, result_engine: &Vec<StringAndPos>) -> Vec<RevealStrength> {
+        self.text.clone()
             .into_iter()
             .map(|string_hidden| {
                 let string_hidden_lowercase = string_hidden.to_lowercase();
-                let word_lowercase = word_res.word.to_lowercase();
+                let word_lowercase = word.to_lowercase();
                 if word_lowercase == string_hidden_lowercase {
                     RevealStrength::Revealed
                 } else if same_root(&word_lowercase, &string_hidden_lowercase) {
                     RevealStrength::Revealed
                 } else {
-                    match word_res.close_words.iter().position(|candidate| candidate.str.to_lowercase() == string_hidden_lowercase) {
+                    let opt_index = result_engine.iter().position(|str_and_pos| str_and_pos.str == string_hidden);
+                    match opt_index {
                         None => RevealStrength::NotRevealed,
-                        Some(position) => {
-                            let str_pos = StringAndPos{str:word_lowercase, pos: position};
+                        Some(index) => {
+                            let mut str_pos = result_engine[index].clone();
+                            str_pos.str = word.to_string();
+                            let position = str_pos.pos;
                             // log::info!("position: {}", position);
                             if position < 10 {
                                 RevealStrength::VeryClose(str_pos)
@@ -230,14 +173,49 @@ impl HiddenText {
                                 RevealStrength::Close(str_pos)
                             } else {
                                 RevealStrength::Distant(str_pos)
-                            } 
+                            }
                         },
                     }
                 }
             })
-            .collect();
-        // log::info!("matches: {:?}", vec_matches);
-        // log::info!("old_reveal: {:?}", self.revealed);
+            .collect()
+    }
+
+    fn reveal_with_engine(&mut self, word: &str, result_engine: &Vec<StringAndPos>) -> bool {
+        let vec_matches = self.get_word_match_with_engine(word, result_engine);
+        self.update_revelations(&vec_matches)
+    }
+
+    fn get_word_match(&mut self, word_res: &WordResult) -> Vec<RevealStrength> {
+        self.text.clone()
+        .into_iter()
+        .map(|string_hidden| {
+            let string_hidden_lowercase = string_hidden.to_lowercase();
+            let word_lowercase = word_res.word.to_lowercase();
+            if word_lowercase == string_hidden_lowercase {
+                RevealStrength::Revealed
+            } else if same_root(&word_lowercase, &string_hidden_lowercase) {
+                RevealStrength::Revealed
+            } else {
+                match word_res.close_words.iter().position(|candidate| candidate.str.to_lowercase() == string_hidden_lowercase) {
+                    None => RevealStrength::NotRevealed,
+                    Some(position) => {
+                        let str_pos = StringAndPos{str:word_lowercase, pos: position};
+                        // log::info!("position: {}", position);
+                        if position < 10 {
+                            RevealStrength::VeryClose(str_pos)
+                        } else if position < 100 {
+                            RevealStrength::Close(str_pos)
+                        } else {
+                            RevealStrength::Distant(str_pos)
+                        }
+                    },
+                }
+            }
+        })
+        .collect()
+    }
+    fn update_revelations(&mut self, vec_matches: &Vec<RevealStrength>) -> bool {
         let vec_new_revelation: Vec<_> = vec_matches.clone().into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {
@@ -251,8 +229,8 @@ impl HiddenText {
         let revealed: Vec<RevealStrength> = vec_matches.into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {
-                if &reveal_new < reveal_old {
-                    reveal_new
+                if reveal_new < reveal_old {
+                    reveal_new.clone()
                 } else {
                     reveal_old.clone()
                 }
@@ -262,6 +240,10 @@ impl HiddenText {
         let all_revealed = revealed.iter().all(|rev_strength| matches!(rev_strength, RevealStrength::Revealed));
         self.revealed = revealed;
         all_revealed
+    }
+    fn reveal(&mut self, word_res: &WordResult) -> bool {
+        let vec_matches = self.get_word_match(word_res);
+        self.update_revelations(&vec_matches)
     }
 }
 
@@ -296,9 +278,9 @@ impl ToString for HiddenText {
 enum ArticleAction {
     Render(Page, Option<OngoingGame>, Option<GameEngine>),
     SetInput(String),
-    Reveal(WordResult),
+    _Reveal(WordResult),
     RevealWithEngine(String),
-    SetEngine(GameEngine),
+    _SetEngine(GameEngine),
     RevealAll,
 }
 
@@ -329,7 +311,7 @@ impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
-            ArticleAction::SetEngine(game_engine) => {
+            ArticleAction::_SetEngine(game_engine) => {
                 Self { 
                     opt_page: self.opt_page.clone(),
                     num_moves: self.num_moves,
@@ -346,7 +328,7 @@ impl Reducible for ArticleState {
                     victory: false,
                     opt_user: self.opt_user.clone(),
                     opt_game,
-                    opt_engine: opt_engine,
+                    opt_engine,
                 }.into()
             },
             ArticleAction::SetInput(input) => {
@@ -364,30 +346,24 @@ impl Reducible for ArticleState {
             ArticleAction::RevealWithEngine(word) => {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 let engine = self.opt_engine.clone().expect("There should be an engine now..");
-                if let Some(result) = engine.reveals.get(&word) {
-                    let victory = page_clone.reveal_with_engine(&word, result);
-                    Self { 
-                        opt_page: Some(page_clone),
-                        num_moves: self.num_moves + 1,
-                        victory,
-                        opt_user: self.opt_user.clone(),
-                        opt_game: self.opt_game.clone(),
-                        opt_engine: self.opt_engine.clone(),
-                    }.into()
-                } else  {
-                    Self { 
-                        opt_page: Some(page_clone),
-                        num_moves: self.num_moves,
-                        victory: false,
-                        opt_user: self.opt_user.clone(),
-                        opt_game: self.opt_game.clone(),
-                        opt_engine: self.opt_engine.clone(),
-                    }.into()
-                }
+                let empty_vec = Vec::new();
+                let (result, num_moves) = if let Some(res) = engine.reveals.get(&word) {
+                    (res, self.num_moves + 1)
+                } else {
+                    (&empty_vec, self.num_moves)
+                };
+                let victory = page_clone.reveal_with_engine(&word, result);
+                page_clone.input = "".to_string();
+                Self { 
+                    opt_page: Some(page_clone),
+                    num_moves,
+                    victory,
+                    opt_user: self.opt_user.clone(),
+                    opt_game: self.opt_game.clone(),
+                    opt_engine: self.opt_engine.clone(),
+                }.into()
             },
-            ArticleAction::Reveal(word_res) => {
-                // TODO(leo): check word exists
-                // TODO(leo): check words close
+            ArticleAction::_Reveal(word_res) => {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 let victory = page_clone.reveal(&word_res);
                 if victory {
@@ -483,7 +459,8 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                             state_1.dispatch(ArticleAction::Render(page.clone(), Some(ongoing_game.clone()), Some(game_engine)));
                                             for opt_res in all_results.clone().into_iter() {
                                                 if let Some(word_res) = opt_res {
-                                                    state.dispatch(ArticleAction::Reveal(word_res));
+                                                    state.dispatch(ArticleAction::RevealWithEngine(word_res.word));
+                                                    // state.dispatch(ArticleAction::Reveal(word_res));
                                                 }
                                             }
                                         }
@@ -811,15 +788,16 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
     if let Some(_page) = &(*state).opt_page {
         let state = state.clone();
         let word = (*state).opt_page.as_ref().expect("There should be a Page").input.clone();
+        state.dispatch(ArticleAction::RevealWithEngine(word.clone()));
         // let future = async move { query(&word.to_lowercase()).await };
         let ongoing_game = state.opt_game.clone().expect("There should be a game");
         let future = async move { games::update_game(ongoing_game.game.id, &word.to_lowercase()).await };
         handle_future(future, move |data: Result<Option<WordResult>, Status>| {
             match data {
                 Ok(opt_word_res) => {
-                    let state = state.clone();
-                    if let Some(word_res) = opt_word_res {
-                        state.dispatch(ArticleAction::Reveal(word_res));
+                    // let state = state.clone();
+                    if let Some(_word_res) = opt_word_res {
+                        // state.dispatch(ArticleAction::Reveal(word_res));
                     }
                 }
                 Err(_) => {
