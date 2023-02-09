@@ -35,19 +35,15 @@ impl WordResult {
                 variants: vec![],
             };
             Ok(Some(word_res))
-        // skip quering if word is common
-        // } else if let Some(res) = {
         } else {
             let opt_results = embed.word_similarity(word, NUM_WORD_RESULTS);
             // iterate through text of the article
-            // println!("results: {:?}", results);
             if let Some(results) = opt_results {
                 let word_res = results.iter().map(|similarity_res| {
                     let str = similarity_res.word().to_string();
                     IString{str}
                 }).collect();
                 let variants = get_variants(word, &word_res);
-                println!("variants: {:?}", variants);
                 Ok(Some(WordResult{word:word.to_string(), close_words: word_res, variants}))
             } else {
                 Ok(None)

@@ -1,8 +1,7 @@
-use models::words::WordModel;
 use finalfusion::prelude::*;
 use std::fs::File;
 use std::io::{ BufRead, BufReader };
-use crate::models::articles::Article;
+use crate::models::words::WordResult;
 
 #[macro_use]
 extern crate diesel;
@@ -39,6 +38,13 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
+    let fifu_file = FILE_MODEL;
+    let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
+    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
+    let common_words = get_common_words();
+    println!("Creating engine");
+    let result_common = WordResult::query_multiple(&common_words, &embed).expect("common words should not fail");
+
     HttpServer::new(move || {
         App::new()
             .wrap(
@@ -56,27 +62,7 @@ async fn main() -> std::io::Result<()> {
                     .max_age(3600),
             )
             .app_data(
-                web::Data::new({
-                    let fifu_file = FILE_MODEL;
-                    let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
-                    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
-                    WordModel {
-                        embedding: embed,
-                    }
-                })
-            )
-            .app_data(
-                web::Data::new({
-                    let fifu_file = FILE_MODEL;
-                    let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
-                    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
-                    let filename = "data/list_common.txt";
-                    // Open the file in read-only mode.
-                    let file = File::open(filename).unwrap();
-                    // Read the file line by line, and return an iterator of the lines of the file.
-                    let common_words: Vec<String> = BufReader::new(file).lines().filter_map(|l| l.ok()).collect();
-                    Article::create_engine(&common_words, &embed)
-                })
+                web::Data::new(result_common.clone())
             )
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())
@@ -112,4 +98,12 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", 8000))?
     .run()
     .await
+}
+
+fn get_common_words() -> Vec<String> {
+    let filename = "data/list_common.txt";
+    // Open the file in read-only mode.
+    let file = File::open(filename).unwrap();
+    // Read the file line by line, and return an iterator of the lines of the file.
+    BufReader::new(file).lines().filter_map(|l| l.ok()).collect()
 }

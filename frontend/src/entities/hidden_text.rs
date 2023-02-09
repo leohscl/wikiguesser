@@ -105,8 +105,10 @@ impl HiddenText {
                             let mut str_pos = result_engine[index].clone();
                             str_pos.str = word.to_string();
                             let position = str_pos.pos;
-                            // log::info!("position: {}", position);
-                            if position < 10 {
+                            // if it is a variant
+                            if position == 0 {
+                                RevealStrength::Revealed
+                            } else if position < 10 {
                                 RevealStrength::VeryClose(str_pos)
                             } else if position < 100 {
                                 RevealStrength::Close(str_pos)

@@ -2,8 +2,8 @@ use actix_web::{web, HttpResponse, HttpRequest, Error};
 use crate::{errors::database_error::DatabaseError, models::games::GamePrompt};
 use crate::Pool;
 use crate::models::games::Game;
-use crate::models::words::WordModel;
 use serde::{Serialize, Deserialize};
+use crate::handlers::utils::get_word_model;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputGame {
@@ -36,7 +36,8 @@ pub async fn get_ongoing(req: HttpRequest, pool: web::Data<Pool>, game_prompt: w
 }
 
 // /games/get_or_create/{email}
-pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
+pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>) -> Result<HttpResponse, Error> {
+    // let model = get_word_model();
     println!("Request: {:?}", req);
     let val = req.connection_info();
     println!("Address {:?}", val);
@@ -53,7 +54,7 @@ pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt:
     };
     let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
     let input_game = InputGame{ip_or_email, is_ip};
-    Ok(web::block(move || Game::get_or_create(&mut connection, &input_game, &model, &opt_cat))
+    Ok(web::block(move || Game::get_or_create(&mut connection, &input_game, &opt_cat))
         .await
         .map(|user| HttpResponse::Ok().json(user))
         .map_err(DatabaseError)?)
@@ -77,7 +78,8 @@ pub async fn finish(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpRes
         .map_err(DatabaseError)?)
 }
 // /games/update/{id}
-pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
+pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>) -> Result<HttpResponse, Error> {
+    let model = get_word_model();
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
         .await

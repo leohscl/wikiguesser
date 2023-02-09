@@ -58,7 +58,7 @@ impl Game {
         Ok(new_game)
     }
 
-    pub fn get_or_create(connection: &mut PgConnection, input_game: &InputGame, word_model: &WordModel, opt_cat: &Option<String>) -> Result<OngoingGame, diesel::result::Error> {
+    pub fn get_or_create(connection: &mut PgConnection, input_game: &InputGame, opt_cat: &Option<String>) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let query = query.filter(games::is_finished.eq(false));
@@ -69,9 +69,9 @@ impl Game {
         } else {
             Self::create(connection, input_game, opt_cat)?
         };
-        let all_results = Self::get_all_results(&game, word_model)?;
+        // let all_results = Self::get_all_results(&game, word_model)?;
         let article = Article::get(game.article_id, connection)?;
-        Ok(OngoingGame{ game, article, all_results })
+        Ok(OngoingGame{ game, article, all_results: Vec::new() })
     }
     pub fn get_ongoing(connection: &mut PgConnection, input_game: &InputGame) -> Result<Option<Game>, diesel::result::Error> {
         let query = games::table.into_boxed();
@@ -136,8 +136,8 @@ impl Game {
         Ok(updated_game)
     }
 
-    fn get_all_results(game: &Game, word_model: &WordModel) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
-        let words_to_query: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
-        WordResult::query_multiple(&words_to_query, &word_model.embedding)
-    }
+    // fn get_all_results(game: &Game, word_model: &WordModel) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
+    //     let words_to_query: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+    //     WordResult::query_multiple(&words_to_query, &word_model.embedding)
+    // }
 }

@@ -4,3 +4,4 @@ pub mod users;
 pub mod reports;
 pub mod ratings;
 pub mod games;
+pub mod utils;

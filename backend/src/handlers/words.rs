@@ -1,8 +1,10 @@
-use crate::{errors::database_error::DatabaseError, models::words::WordResult, models::words::WordModel};
+use crate::{errors::database_error::DatabaseError, models::words::WordResult};
 use actix_web::{web, Error, HttpResponse};
+use crate::handlers::utils::get_word_model;
 
 // /words/{word}
-pub async fn query(word: web::Path<String>, model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
+pub async fn query(word: web::Path<String>) -> Result<HttpResponse, Error> {
+    let model = get_word_model();
     Ok(web::block(move || WordResult::query(&word, &model.embedding))
         .await
         .map(|reveal| HttpResponse::Ok().json(reveal))

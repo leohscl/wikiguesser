@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::schema::{articles, categories};
+use crate::{schema::{articles, categories}, get_common_words};
 use diesel::PgConnection;
 use crate::diesel::{QueryDsl, RunQueryDsl, ExpressionMethods};
 use serde::Deserialize;
@@ -29,7 +29,7 @@ struct StringAndPos {
     pos: usize,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GameEngine {
     reveals: HashMap<String, Vec<StringAndPos>>,
 }
@@ -49,16 +49,18 @@ impl Article {
 
     pub fn get_dummy_engine(word_model: &WordModel) -> Result<GameEngine, diesel::result::Error> {
         let dummy_article = Article::dummy_2();
-        dummy_article.get_engine(&word_model.embedding)
+        let content = String::from(dummy_article.content.clone() + " ");
+        let content_vec = Self::create_string_vector(&content);
+        Self::create_engine_with_common(&content_vec, &word_model.embedding, &Vec::new())
     }
 
-    pub fn get_engine_from_id(connection: &mut PgConnection, article_id: i32, word_model: &WordModel) -> Result<GameEngine, diesel::result::Error> {
+    pub fn get_engine_from_id(connection: &mut PgConnection, article_id: i32, word_model: &WordModel, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
         let query = articles::table.into_boxed();
         let query = query.filter(articles::id.eq(article_id));
         let results = query.load::<Article>(connection)?;
         println!("Game: {:?}", results);
         if let Some(article) = results.into_iter().next() {
-            article.get_engine(&word_model.embedding)
+            article.get_engine(&word_model.embedding, result_common)
         } else {
             Err(diesel::result::Error::NotFound)
         }
@@ -103,28 +105,36 @@ impl Article {
         Ok(article)
     }
 
-    pub fn get_engine(&self, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<GameEngine, diesel::result::Error> {
+    pub fn get_engine(&self, embed: &Embeddings<VocabWrap, StorageViewWrap>, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
         let content = String::from(self.content.clone() + " ");
         let mut content_vec = Self::create_string_vector(&content);
         println!("Number of word in page: {}", content_vec.len());
         content_vec.sort();
         content_vec.dedup();
+        println!("Number of word after dedup: {}", content_vec.len());
+        // remove common words
+        let common_words = get_common_words();
+        for common_w in common_words.iter() {
+            content_vec.retain(|word| word != common_w);
+        }
+
         println!("Number of word to query: {}", content_vec.len());
         // can optimise this further by caching first 100 words in wiki
-        Self::create_engine(&content_vec, embed)
+        Self::create_engine_with_common(&content_vec, embed, result_common)
     }
-
-    pub fn create_engine(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<GameEngine, diesel::result::Error> {
+    pub fn create_engine_with_common(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
         let mut hash = HashMap::new();
  
         let query_results = WordResult::query_multiple(words, embed)?;
-        for query_result in query_results.into_iter().filter_map(|r| r) {
-            for _word in query_result.variants {
-                // skip for now
+        let iterator_common = result_common.into_iter().filter_map(|r| r.as_ref());
+        for query_result in query_results.iter().filter_map(|r| r.as_ref()).chain(iterator_common) {
+            for word in &query_result.variants {
+                let string_and_pos = StringAndPos{str: query_result.word.to_string(), pos: 0};
+                hash.entry(word.str.clone()).or_insert(Vec::with_capacity(20)).push(string_and_pos);
             }
-            for (pos, word) in query_result.close_words.into_iter().enumerate() {
-                let string_and_pos = StringAndPos{str: query_result.word.to_string(), pos};
-                hash.entry(word.str).or_insert(Vec::with_capacity(20)).push(string_and_pos);
+            for (pos, word) in query_result.close_words.iter().enumerate() {
+                let string_and_pos = StringAndPos{str: query_result.word.to_string(), pos: pos + 1};
+                hash.entry(word.str.clone()).or_insert(Vec::with_capacity(20)).push(string_and_pos);
             }
         }
         Ok(GameEngine { reveals: hash })
