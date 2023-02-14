@@ -1,7 +1,7 @@
+use crate::models::words::WordResult;
 use finalfusion::prelude::*;
 use std::fs::File;
-use std::io::{ BufRead, BufReader };
-use crate::models::words::WordResult;
+use std::io::{BufRead, BufReader};
 
 #[macro_use]
 extern crate diesel;
@@ -40,10 +40,12 @@ async fn main() -> std::io::Result<()> {
 
     let fifu_file = FILE_MODEL;
     let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
-    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
+    let embed: Embeddings<VocabWrap, StorageViewWrap> =
+        Embeddings::read_embeddings(&mut reader).unwrap();
     let common_words = get_common_words();
     println!("Creating engine");
-    let result_common = WordResult::query_multiple(&common_words, &embed).expect("common words should not fail");
+    let result_common =
+        WordResult::query_multiple(&common_words, &embed).expect("common words should not fail");
 
     HttpServer::new(move || {
         App::new()
@@ -61,39 +63,62 @@ async fn main() -> std::io::Result<()> {
                     .allowed_header(http::header::CONTENT_TYPE)
                     .max_age(3600),
             )
-            .app_data(
-                web::Data::new(result_common.clone())
-            )
+            .app_data(web::Data::new(result_common.clone()))
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())
             .route("/words/{word}", web::get().to(handlers::words::query))
-
             .route("/articles/{id}", web::get().to(handlers::articles::get))
-            .route("/articles/random/pick", web::get().to(handlers::articles::get_one))
-            .route("/articles/random_in/{category}", web::get().to(handlers::articles::get_one_incl_filter))
-            .route("/articles/random_out/{category}", web::get().to(handlers::articles::get_one_excl_filter))
-            .route("/articles/dummy_engine/", web::get().to(handlers::articles::get_dummy_engine))
-            .route("/articles/get_engine/{article_id}", web::get().to(handlers::articles::get_engine))
-
+            .route(
+                "/articles/random/pick",
+                web::get().to(handlers::articles::get_one),
+            )
+            .route(
+                "/articles/random_in/{category}",
+                web::get().to(handlers::articles::get_one_incl_filter),
+            )
+            .route(
+                "/articles/random_out/{category}",
+                web::get().to(handlers::articles::get_one_excl_filter),
+            )
+            .route(
+                "/articles/dummy_engine/",
+                web::get().to(handlers::articles::get_dummy_engine),
+            )
+            .route(
+                "/articles/get_engine/{article_id}",
+                web::get().to(handlers::articles::get_engine),
+            )
             .route("/ratings", web::post().to(handlers::ratings::create))
-
-            .route("/reports/{article_id}", web::get().to(handlers::reports::get_article_reports))
+            .route(
+                "/reports/{article_id}",
+                web::get().to(handlers::reports::get_article_reports),
+            )
             .route("/reports", web::post().to(handlers::reports::create))
             .route("/reports", web::get().to(handlers::reports::get_all))
-
             .route("/users/", web::get().to(handlers::users::get_users))
             .route("/users/{email}", web::get().to(handlers::users::get_user))
             .route("/users/", web::post().to(handlers::users::create))
-
-            .route("/games/get_or_create", web::post().to(handlers::games::get_or_create))
-            .route("/games/get_ongoing", web::post().to(handlers::games::get_ongoing))
-            .route("/games/update/{id}", web::post().to(handlers::games::update))
-            .route("/games/delete/{id}", web::delete().to(handlers::games::delete))
+            .route(
+                "/games/get_or_create",
+                web::post().to(handlers::games::get_or_create),
+            )
+            .route(
+                "/games/get_ongoing",
+                web::post().to(handlers::games::get_ongoing),
+            )
+            .route(
+                "/games/update/{id}",
+                web::post().to(handlers::games::update),
+            )
+            .route(
+                "/games/delete/{id}",
+                web::delete().to(handlers::games::delete),
+            )
             .route("/games/finish/{id}", web::get().to(handlers::games::finish))
-            // .route("/games/update/{word}", web::post().to(handlers::games::update))
-            // .route("/games/create/", web::post().to(handlers::games::create))
-            // .route("/games/{email}", web::get().to(handlers::users::get_user))
-            // .route("/games/", web::post().to(handlers::users::create))
+        // .route("/games/update/{word}", web::post().to(handlers::games::update))
+        // .route("/games/create/", web::post().to(handlers::games::create))
+        // .route("/games/{email}", web::get().to(handlers::users::get_user))
+        // .route("/games/", web::post().to(handlers::users::create))
     })
     .bind(("127.0.0.1", 8000))?
     .run()
@@ -105,5 +130,8 @@ fn get_common_words() -> Vec<String> {
     // Open the file in read-only mode.
     let file = File::open(filename).unwrap();
     // Read the file line by line, and return an iterator of the lines of the file.
-    BufReader::new(file).lines().filter_map(|l| l.ok()).collect()
+    BufReader::new(file)
+        .lines()
+        .filter_map(|l| l.ok())
+        .collect()
 }

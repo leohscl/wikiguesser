@@ -52,7 +52,8 @@ pub struct User {
 pub struct OngoingGame {
     pub game: Game,
     pub article: Article,
-    pub all_results: Vec<Option<WordResult>>,
+    pub words: Vec<String>,
+    // pub all_results: Vec<Option<WordResult>>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]

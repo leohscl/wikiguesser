@@ -226,17 +226,17 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                 let article_id = ongoing_game.article.id;
                                 let future = async move { get_engine(article_id).await };
                                 let state = state.clone();
-                                let all_results = ongoing_game.all_results.clone();
+                                let words = ongoing_game.words.clone();
                                 handle_future(future, move |data: Result<GameEngine, Status>| {
                                     match data {
                                         Ok(game_engine) => {
                                             log::info!("Game engine loaded: {:?}", game_engine);
                                             state_1.dispatch(ArticleAction::Render(page.clone(), Some(ongoing_game.clone()), Some(game_engine)));
-                                            for opt_res in all_results.clone().into_iter() {
-                                                if let Some(word_res) = opt_res {
-                                                    state.dispatch(ArticleAction::RevealWithEngine(word_res.word));
-                                                    // state.dispatch(ArticleAction::Reveal(word_res));
-                                                }
+                                            for word in words.clone().into_iter() {
+                                                state.dispatch(ArticleAction::RevealWithEngine(word));
+                                                // if let Some(word_res) = opt_res {
+                                                //     // state.dispatch(ArticleAction::Reveal(word_res));
+                                                // }
                                             }
                                         }
                                         Err(_) => {

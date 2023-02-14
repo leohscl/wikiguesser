@@ -1,15 +1,13 @@
-
-use crate::models::words::WordResult;
-use crate::{schema::*, handlers::games::InputGame};
-use diesel::{PgConnection, QueryDsl};
-use crate::diesel::RunQueryDsl;
-use crate::diesel::ExpressionMethods;
-use serde::Serialize;
-use serde::Deserialize;
-use rand::Rng;
-use crate::models::words::WordModel;
 use super::articles::Article;
-
+use crate::diesel::ExpressionMethods;
+use crate::diesel::RunQueryDsl;
+use crate::models::words::WordModel;
+use crate::models::words::WordResult;
+use crate::{handlers::games::InputGame, schema::*};
+use diesel::{PgConnection, QueryDsl};
+use rand::Rng;
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GamePrompt {
@@ -21,7 +19,8 @@ pub struct GamePrompt {
 pub struct OngoingGame {
     game: Game,
     article: Article,
-    all_results: Vec<Option<WordResult>>,
+    words: Vec<String>,
+    // all_results: Vec<Option<WordResult>>,
 }
 
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable, Insertable)]
@@ -35,8 +34,12 @@ pub struct Game {
 }
 
 impl Game {
-    fn create(connection: &mut PgConnection, game: &InputGame, opt_cat: &Option<String>) -> Result<Game, diesel::result::Error> {
-        // create article 
+    fn create(
+        connection: &mut PgConnection,
+        game: &InputGame,
+        opt_cat: &Option<String>,
+    ) -> Result<Game, diesel::result::Error> {
+        // create article
         let new_article = if let Some(cat) = opt_cat {
             Article::get_one_incl_filter(connection, cat)?
         } else {
@@ -58,7 +61,11 @@ impl Game {
         Ok(new_game)
     }
 
-    pub fn get_or_create(connection: &mut PgConnection, input_game: &InputGame, opt_cat: &Option<String>) -> Result<OngoingGame, diesel::result::Error> {
+    pub fn get_or_create(
+        connection: &mut PgConnection,
+        input_game: &InputGame,
+        opt_cat: &Option<String>,
+    ) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let query = query.filter(games::is_finished.eq(false));
@@ -70,10 +77,18 @@ impl Game {
             Self::create(connection, input_game, opt_cat)?
         };
         // let all_results = Self::get_all_results(&game, word_model)?;
+        let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
         let article = Article::get(game.article_id, connection)?;
-        Ok(OngoingGame{ game, article, all_results: Vec::new() })
+        Ok(OngoingGame {
+            game,
+            article,
+            words,
+        })
     }
-    pub fn get_ongoing(connection: &mut PgConnection, input_game: &InputGame) -> Result<Option<Game>, diesel::result::Error> {
+    pub fn get_ongoing(
+        connection: &mut PgConnection,
+        input_game: &InputGame,
+    ) -> Result<Option<Game>, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let query = query.filter(games::is_finished.eq(false));
@@ -86,7 +101,10 @@ impl Game {
         }
     }
 
-    pub fn get(connection: &mut PgConnection, ip_or_email: &str) -> Result<Option<Game>, diesel::result::Error> {
+    pub fn get(
+        connection: &mut PgConnection,
+        ip_or_email: &str,
+    ) -> Result<Option<Game>, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(ip_or_email));
         let results = query.load::<Game>(connection)?;
@@ -94,7 +112,10 @@ impl Game {
         Ok(results.into_iter().next())
     }
 
-    pub fn delete(connection: &mut PgConnection, game_id: i32) -> Result<(), diesel::result::Error> {
+    pub fn delete(
+        connection: &mut PgConnection,
+        game_id: i32,
+    ) -> Result<(), diesel::result::Error> {
         diesel::delete(games::table.filter(games::id.eq(game_id))).execute(connection)?;
         Ok(())
     }
@@ -114,8 +135,12 @@ impl Game {
         }
     }
 
-
-    pub fn update_with_id(connection: &mut PgConnection, id: i32, word: &str, word_model: &WordModel) -> Result<Option<WordResult>, diesel::result::Error> {
+    pub fn update_with_id(
+        connection: &mut PgConnection,
+        id: i32,
+        word: &str,
+        word_model: &WordModel,
+    ) -> Result<Option<WordResult>, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::id.eq(id));
         let results = query.load::<Game>(connection)?;
@@ -128,7 +153,11 @@ impl Game {
         }
     }
 
-    fn update(connection: &mut PgConnection, game: &Game, word: &str) -> Result<Game, diesel::result::Error> {
+    fn update(
+        connection: &mut PgConnection,
+        game: &Game,
+        word: &str,
+    ) -> Result<Game, diesel::result::Error> {
         let updated_words = game.words.to_owned() + " " + word;
         let updated_game = diesel::update(game)
             .set(games::words.eq(updated_words.to_owned()))

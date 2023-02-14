@@ -1,4 +1,3 @@
- 
 pub mod components;
 pub mod entities;
 pub mod service;
@@ -15,5 +14,3 @@ fn main() {
     // yew::start_app::<GuessingPage>();
     yew::start_app::<App>();
 }
-
-
