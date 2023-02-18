@@ -1,6 +1,5 @@
 /target
 .dockerignore
-.env_amazon
 backend/Cargo.lock
 backend/data/corrected_model_fr.fifu
 backend/target/
