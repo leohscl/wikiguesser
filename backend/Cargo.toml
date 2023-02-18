@@ -23,4 +23,3 @@ finalfusion = "^0.17"
 rand = "^0.8"
 distance = "0.4"
 uuid = { version = "1.2.2", features = ["v4"]}
-common = { path = "../common/"}
