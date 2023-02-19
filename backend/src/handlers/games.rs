@@ -90,14 +90,14 @@ fn get_ip_or_email(req: &HttpRequest, opt_email: &Option<String>) -> (bool, Stri
     if let Some(email) = opt_email {
         (false, email.to_string())
     } else {
-        (true, get_ip(&req))
+        (true, get_ip(req))
     }
 }
 fn get_ip(req: &HttpRequest) -> String {
-    let host_value = req.headers().get(actix_web::http::header::HOST).expect("Header should contain host");
+    // let host_value = req.headers().get(actix_web::http::header::HOST).expect("Header should contain host");
+    let connection_info = req.connection_info();
+    let host_value = connection_info.realip_remote_addr();
     println!("host_value: {:?}", host_value);
-    String::from(host_value.to_str().expect("Ip adress"))
-    // if let Some(val) = req.peer_addr() {
-    //     println!("Address {:?}", val.ip());
-    // };
+    // String::from(host_value.to_str().expect("Ip adress"))
+    String::from(host_value.expect("Ip adress"))
 }
