@@ -22,3 +22,4 @@ wiki_random/target/
 aws_commands
 backend/sens_test
 backend/tmp
+backend/benchmark/target/
