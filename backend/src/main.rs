@@ -24,7 +24,7 @@ mod schema;
 // Constants
 const DATABASE_URL: &str = dotenv!("DATABASE_URL");
 const FILE_MODEL: &str = dotenv!("FILE_MODEL");
-const NUM_WORD_RESULTS: usize = 1000;
+const NUM_WORD_RESULTS: usize = 300;
 
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
