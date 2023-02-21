@@ -1,0 +1,72 @@
+EC2
+ssh -i "/home/lhenches/.ssh/aws/t430.pem" ec2-user@ec2-35-180-111-60.eu-west-3.compute.amazonaws.com
+scp -i "/home/lhenches/.ssh/aws/t430.pem" ~/.ssh/id_rsa ec2-user@ec2-35-180-111-60.eu-west-3.compute.amazonaws.com:~/.ssh/
+
+
+RDS
+rds instance
+username=postgres
+password=wikiguesser
+
+sudo amazon-linux-extras install -y postgresql10
+sudo yum install -y postgresql-devel
+sudo yum install -y git
+sudo yum install -y docker
+sudo yum install -y gcc gcc-c++ make
+sudo yum install -y openssl-devel
+git clone https://github.com/leohscl/wikiguesser
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+cd wikiguesser/wiki_random
+cargo run --release
+
+cd wikiguesser/backend
+cargo install diesel_cli ?
+cargo install diesel_cli --no-default-features --features postgres ?
+
+# ubuntu
+ 
+sudo apt-get update
+sudo apt install -y postgresql git gcc make tmux pkg-config openssl libssl-dev libpq-dev
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+git clone https://github.com/leohscl/wikiguesser
+source ~/.bashrc
+cd wikiguesser
+cp .env_amazon .env
+cd wiki_random/
+tmux
+# PGPASSWORD=wikiguesser psql -h database-2.c2zgka3ai9ya.eu-west-3.rds.amazonaws.com -p 5432 -U postgres 
+export DATABASE_URL="postgres://postgres:wikiguesser@database-2.c2zgka3ai9ya.eu-west-3.rds.amazonaws.com:5432/wikiguesser"
+
+cargo install diesel_cli --no-default-features --features postgres
+bash diesel_setup.sh
+cargo run
+rm -r target
+
+
+
+
+cd ../frontend/
+
+cargo install --locked trunk
+sudo apt install -y apache2
+
+rustup target add wasm32-unknown-unknown
+trunk build --release
+sudo cp dist/* /var/www/html/
+rm -r target
+
+# add to /etc/apache2/sites-available/000-default.conf
+# ProxyPass /backend/ http://localhost:8000/
+# ProxyPassReverse /backend/ http://localhost:8000/
+
+
+cd ../backend/
+curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+sudo apt-get install git-lfs
+git lfs install
+git pull
+cargo build --release
+
+sudo systemctl restart apache2

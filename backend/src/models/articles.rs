@@ -119,7 +119,6 @@ impl Article {
         }
 
         println!("Number of word to query: {}", content_vec.len());
-        // can optimise this further by caching first 100 words in wiki
         Self::create_engine_with_common(&content_vec, embed, result_common)
     }
     pub fn create_engine_with_common(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
@@ -137,6 +136,7 @@ impl Article {
                 hash.entry(word.str.clone()).or_insert(Vec::with_capacity(20)).push(string_and_pos);
             }
         }
+        println!("Done creating engine !");
         Ok(GameEngine { reveals: hash })
     }
 
