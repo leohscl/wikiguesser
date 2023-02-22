@@ -142,7 +142,6 @@ impl Article {
 
     fn create_string_vector(text: &str) -> Vec<String> {
         let processed_text = text.replace("\n\n\n", "").to_string();
-        let processed_text = processed_text.replace("()", "").to_string();
         let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-', '\n'];
         let separator_indexes: Vec<_> = [0].into_iter().chain(
             processed_text
@@ -150,7 +149,8 @@ impl Article {
             .filter_map(|(index, char)| {
                 match separators.iter().find(|c| *c == &char) {
                     Some(_) => {
-                        Some([index, index+1])
+                        let num_bytes_char = char.len_utf8();
+                        Some([index, index+num_bytes_char])
                     },
                     None => None,
                 }

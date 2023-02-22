@@ -1,4 +1,5 @@
 /target
+compute_freq
 .dockerignore
 backend/Cargo.lock
 backend/data/corrected_model_fr.fifu
