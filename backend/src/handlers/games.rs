@@ -3,7 +3,7 @@ use crate::{errors::database_error::DatabaseError, models::games::GamePrompt};
 use crate::Pool;
 use crate::models::games::Game;
 use serde::{Serialize, Deserialize};
-use crate::handlers::utils::get_word_model;
+use crate::models::words::WordModel;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputGame {
@@ -78,8 +78,7 @@ pub async fn finish(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpRes
         .map_err(DatabaseError)?)
 }
 // /games/update/{id}
-pub async fn update(pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>) -> Result<HttpResponse, Error> {
-    let model = get_word_model();
+pub async fn update(model: web::Data<WordModel>, pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
         .await

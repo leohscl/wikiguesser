@@ -2,6 +2,7 @@ use crate::models::words::WordResult;
 use finalfusion::prelude::*;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use crate::models::words::WordModel;
 
 #[macro_use]
 extern crate diesel;
@@ -66,6 +67,16 @@ async fn main() -> std::io::Result<()> {
             //         .max_age(3600),
             // )
             .app_data(web::Data::new(result_common.clone()))
+            .app_data(
+                web::Data::new({
+                    let fifu_file = FILE_MODEL;
+                    let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
+                    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
+                    WordModel {
+                        embedding: embed,
+                    }
+                })
+            )
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())
             .route("/words/{word}", web::get().to(handlers::words::query))

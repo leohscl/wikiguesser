@@ -1,4 +1,4 @@
-use crate::{handlers::utils::get_word_model, models::words::WordResult};
+use crate::models::words::{WordResult, WordModel};
 use {
     crate::{errors::database_error::DatabaseError, models::articles::Article, Pool},
     actix_web::{web, Error, HttpResponse},
@@ -38,8 +38,7 @@ pub async fn get_one_excl_filter(pool: web::Data<Pool>, cat: web::Path<String>) 
         .map_err(DatabaseError)?)
 }
 // /articles/get_engine/{id}
-pub async fn get_engine(pool: web::Data<Pool>, article_id: web::Path<i32>, result_common: web::Data<Vec<Option<WordResult>>>) -> Result<HttpResponse, Error> {
-    let model = get_word_model();
+pub async fn get_engine(pool: web::Data<Pool>, article_id: web::Path<i32>, model: web::Data<WordModel>, result_common: web::Data<Vec<Option<WordResult>>>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Article::get_engine_from_id(&mut connection, *article_id, &model, &result_common))
         .await
@@ -47,8 +46,7 @@ pub async fn get_engine(pool: web::Data<Pool>, article_id: web::Path<i32>, resul
         .map_err(DatabaseError)?)
 }
 // /articles/dummy_engine
-pub async fn get_dummy_engine() -> Result<HttpResponse, Error> {
-    let model = get_word_model();
+pub async fn get_dummy_engine(model: web::Data<WordModel>) -> Result<HttpResponse, Error> {
     Ok(web::block(move || Article::get_dummy_engine(&model))
         .await
         .map(|user| HttpResponse::Ok().json(user))
