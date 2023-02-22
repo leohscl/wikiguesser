@@ -59,6 +59,10 @@ rm -r target
 # add to /etc/apache2/sites-available/000-default.conf
 # ProxyPass /backend/ http://localhost:8000/
 # ProxyPassReverse /backend/ http://localhost:8000/
+# RewriteEngine On
+# RewriteRule ^/guess /var/www/html/index.html
+# ServerName localhost
+
 
 
 cd ../backend/

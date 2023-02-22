@@ -46,6 +46,7 @@ async fn main() -> std::io::Result<()> {
     println!("Creating engine");
     let result_common =
         WordResult::query_multiple(&common_words, &embed).expect("common words should not fail");
+    drop(embed);
 
     HttpServer::new(move || {
         App::new()
