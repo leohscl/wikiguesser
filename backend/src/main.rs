@@ -128,7 +128,8 @@ async fn main() -> std::io::Result<()> {
 
 fn get_common_words() -> Vec<String> {
     // let filename = "data/list_common.txt";
-    let filename = "data/result_10000";
+    // let filename = "data/result_10000";
+    let filename = "data/result_500";
     // Open the file in read-only mode.
     let file = File::open(filename).unwrap();
     // Read the file line by line, and return an iterator of the lines of the file.

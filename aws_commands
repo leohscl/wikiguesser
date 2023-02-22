@@ -36,7 +36,6 @@ cd wikiguesser
 cp .env_amazon .env
 cd wiki_random/
 tmux
-# PGPASSWORD=wikiguesser psql -h database-2.c2zgka3ai9ya.eu-west-3.rds.amazonaws.com -p 5432 -U postgres 
 export DATABASE_URL="postgres://postgres:wikiguesser@database-2.c2zgka3ai9ya.eu-west-3.rds.amazonaws.com:5432/wikiguesser"
 
 cargo install diesel_cli --no-default-features --features postgres
