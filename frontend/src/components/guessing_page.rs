@@ -12,6 +12,7 @@ use crate::entities::hidden_text::HiddenText;
 use super::app::Route;
 use super::rating::Rating;
 use gloo::dialogs::confirm;
+use super::past_words::{PastWords, PastWordsProps};
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum RevealStrength {
@@ -346,7 +347,10 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     _ => num_close+=1,
                 }
             }
+            let past_words = Vec::new();
             html! {
+                <div >
+                <PastWords {past_words}/>
                 <p align="justified" class="content">
                     {
                         ifcond!(
@@ -426,6 +430,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         ifcond!(victory, html! { <b> {views_string}</b> })
                     }
                 </p>
+                </div>
             }
         },
     }

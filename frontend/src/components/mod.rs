@@ -6,3 +6,4 @@ pub mod signup;
 pub mod launch_page;
 pub mod report_page;
 pub mod rating;
+pub mod past_words;
