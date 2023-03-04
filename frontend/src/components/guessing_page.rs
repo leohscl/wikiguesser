@@ -122,10 +122,15 @@ impl Reducible for ArticleState {
                     .clone()
                     .expect("There should be an engine now..");
                 let empty_vec = Vec::new();
+                let word_already_queried = self.word_queried.contains(&word);
                 let (result, num_moves) = if let Some(res) = engine.reveals.get(&word) {
-                    (res, self.num_moves + 1)
+                    if word_already_queried {
+                        (res, self.num_moves)
+                    } else {
+                        (res, self.num_moves + 1)
+                    }
                 } else {
-                    (&empty_vec, self.num_moves + 1)
+                    (&empty_vec, self.num_moves)
                 };
                 let victory = page_clone.reveal_with_engine(&word, result);
                 if victory {
@@ -136,7 +141,9 @@ impl Reducible for ArticleState {
                 }
                 page_clone.input = "".to_string();
                 let mut word_queried = self.word_queried.clone();
-                word_queried.push(word.clone());
+                if !word_already_queried {
+                    word_queried.push(word.clone());
+                }
                 Self {
                     opt_page: Some(page_clone),
                     num_moves,
@@ -247,7 +254,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                 handle_future(future, move |data: Result<GameEngine, Status>| {
                                     match data {
                                         Ok(game_engine) => {
-                                            log::info!("Game engine loaded: {:?}", game_engine);
                                             state_1.dispatch(ArticleAction::Render(
                                                 page.clone(),
                                                 Some(ongoing_game.clone()),
@@ -361,7 +367,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         None => html! {<span>{"Chargement.."}</span>},
         Some(page) => {
             let views_string = if let Some(game) = &state.opt_game {
-                log::info!("Views found");
                 let daily_views = game.article.views / 30;
                 "daily views: ".to_string() + &daily_views.to_string()
             } else {
@@ -378,8 +383,9 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 }
             }
             let past_words = state.word_queried.clone();
+            let no_words = past_words.len() == 1;
             html! {
-                <div >
+                <div style="display: flex;">
                 <PastWords {past_words}/>
                 <p align="justified" class="content">
                     {
@@ -401,15 +407,19 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     }
                     <div/>
                     {
-                    if num_found + num_close == 0 {
-                        if state.num_moves != 0 && !page.content.fully_revealed {
-                            html!{<span > {red_emo.to_string()} </span>}
-                        } else {
+                        if no_words {
                             html!{}
+                        } else {
+                            if num_found + num_close == 0 {
+                                if !page.content.fully_revealed {
+                                    html!{<span > {red_emo.to_string()} </span>}
+                                } else {
+                                    html!{}
+                                }
+                            } else {
+                                html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
+                            }
                         }
-                    } else {
-                        html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
-                    }
                     }
 
                     <div/>
@@ -497,7 +507,17 @@ fn page_from_json(article: Article) -> Page {
 }
 
 fn initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
-    //TODO(léo): handle all pre_revealed words
+    vec_text
+        .iter()
+        .map(|str| match str.chars().count() <= 1 {
+            true => RevealStrength::Revealed,
+            false => RevealStrength::NotRevealed,
+        })
+        .collect()
+}
+
+fn _initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
+    //TODO(léo): handle all pre_revealed words ?
     let determinants = vec!["le", "la", "les", "un", "une", "des"];
     let pronoms = vec!["ce", "ces", "de", "du"];
     let avoir_conj = vec!["eu", "aura", "a"];

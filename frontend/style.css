@@ -100,3 +100,9 @@ input, #signin, #sync {
 .rate > label:hover ~ input:checked ~ label {
     color: #c59b08;
 }
+.past_word {
+  box-shadow: 0 0 0.3rem #999;
+  border-radius: 0.2rem;
+  padding: 1.2rem;
+  margin-bottom: 1.6rem;
+}
