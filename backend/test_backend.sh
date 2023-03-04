@@ -6,13 +6,13 @@
 # echo $id
 # curl -X DELETE localhost:8000/games/$id
 
-curl localhost:8000/articles/random/pick
-# article on pom pom girls
-article_test_id="736095"
-# article on cristiano
-article_test_id_2="3146685"
-# guerre franco allemande 1870
-article_test_id_3="20328" 
+# curl localhost:8000/articles/random/pick
+# # article on pom pom girls
+# article_test_id="736095"
+# # article on cristiano
+# article_test_id_2="3146685"
+# # guerre franco allemande 1870
+# article_test_id_3="20328" 
 # testing report
 #
 # curl -d '{"article_id":"736095","report_cat":"Bug","description":"there is no bug this is a test"}' -H "Content-Type: application/json" localhost:8000/reports
@@ -26,5 +26,8 @@ article_test_id_3="20328"
 # testing model
 # curl localhost:8000/articles/dummy_engine/
 
-curl localhost:8000/articles/$article_test_id_3
-curl localhost:8000/articles/get_engine/$article_test_id_3
+# curl localhost:8000/articles/$article_test_id_3
+# curl localhost:8000/articles/get_engine/$article_test_id_3
+
+# testing word queries
+curl localhost:8000/words/science

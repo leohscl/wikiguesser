@@ -48,6 +48,7 @@ async fn main() -> std::io::Result<()> {
     let result_common =
         WordResult::query_multiple(&common_words, &embed).expect("common words should not fail");
     drop(embed);
+    println!("Using file model {}", FILE_MODEL);
 
     HttpServer::new(move || {
         App::new()
