@@ -1,8 +1,8 @@
+use crate::models::words::WordModel;
 use crate::models::words::WordResult;
 use finalfusion::prelude::*;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use crate::models::words::WordModel;
 
 #[macro_use]
 extern crate diesel;
@@ -45,10 +45,11 @@ async fn main() -> std::io::Result<()> {
         Embeddings::read_embeddings(&mut reader).unwrap();
     let common_words = get_common_words();
     println!("Creating engine");
+    println!("Using file model {}", FILE_MODEL);
     let result_common =
         WordResult::query_multiple(&common_words, &embed).expect("common words should not fail");
     drop(embed);
-    println!("Using file model {}", FILE_MODEL);
+    println!("Common words model constructed");
 
     HttpServer::new(move || {
         App::new()
@@ -68,16 +69,14 @@ async fn main() -> std::io::Result<()> {
             //         .max_age(3600),
             // )
             .app_data(web::Data::new(result_common.clone()))
-            .app_data(
-                web::Data::new({
-                    let fifu_file = FILE_MODEL;
-                    let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
-                    let embed: Embeddings<VocabWrap, StorageViewWrap> = Embeddings::read_embeddings(&mut reader).unwrap();
-                    WordModel {
-                        embedding: embed,
-                    }
-                })
-            )
+            .app_data(web::Data::new({
+                println!("Creating word model from embeddings !");
+                let fifu_file = FILE_MODEL;
+                let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
+                let embed: Embeddings<VocabWrap, StorageViewWrap> =
+                    Embeddings::read_embeddings(&mut reader).unwrap();
+                WordModel { embedding: embed }
+            }))
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())
             .route("/words/{word}", web::get().to(handlers::words::query))
@@ -134,14 +133,13 @@ async fn main() -> std::io::Result<()> {
         // .route("/games/{email}", web::get().to(handlers::users::get_user))
         // .route("/games/", web::post().to(handlers::users::create))
     })
+    .workers(2)
     .bind(("127.0.0.1", 8000))?
     .run()
     .await
 }
 
 fn get_common_words() -> Vec<String> {
-    // let filename = "data/list_common.txt";
-    // let filename = "data/result_10000";
     let filename = "data/result_500";
     // Open the file in read-only mode.
     let file = File::open(filename).unwrap();
