@@ -27,12 +27,18 @@ cargo install diesel_cli --no-default-features --features postgres ?
 # ubuntu
  
 sudo apt-get update
-sudo apt install -y postgresql git gcc make tmux pkg-config openssl libssl-dev libpq-dev
+sudo apt install -y postgresql git gcc make tmux pkg-config openssl libssl-dev libpq-dev apache2
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 git clone https://github.com/leohscl/wikiguesser
 source ~/.bashrc
 cd wikiguesser
+# add to /etc/apache2/sites-available/000-default.conf
+# ProxyPass /backend/ http://localhost:8000/
+# ProxyPassReverse /backend/ http://localhost:8000/
+# RewriteEngine On
+# RewriteRule ^/guess /var/www/html/index.html
+# ServerName localhost
 cp .env_amazon .env
 cd wiki_random/
 tmux
@@ -49,19 +55,13 @@ rm -r target
 cd ../frontend/
 
 cargo install --locked trunk
-sudo apt install -y apache2
 
 rustup target add wasm32-unknown-unknown
 trunk build --release
 sudo cp dist/* /var/www/html/
 rm -r target
 
-# add to /etc/apache2/sites-available/000-default.conf
-# ProxyPass /backend/ http://localhost:8000/
-# ProxyPassReverse /backend/ http://localhost:8000/
-# RewriteEngine On
-# RewriteRule ^/guess /var/www/html/index.html
-# ServerName localhost
+sudo systemctl restart apache2
 
 
 
@@ -72,4 +72,3 @@ git lfs install
 git pull
 cargo build --release
 
-sudo systemctl restart apache2
