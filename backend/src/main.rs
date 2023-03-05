@@ -112,6 +112,10 @@ async fn main() -> std::io::Result<()> {
             .route("/users/{email}", web::get().to(handlers::users::get_user))
             .route("/users/", web::post().to(handlers::users::create))
             .route(
+                "/games/get_or_create_with_id",
+                web::post().to(handlers::games::get_or_create_with_id),
+            )
+            .route(
                 "/games/get_or_create",
                 web::post().to(handlers::games::get_or_create),
             )

@@ -14,6 +14,11 @@ pub struct GamePrompt {
     pub cat: String,
     pub email: String,
 }
+#[derive(Deserialize, Serialize, Debug)]
+pub struct GamePromptId {
+    pub id: i32,
+    pub email: String,
+}
 
 #[derive(Debug, Serialize, Clone)]
 pub struct OngoingGame {
@@ -34,6 +39,28 @@ pub struct Game {
 }
 
 impl Game {
+    fn create_with_id(
+        connection: &mut PgConnection,
+        game: &InputGame,
+        article_id: i32,
+    ) -> Result<Game, diesel::result::Error> {
+        // create article
+        let new_article = Article::get_one_with_id(connection, article_id)?;
+        let mut rng = rand::thread_rng();
+        let id = rng.gen::<i32>();
+        let new_game = Game {
+            id,
+            article_id: new_article.id,
+            ip_or_email: game.ip_or_email.to_owned(),
+            is_ip: game.is_ip,
+            is_finished: false,
+            words: "".to_owned(),
+        };
+        diesel::insert_into(games::table)
+            .values(&new_game)
+            .execute(connection)?;
+        Ok(new_game)
+    }
     fn create(
         connection: &mut PgConnection,
         game: &InputGame,
@@ -61,6 +88,30 @@ impl Game {
         Ok(new_game)
     }
 
+    pub fn get_or_create_with_id(
+        connection: &mut PgConnection,
+        input_game: &InputGame,
+        article_id: i32,
+    ) -> Result<OngoingGame, diesel::result::Error> {
+        let query = games::table.into_boxed();
+        let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
+        let query = query.filter(games::is_finished.eq(false));
+        let results = query.load::<Game>(connection)?;
+        println!("Game: {:?}", results);
+        let game = if let Some(game) = results.into_iter().next() {
+            game
+        } else {
+            Self::create_with_id(connection, input_game, article_id)?
+        };
+        // let all_results = Self::get_all_results(&game, word_model)?;
+        let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+        let article = Article::get(game.article_id, connection)?;
+        Ok(OngoingGame {
+            game,
+            article,
+            words,
+        })
+    }
     pub fn get_or_create(
         connection: &mut PgConnection,
         input_game: &InputGame,

@@ -1,15 +1,18 @@
-use std::collections::HashMap;
-use crate::{schema::{articles, categories}, get_common_words};
-use diesel::PgConnection;
-use crate::diesel::{QueryDsl, RunQueryDsl, ExpressionMethods};
-use serde::Deserialize;
-use finalfusion::prelude::*;
+use crate::diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use crate::models::words::WordModel;
+use crate::{
+    get_common_words,
+    schema::{articles, categories},
+};
+use diesel::PgConnection;
+use finalfusion::prelude::*;
+use serde::Deserialize;
+use std::collections::HashMap;
 
 // use common::models::{Article, WordResult};
+use super::words::WordResult;
 use rand::Rng;
 use serde::Serialize;
-use super::words::WordResult;
 
 // TODO(leo): deduplicate code
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable)]
@@ -35,16 +38,27 @@ pub struct GameEngine {
 }
 
 impl Article {
-
     pub fn dummy() -> Self {
         let dummy_str = "thé";
-        Article{id: 1, wiki_id: 1, title: dummy_str.to_string(), content: dummy_str.to_string(), views: 1000000}
+        Article {
+            id: 1,
+            wiki_id: 1,
+            title: dummy_str.to_string(),
+            content: dummy_str.to_string(),
+            views: 1000000,
+        }
     }
 
     pub fn dummy_2() -> Self {
         let dummy_title = "thé".to_string();
         let dummy_content = "le thé c'est mieux que le café".to_string();
-        Article{id: 1, wiki_id: 1, title: dummy_title, content: dummy_content, views: 1000000}
+        Article {
+            id: 1,
+            wiki_id: 1,
+            title: dummy_title,
+            content: dummy_content,
+            views: 1000000,
+        }
     }
 
     pub fn get_dummy_engine(word_model: &WordModel) -> Result<GameEngine, diesel::result::Error> {
@@ -54,7 +68,12 @@ impl Article {
         Self::create_engine_with_common(&content_vec, &word_model.embedding, &Vec::new())
     }
 
-    pub fn get_engine_from_id(connection: &mut PgConnection, article_id: i32, word_model: &WordModel, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
+    pub fn get_engine_from_id(
+        connection: &mut PgConnection,
+        article_id: i32,
+        word_model: &WordModel,
+        result_common: &Vec<Option<WordResult>>,
+    ) -> Result<GameEngine, diesel::result::Error> {
         let query = articles::table.into_boxed();
         let query = query.filter(articles::id.eq(article_id));
         let results = query.load::<Article>(connection)?;
@@ -64,7 +83,6 @@ impl Article {
         } else {
             Err(diesel::result::Error::NotFound)
         }
-
     }
 
     pub fn get(id: i32, connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
@@ -72,40 +90,100 @@ impl Article {
         Ok(article)
     }
     pub fn get_one(connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
-        let vec_article = articles::table.filter(articles::views.gt(10000)).load::<Article>(connection)?;
+        let vec_article = articles::table
+            .filter(articles::views.gt(10000))
+            .load::<Article>(connection)?;
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..vec_article.len());
-        let article = vec_article.get(index).expect("There should be a first element").clone();
+        let article = vec_article
+            .get(index)
+            .expect("There should be an element")
+            .clone();
         Ok(article)
     }
-    pub fn get_one_excl_filter(connection: &mut PgConnection, cat_filter: &str) -> Result<Article, diesel::result::Error> {
+    pub fn get_one_with_id(
+        connection: &mut PgConnection,
+        id: i32,
+    ) -> Result<Article, diesel::result::Error> {
+        let join = articles::table.inner_join(categories::table);
+        let id_predicate = categories::article_id.eq(id);
+        let filtered = join.filter(id_predicate);
+        let sel = filtered.select((
+            articles::id,
+            articles::wiki_id,
+            articles::title,
+            articles::content,
+            articles::views,
+        ));
+        let vec_article = sel.distinct().load::<Article>(connection)?;
+        let mut rng = rand::thread_rng();
+        let index = rng.gen_range(0..vec_article.len());
+        println!("Nombre d'articles: {}", vec_article.len());
+        let article = vec_article
+            .get(index)
+            .expect("There should be an element")
+            .clone();
+        Ok(article)
+    }
+    pub fn get_one_excl_filter(
+        connection: &mut PgConnection,
+        cat_filter: &str,
+    ) -> Result<Article, diesel::result::Error> {
         Self::get_one_right_filter(connection, cat_filter, false)
     }
-    pub fn get_one_incl_filter(connection: &mut PgConnection, cat_filter: &str) -> Result<Article, diesel::result::Error> {
+    pub fn get_one_incl_filter(
+        connection: &mut PgConnection,
+        cat_filter: &str,
+    ) -> Result<Article, diesel::result::Error> {
         Self::get_one_right_filter(connection, cat_filter, true)
     }
-    fn get_one_right_filter(connection: &mut PgConnection, cat_filter: &str, incl: bool) -> Result<Article, diesel::result::Error> {
+    fn get_one_right_filter(
+        connection: &mut PgConnection,
+        cat_filter: &str,
+        incl: bool,
+    ) -> Result<Article, diesel::result::Error> {
         let join = articles::table.inner_join(categories::table);
-        let views_predicate = articles::views.gt(100);
+        // let views_predicate = articles::views.gt(100);
         let vec_article = if incl {
             let cat_predicate = categories::category.eq(cat_filter);
-            let filtered = join.filter(views_predicate).filter(cat_predicate);
-            let sel = filtered.select((articles::id, articles::wiki_id, articles::title, articles::content, articles::views));
+            // let filtered = join.filter(views_predicate).filter(cat_predicate);
+            let filtered = join.filter(cat_predicate);
+            let sel = filtered.select((
+                articles::id,
+                articles::wiki_id,
+                articles::title,
+                articles::content,
+                articles::views,
+            ));
             sel.distinct().load::<Article>(connection)?
         } else {
             let cat_predicate = categories::category.eq(cat_filter);
-            let filtered = join.filter(views_predicate).filter(cat_predicate);
-            let sel = filtered.select((articles::id, articles::wiki_id, articles::title, articles::content, articles::views));
+            // let filtered = join.filter(views_predicate).filter(cat_predicate);
+            let filtered = join.filter(cat_predicate);
+            let sel = filtered.select((
+                articles::id,
+                articles::wiki_id,
+                articles::title,
+                articles::content,
+                articles::views,
+            ));
             sel.distinct().load::<Article>(connection)?
         };
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..vec_article.len());
         println!("Nombre d'articles: {}", vec_article.len());
-        let article = vec_article.get(index).expect("There should be a first element").clone();
+        let article = vec_article
+            .get(index)
+            .expect("There should be an element")
+            .clone();
         Ok(article)
     }
 
-    pub fn get_engine(&self, embed: &Embeddings<VocabWrap, StorageViewWrap>, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
+    pub fn get_engine(
+        &self,
+        embed: &Embeddings<VocabWrap, StorageViewWrap>,
+        result_common: &Vec<Option<WordResult>>,
+    ) -> Result<GameEngine, diesel::result::Error> {
         let content = String::from(self.content.clone() + " ");
         let mut content_vec = Self::create_string_vector(&content);
         println!("Number of word in page: {}", content_vec.len());
@@ -121,19 +199,37 @@ impl Article {
         println!("Number of word to query: {}", content_vec.len());
         Self::create_engine_with_common(&content_vec, embed, result_common)
     }
-    pub fn create_engine_with_common(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>, result_common: &Vec<Option<WordResult>>) -> Result<GameEngine, diesel::result::Error> {
+    pub fn create_engine_with_common(
+        words: &Vec<String>,
+        embed: &Embeddings<VocabWrap, StorageViewWrap>,
+        result_common: &Vec<Option<WordResult>>,
+    ) -> Result<GameEngine, diesel::result::Error> {
         let mut hash = HashMap::new();
- 
+
         let query_results = WordResult::query_multiple(words, embed)?;
         let iterator_common = result_common.into_iter().filter_map(|r| r.as_ref());
-        for query_result in query_results.iter().filter_map(|r| r.as_ref()).chain(iterator_common) {
+        for query_result in query_results
+            .iter()
+            .filter_map(|r| r.as_ref())
+            .chain(iterator_common)
+        {
             for word in &query_result.variants {
-                let string_and_pos = StringAndPos{str: query_result.word.to_string(), pos: 0};
-                hash.entry(word.str.clone()).or_insert(Vec::with_capacity(20)).push(string_and_pos);
+                let string_and_pos = StringAndPos {
+                    str: query_result.word.to_string(),
+                    pos: 0,
+                };
+                hash.entry(word.str.clone())
+                    .or_insert(Vec::with_capacity(20))
+                    .push(string_and_pos);
             }
             for (pos, word) in query_result.close_words.iter().enumerate() {
-                let string_and_pos = StringAndPos{str: query_result.word.to_string(), pos: pos + 1};
-                hash.entry(word.str.clone()).or_insert(Vec::with_capacity(20)).push(string_and_pos);
+                let string_and_pos = StringAndPos {
+                    str: query_result.word.to_string(),
+                    pos: pos + 1,
+                };
+                hash.entry(word.str.clone())
+                    .or_insert(Vec::with_capacity(20))
+                    .push(string_and_pos);
             }
         }
         println!("Done creating engine !");
@@ -142,20 +238,26 @@ impl Article {
 
     fn create_string_vector(text: &str) -> Vec<String> {
         let processed_text = text.replace("\n\n\n", "").to_string();
-        let separators = [' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-', '\n'];
-        let separator_indexes: Vec<_> = [0].into_iter().chain(
-            processed_text
-            .char_indices()
-            .filter_map(|(index, char)| {
-                match separators.iter().find(|c| *c == &char) {
-                    Some(_) => {
-                        let num_bytes_char = char.len_utf8();
-                        Some([index, index+num_bytes_char])
-                    },
-                    None => None,
-                }
-            })
-            .flatten())
+        let separators = [
+            ' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[',
+            '-', '\n',
+        ];
+        let separator_indexes: Vec<_> = [0]
+            .into_iter()
+            .chain(
+                processed_text
+                    .char_indices()
+                    .filter_map(
+                        |(index, char)| match separators.iter().find(|c| *c == &char) {
+                            Some(_) => {
+                                let num_bytes_char = char.len_utf8();
+                                Some([index, index + num_bytes_char])
+                            }
+                            None => None,
+                        },
+                    )
+                    .flatten(),
+            )
             .collect();
         separator_indexes
             .windows(2)

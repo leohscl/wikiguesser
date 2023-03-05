@@ -87,11 +87,11 @@ input, #signin, #sync {
     content: '★ ';
 }
 .rate > input:checked ~ label {
-    color: #ffc700;    
+    color: #ffc700;
 }
 .rate:not(:checked) > label:hover,
 .rate:not(:checked) > label:hover ~ label {
-    color: #deb217;  
+    color: #deb217;
 }
 .rate > input:checked + label:hover,
 .rate > input:checked + label:hover ~ label,
@@ -105,4 +105,65 @@ input, #signin, #sync {
   border-radius: 0.2rem;
   padding: 1.2rem;
   margin-bottom: 1.6rem;
+}
+button.launch {
+  padding: 0.3rem;
+  margin-left: 1rem;
+  background-color: $green;
+  border: none;
+  border-radius: 3px;
+  box-shadow: 1px 1px 10px rgba(50,50,50,.4);
+  transition: .3s all ease;
+  letter-spacing: .05rem;
+  font-size: .85rem;
+  position: relative;
+  top: 0;
+  right: 0;
+
+  &:after,
+  &:before {
+    position: absolute;
+    font-family: 'Barrio', sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    color: darken($green, 20%);
+    transition: .3s all ease;
+  }
+
+  &:before {
+    content: '_';
+    position: absolute;
+    left: 1.4rem;
+    top: .9rem;
+  }
+
+  &:after {
+    content: '>';
+    position: absolute;
+    left: .8rem;
+    top: 1rem;
+  }
+
+  &:hover {
+    box-shadow: 1px 1px 20px rgba(150,150,150,.2);
+    top: -.1rem;
+    right: -.1rem;
+    cursor: pointer;
+
+
+    &:before {
+      content: '_';
+      position: absolute;
+      left: .8rem;
+      top: .7rem;
+      transform: translateY(-1px);
+    }
+
+    &:after {
+      content: '>';
+      position: absolute;
+      left: 1.1rem;
+      top: 1rem;
+    }
+  }
 }

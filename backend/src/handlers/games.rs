@@ -1,9 +1,12 @@
-use actix_web::{web, HttpResponse, HttpRequest, Error};
-use crate::{errors::database_error::DatabaseError, models::games::GamePrompt};
-use crate::Pool;
 use crate::models::games::Game;
-use serde::{Serialize, Deserialize};
 use crate::models::words::WordModel;
+use crate::Pool;
+use crate::{
+    errors::database_error::DatabaseError,
+    models::games::{GamePrompt, GamePromptId},
+};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputGame {
@@ -17,7 +20,11 @@ pub struct StringPost {
 }
 
 // /games/get_ongoing
-pub async fn get_ongoing(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>) -> Result<HttpResponse, Error> {
+pub async fn get_ongoing(
+    req: HttpRequest,
+    pool: web::Data<Pool>,
+    game_prompt: web::Json<GamePrompt>,
+) -> Result<HttpResponse, Error> {
     println!("Request: {:?}", req);
     let val = req.connection_info();
     println!("Address {:?}", val);
@@ -28,15 +35,47 @@ pub async fn get_ongoing(req: HttpRequest, pool: web::Data<Pool>, game_prompt: w
         Some(game_prompt.email.to_string())
     };
     let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
-    let input_game = InputGame{ip_or_email, is_ip};
-    Ok(web::block(move || Game::get_ongoing(&mut connection, &input_game))
-        .await
-        .map(|user| HttpResponse::Ok().json(user))
-        .map_err(DatabaseError)?)
+    let input_game = InputGame { ip_or_email, is_ip };
+    Ok(
+        web::block(move || Game::get_ongoing(&mut connection, &input_game))
+            .await
+            .map(|user| HttpResponse::Ok().json(user))
+            .map_err(DatabaseError)?,
+    )
 }
 
-// /games/get_or_create/{email}
-pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt: web::Json<GamePrompt>) -> Result<HttpResponse, Error> {
+// /games/get_or_create
+pub async fn get_or_create_with_id(
+    req: HttpRequest,
+    pool: web::Data<Pool>,
+    game_prompt: web::Json<GamePromptId>,
+) -> Result<HttpResponse, Error> {
+    // let model = get_word_model();
+    println!("Request: {:?}", req);
+    let val = req.connection_info();
+    println!("Address {:?}", val);
+    let mut connection = pool.get().unwrap();
+    let opt_email = if game_prompt.email == "None" {
+        None
+    } else {
+        Some(game_prompt.email.to_string())
+    };
+    let article_id = game_prompt.id;
+    let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
+    let input_game = InputGame { ip_or_email, is_ip };
+    Ok(
+        web::block(move || Game::get_or_create_with_id(&mut connection, &input_game, article_id))
+            .await
+            .map(|user| HttpResponse::Ok().json(user))
+            .map_err(DatabaseError)?,
+    )
+}
+// /games/get_or_create
+pub async fn get_or_create(
+    req: HttpRequest,
+    pool: web::Data<Pool>,
+    game_prompt: web::Json<GamePrompt>,
+) -> Result<HttpResponse, Error> {
     // let model = get_word_model();
     println!("Request: {:?}", req);
     let val = req.connection_info();
@@ -53,11 +92,13 @@ pub async fn get_or_create(req: HttpRequest, pool: web::Data<Pool>, game_prompt:
         Some(game_prompt.cat.to_string())
     };
     let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
-    let input_game = InputGame{ip_or_email, is_ip};
-    Ok(web::block(move || Game::get_or_create(&mut connection, &input_game, &opt_cat))
-        .await
-        .map(|user| HttpResponse::Ok().json(user))
-        .map_err(DatabaseError)?)
+    let input_game = InputGame { ip_or_email, is_ip };
+    Ok(
+        web::block(move || Game::get_or_create(&mut connection, &input_game, &opt_cat))
+            .await
+            .map(|user| HttpResponse::Ok().json(user))
+            .map_err(DatabaseError)?,
+    )
 }
 
 // /games/finish/{id}
@@ -78,12 +119,19 @@ pub async fn finish(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpRes
         .map_err(DatabaseError)?)
 }
 // /games/update/{id}
-pub async fn update(model: web::Data<WordModel>, pool: web::Data<Pool>, id: web::Path<i32>, word: web::Json<StringPost>) -> Result<HttpResponse, Error> {
+pub async fn update(
+    model: web::Data<WordModel>,
+    pool: web::Data<Pool>,
+    id: web::Path<i32>,
+    word: web::Json<StringPost>,
+) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
-        .await
-        .map(|user| HttpResponse::Ok().json(user))
-        .map_err(DatabaseError)?)
+    Ok(
+        web::block(move || Game::update_with_id(&mut connection, *id, &word.string, &model))
+            .await
+            .map(|user| HttpResponse::Ok().json(user))
+            .map_err(DatabaseError)?,
+    )
 }
 fn get_ip_or_email(req: &HttpRequest, opt_email: &Option<String>) -> (bool, String) {
     if let Some(email) = opt_email {

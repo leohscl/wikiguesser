@@ -7,8 +7,10 @@ use crate::entities::interfaces::{Article, WordResult};
 use crate::entities::interfaces::{Game, GameEngine, OngoingGame, Status, StringAndPos};
 use crate::service::articles::get_engine;
 use crate::service::future::handle_future;
-use crate::service::games::{self, finish_game, get_game};
+use crate::service::games::{self, finish_game, get_game, get_game_with_id};
 use gloo::dialogs::confirm;
+use std::future::Future;
+use std::pin::Pin;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
 use yew::prelude::*;
@@ -213,6 +215,7 @@ fn finish(data: Result<Game, Status>) {
 pub struct GuessingPageProps {
     pub opt_user: Option<User>,
     pub opt_cat: Option<String>,
+    pub opt_id: Option<i32>,
     pub dummy: bool,
 }
 
@@ -235,12 +238,18 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         {
             let dummy = props.dummy;
             let opt_cat = props.opt_cat.clone();
+            let opt_id = props.opt_id.clone();
             let state = state.clone();
             move |_| {
                 if !dummy {
                     // let future = async move { get_one_article(opt_cat).await };
+                    let future: Pin<Box<dyn Future<Output = Result<_, _>>>> =
+                        if let Some(id) = opt_id {
+                            Box::pin(async move { get_game_with_id(id).await })
+                        } else {
+                            Box::pin(async move { get_game(opt_cat).await })
+                        };
                     let state = state.clone();
-                    let future = async move { get_game(opt_cat).await };
                     handle_future(future, move |data: Result<OngoingGame, Status>| {
                         match data {
                             Ok(ongoing_game) => {
@@ -440,6 +449,17 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                             !victory,
                             html! { <button onclick={onclick_give_up}> { "Give up" } </button> }
                         )
+                    }
+                    {
+                        {
+                            if let Some(ongoing_game) = &state.opt_game {
+                                let article_id = ongoing_game.article.id;
+                                let text = "Game id: ".to_string() + &article_id.to_string();
+                                html! { <p> {text} </p> }
+                            } else {
+                                html!{}
+                            }
+                        }
                     }
                     {
                         ifcond!(

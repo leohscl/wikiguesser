@@ -30,4 +30,7 @@
 # curl localhost:8000/articles/get_engine/$article_test_id_3
 
 # testing word queries
-curl localhost:8000/words/science
+# curl localhost:8000/words/science
+str_post='{"id":1876391,"email":"None"}'
+curl_get_game="curl -v -X POST -d $str_post -H Content-Type:application/json localhost:8000/games/create_with_id"
+$curl_get_game
