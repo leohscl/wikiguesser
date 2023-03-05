@@ -80,6 +80,7 @@ async fn main() -> std::io::Result<()> {
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())
             .route("/words/{word}", web::get().to(handlers::words::query))
+            .route("/words/check/{word}", web::get().to(handlers::words::check))
             .route("/articles/{id}", web::get().to(handlers::articles::get))
             .route(
                 "/articles/random/pick",

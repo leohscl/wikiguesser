@@ -1,8 +1,9 @@
 // use distance::hamming;
-use serde::Serialize;
+use crate::NUM_WORD_RESULTS;
 use finalfusion::prelude::*;
 use finalfusion::similarity::WordSimilarity;
-use crate::NUM_WORD_RESULTS;
+use finalfusion::vocab::Vocab;
+use serde::Serialize;
 
 pub struct WordModel {
     pub embedding: Embeddings<VocabWrap, StorageViewWrap>,
@@ -21,14 +22,16 @@ pub struct WordResult {
 }
 
 impl WordResult {
-    pub fn query(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<Option<WordResult>, diesel::result::Error> {
+    pub fn query(
+        word: &str,
+        embed: &Embeddings<VocabWrap, StorageViewWrap>,
+    ) -> Result<Option<WordResult>, diesel::result::Error> {
         // skip quering if word is a number
         if let Ok(num) = word.parse::<i32>() {
-            let close_words: Vec<_> = (1..500).flat_map(|n| {
-                [num + n, num - n].into_iter()
-            })
-            .map(|n| IString{str:n.to_string()})
-            .collect();
+            let close_words: Vec<_> = (1..500)
+                .flat_map(|n| [num + n, num - n].into_iter())
+                .map(|n| IString { str: n.to_string() })
+                .collect();
             let word_res = WordResult {
                 word: word.to_string(),
                 close_words,
@@ -39,39 +42,62 @@ impl WordResult {
             let opt_results = embed.word_similarity(word, NUM_WORD_RESULTS);
             // iterate through text of the article
             if let Some(results) = opt_results {
-                let word_res = results.iter().map(|similarity_res| {
-                    let str = similarity_res.word().to_string();
-                    IString{str}
-                }).collect();
+                let word_res = results
+                    .iter()
+                    .map(|similarity_res| {
+                        let str = similarity_res.word().to_string();
+                        IString { str }
+                    })
+                    .collect();
                 let variants = get_variants(word, &word_res);
-                Ok(Some(WordResult{word:word.to_string(), close_words: word_res, variants}))
+                Ok(Some(WordResult {
+                    word: word.to_string(),
+                    close_words: word_res,
+                    variants,
+                }))
             } else {
                 Ok(None)
             }
         }
     }
-    pub fn query_multiple(words: &Vec<String>, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
+
+    pub fn check(word: &str, embed: &Embeddings<VocabWrap, StorageViewWrap>) -> bool {
+        let words_vocab = embed.vocab().words();
+        words_vocab.iter().find(|w| w == &word).is_some()
+    }
+
+    pub fn query_multiple(
+        words: &Vec<String>,
+        embed: &Embeddings<VocabWrap, StorageViewWrap>,
+    ) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
         words.iter().map(|word| Self::query(word, embed)).collect()
     }
 }
 
 fn get_variants(word: &str, word_res: &Vec<IString>) -> Vec<IString> {
-    let iter_opt_variants = word_res.iter()
+    let iter_opt_variants = word_res
+        .iter()
         .take(50)
-        .flat_map(|istr| { 
-            match same_root(istr, word) {
-                true => [Some(IString { str: istr.str.clone() }), get_ligature_variants(&istr.str)],
-                false => [None, None],
-            }
+        .flat_map(|istr| match same_root(istr, word) {
+            true => [
+                Some(IString {
+                    str: istr.str.clone(),
+                }),
+                get_ligature_variants(&istr.str),
+            ],
+            false => [None, None],
         });
-    std::iter::once(get_ligature_variants(word)).chain(iter_opt_variants)
+    std::iter::once(get_ligature_variants(word))
+        .chain(iter_opt_variants)
         .filter_map(|variant| variant)
         .collect()
 }
 
 fn get_ligature_variants(word: &str) -> Option<IString> {
     if word.contains("oe") {
-        Some(IString{str: str::replace(word, "oe", "œ")})
+        Some(IString {
+            str: str::replace(word, "oe", "œ"),
+        })
     } else {
         None
     }
@@ -83,7 +109,9 @@ fn same_root(icandidate: &IString, word: &str) -> bool {
     let l_word = word.len();
     let distance = hamming_with_normal_size(candidate, word);
     let distance_f64 = distance as f64;
-    let min_dist = std::cmp::max_by(l_candidate as f64, l_word as f64, |a, b| a.partial_cmp(b).unwrap());
+    let min_dist = std::cmp::max_by(l_candidate as f64, l_word as f64, |a, b| {
+        a.partial_cmp(b).unwrap()
+    });
     match min_dist {
         x if x == 0.0 => false,
         _ => {
@@ -100,11 +128,17 @@ fn hamming_with_normal_size(candidate: &str, word: &str) -> usize {
     // TODO(leo: handle errors)
     let (candidate_cmp, word_cmp) = if l_candidate < l_word {
         let padding = l_word - l_candidate;
-        let candidate_cmp = candidate.chars().chain(std::iter::repeat(' ').take(padding)).collect::<String>();
+        let candidate_cmp = candidate
+            .chars()
+            .chain(std::iter::repeat(' ').take(padding))
+            .collect::<String>();
         (candidate_cmp, word.to_string())
     } else {
         let padding = l_candidate - l_word;
-        let word_cmp: String = word.chars().chain(std::iter::repeat(' ').take(padding)).collect();
+        let word_cmp: String = word
+            .chars()
+            .chain(std::iter::repeat(' ').take(padding))
+            .collect();
         (candidate.to_string(), word_cmp)
     };
     // println!("Compared strings: {}, {}", candidate_cmp, word_cmp);
@@ -116,9 +150,10 @@ fn hamming_with_normal_size(candidate: &str, word: &str) -> usize {
 fn hamming(candidate: &str, word: &str) -> Result<usize, String> {
     match candidate.chars().count() == candidate.chars().count() {
         true => {
-            let dist = candidate.chars()
+            let dist = candidate
+                .chars()
                 .zip(word.chars())
-                .map(|(c_candidate, c_word)|{
+                .map(|(c_candidate, c_word)| {
                     // println!("Compared chars: {}, {}", c_candidate, c_word);
                     match c_candidate == c_word {
                         false => 1,
@@ -127,7 +162,7 @@ fn hamming(candidate: &str, word: &str) -> Result<usize, String> {
                 })
                 .sum();
             Ok(dist)
-        },
-        false => Err("Error !".to_string())
+        }
+        false => Err("Error !".to_string()),
     }
 }

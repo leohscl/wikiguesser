@@ -2,12 +2,13 @@ use super::app::Route;
 use super::past_words::PastWords;
 use super::rating::Rating;
 use crate::entities::hidden_text::HiddenText;
-use crate::entities::interfaces::User;
 use crate::entities::interfaces::{Article, WordResult};
+use crate::entities::interfaces::{BoolWrapper, User};
 use crate::entities::interfaces::{Game, GameEngine, OngoingGame, Status, StringAndPos};
 use crate::service::articles::get_engine;
 use crate::service::future::handle_future;
 use crate::service::games::{self, finish_game, get_game, get_game_with_id};
+use crate::service::words::check;
 use gloo::dialogs::confirm;
 use std::future::Future;
 use std::pin::Pin;
@@ -49,11 +50,18 @@ impl Page {
     }
 }
 
+#[derive(PartialEq, Clone)]
+struct WordChecked {
+    is_right: bool,
+    opt_word: Option<String>,
+}
+
 enum ArticleAction {
     Render(Page, Option<OngoingGame>, Option<GameEngine>),
     SetInput(String),
     _Reveal(WordResult),
     RevealWithEngine(String),
+    UnknownWord(String),
     RevealAll,
 }
 
@@ -63,6 +71,7 @@ struct ArticleState {
     victory: bool,
     num_moves: u32,
     word_queried: Vec<String>,
+    word_checked: WordChecked,
     opt_user: Option<User>,
     opt_game: Option<OngoingGame>,
     opt_engine: Option<GameEngine>,
@@ -74,6 +83,10 @@ impl Default for ArticleState {
             opt_page: None,
             num_moves: 0,
             word_queried: Vec::new(),
+            word_checked: WordChecked {
+                is_right: true,
+                opt_word: None,
+            },
             victory: false,
             opt_user: None,
             opt_game: None,
@@ -96,6 +109,10 @@ impl Reducible for ArticleState {
                     opt_page: Some(page.clone()),
                     num_moves: 0,
                     word_queried,
+                    word_checked: WordChecked {
+                        is_right: true,
+                        opt_word: None,
+                    },
                     victory: false,
                     opt_user: self.opt_user.clone(),
                     opt_game,
@@ -110,6 +127,7 @@ impl Reducible for ArticleState {
                     opt_page: Some(page_clone),
                     num_moves: self.num_moves,
                     word_queried: self.word_queried.clone(),
+                    word_checked: self.word_checked.clone(),
                     victory: self.victory,
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -117,6 +135,20 @@ impl Reducible for ArticleState {
                 }
                 .into()
             }
+            ArticleAction::UnknownWord(word) => Self {
+                opt_page: self.opt_page.clone(),
+                num_moves: self.num_moves,
+                word_queried: self.word_queried.clone(),
+                victory: self.victory,
+                word_checked: WordChecked {
+                    is_right: false,
+                    opt_word: Some(word),
+                },
+                opt_user: self.opt_user.clone(),
+                opt_game: self.opt_game.clone(),
+                opt_engine: self.opt_engine.clone(),
+            }
+            .into(),
             ArticleAction::RevealWithEngine(word) => {
                 let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 let engine = self
@@ -124,15 +156,10 @@ impl Reducible for ArticleState {
                     .clone()
                     .expect("There should be an engine now..");
                 let empty_vec = Vec::new();
-                let word_already_queried = self.word_queried.contains(&word);
-                let (result, num_moves) = if let Some(res) = engine.reveals.get(&word) {
-                    if word_already_queried {
-                        (res, self.num_moves)
-                    } else {
-                        (res, self.num_moves + 1)
-                    }
+                let result = if let Some(res) = engine.reveals.get(&word) {
+                    res
                 } else {
-                    (&empty_vec, self.num_moves)
+                    &empty_vec
                 };
                 let victory = page_clone.reveal_with_engine(&word, result);
                 if victory {
@@ -143,14 +170,13 @@ impl Reducible for ArticleState {
                 }
                 page_clone.input = "".to_string();
                 let mut word_queried = self.word_queried.clone();
-                if !word_already_queried {
-                    word_queried.push(word.clone());
-                }
+                word_queried.push(word.clone());
                 Self {
                     opt_page: Some(page_clone),
-                    num_moves,
+                    num_moves: self.num_moves,
                     victory,
                     word_queried,
+                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: self.opt_engine.clone(),
@@ -172,6 +198,7 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves + 1,
                     victory,
                     word_queried: self.word_queried.clone(),
+                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: self.opt_engine.clone(),
@@ -190,6 +217,7 @@ impl Reducible for ArticleState {
                     num_moves: self.num_moves,
                     victory: true,
                     word_queried: self.word_queried.clone(),
+                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: None,
@@ -269,12 +297,10 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                                 Some(game_engine),
                                             ));
                                             for word in words.clone().into_iter() {
+                                                // no checks needed
                                                 state.dispatch(ArticleAction::RevealWithEngine(
                                                     word,
                                                 ));
-                                                // if let Some(word_res) = opt_res {
-                                                //     // state.dispatch(ArticleAction::Reveal(word_res));
-                                                // }
                                             }
                                         }
                                         Err(_) => {
@@ -395,7 +421,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             let no_words = past_words.len() == 1;
             html! {
                 <div style="display: flex;">
-                <PastWords {past_words}/>
+                <PastWords {past_words} />
                 <p align="justified" class="content">
                     {
                         ifcond!(
@@ -606,28 +632,60 @@ fn create_string_vector(text: String) -> Vec<String> {
 }
 
 fn trigger_query(state: UseReducerHandle<ArticleState>) {
-    if let Some(_page) = &(*state).opt_page {
+    if let Some(mut page_clone) = state.opt_page.clone() {
         let state = state.clone();
-        let word = (*state)
-            .opt_page
-            .as_ref()
-            .expect("There should be a Page")
-            .input
-            .clone();
         let ongoing_game = state.opt_game.clone().expect("There should be a game");
-        state.dispatch(ArticleAction::RevealWithEngine(word.clone()));
-        let future =
-            async move { games::update_game(ongoing_game.game.id, &word.to_lowercase()).await };
-        handle_future(future, move |data: Result<Option<WordResult>, Status>| {
-            match data {
-                Ok(opt_word_res) => {
-                    // let state = state.clone();
-                    if let Some(_word_res) = opt_word_res {}
-                }
-                Err(_) => {
-                    log::info!("Error loading the data !");
-                }
+        let engine = state
+            .opt_engine
+            .clone()
+            .expect("There should be an engine now..");
+        let word = page_clone.input.clone();
+        let word_already_queried = state.word_queried.contains(&word);
+        if word_already_queried {
+            page_clone.reveal_with_engine(
+                &word,
+                engine
+                    .reveals
+                    .get(&word)
+                    .expect("Safe since already queried"),
+            );
+        } else {
+            let word_clone = word.clone();
+            let future = async move { check(&word_clone).await };
+            let word_clone = word.clone();
+            // update game only if word exists
+            handle_future(
+                future,
+                move |data: Result<BoolWrapper, Status>| match data {
+                    Ok(bool_wrap) => {
+                        if bool_wrap.boolean {
+                            state.dispatch(ArticleAction::RevealWithEngine(word_clone.clone()));
+                            let mut page_clone = state
+                                .opt_page
+                                .clone()
+                                .expect("There should be a page now..");
+                            page_clone.input = "".to_string();
+                        } else {
+                            state.dispatch(ArticleAction::UnknownWord(word_clone.clone()));
+                        }
+                    }
+                    Err(_) => {
+                        log::info!("Error loading the data !");
+                    }
+                },
+            );
+            let word_clone = word.clone();
+            let future = async move {
+                games::update_game(ongoing_game.game.id, &word_clone.to_lowercase()).await
             };
-        });
+            handle_future(future, move |data: Result<Option<WordResult>, Status>| {
+                match data {
+                    Ok(opt_word_res) => if let Some(_word_res) = opt_word_res {},
+                    Err(_) => {
+                        log::info!("Error finishing game");
+                    }
+                };
+            });
+        }
     }
 }

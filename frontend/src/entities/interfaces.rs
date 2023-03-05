@@ -1,8 +1,13 @@
-use std::collections::HashMap;
-use std::cmp::Ordering;
-use serde::Serialize;
-use serde::Deserialize;
 use chrono::NaiveDate;
+use serde::Deserialize;
+use serde::Serialize;
+use std::cmp::Ordering;
+use std::collections::HashMap;
+
+#[derive(Clone, Deserialize)]
+pub struct BoolWrapper {
+    pub boolean: bool,
+}
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Article {
