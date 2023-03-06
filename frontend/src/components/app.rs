@@ -134,7 +134,7 @@ pub fn app() -> Html {
             <BrowserRouter>
                 <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
                     <div class="navbar-brand">
-                        <h1 class="navbar-item is-size-3">{ "Wikifind" }</h1>
+                        <h1 class="navbar-item is-size-3">{ "Wikitrouve" }</h1>
                         <div class="navbar-start">
                         {
                             if user_logged_in(&state) {

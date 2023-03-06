@@ -101,7 +101,7 @@ pub fn launch_page() -> Html {
     html! {
         <div >
             <div style="display: flex">
-                <select onchange={onchange_cat}>
+                <select class="cat_sel" onchange={onchange_cat}>
                     <option value="Default" selected=true>{ "Pas de filtres" }</option>
                     <option value="Geographie">{ "Géographie" }</option>
                     <option value="Histoire">{ "Histoire" }</option>
