@@ -183,7 +183,7 @@ impl HiddenText {
             .into_iter()
             .zip(self.revealed.iter())
             .map(|(reveal_new, reveal_old)| {
-                if &reveal_new < reveal_old {
+                if &reveal_new <= reveal_old {
                     reveal_new
                 } else {
                     RevealStrength::NotRevealed

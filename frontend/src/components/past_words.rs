@@ -9,6 +9,11 @@ pub struct PastWordsProps {
 pub fn past_words(props: &PastWordsProps) -> Html {
     // display up to 5 words
     let iter_string = props.past_words.iter().rev().take(5);
+    log::info!(
+        "Queried words: {:?}, len: {}",
+        props.past_words,
+        props.past_words.len()
+    );
     let text_words = (props.past_words.len() - 1).to_string() + &" Mots";
     html! {
         <div class="past_word">
