@@ -1,7 +1,7 @@
 use crate::schema::articles;
 use crate::schema::categories;
-use serde::Serialize;
 use diesel::Insertable;
+use serde::Serialize;
 
 #[derive(Serialize, Debug, Insertable)]
 #[diesel(table_name = articles)]
