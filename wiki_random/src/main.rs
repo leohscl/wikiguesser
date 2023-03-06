@@ -1,17 +1,16 @@
-use diesel::PgConnection;
-use diesel::r2d2::ConnectionManager;
-use dotenv_codegen::dotenv;
 use crate::models::Article;
 use crate::models::Category;
+use diesel::r2d2::ConnectionManager;
+use diesel::PgConnection;
+use dotenv_codegen::dotenv;
 use serde::Deserialize;
-use rand::Rng;
 
 use crate::op::create_article;
 use crate::op::create_category;
 use std::fs;
 
-mod op;
 mod models;
+mod op;
 mod schema;
 
 #[derive(Deserialize, Debug)]
@@ -36,8 +35,7 @@ struct PageInfo {
 async fn main() {
     let file_path = "sample_cat.json";
     // println!("In file {}", file_path);
-    let contents = fs::read_to_string(file_path)
-        .expect("Should have been able to read the file");
+    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     // println!("With text:\n{contents}");
     let data: Vec<JsonArticle> = serde_json::from_str(&contents).expect("Json should parse");
     let manager = ConnectionManager::<PgConnection>::new(DATABASE_URL);
@@ -53,19 +51,24 @@ async fn main() {
 }
 
 async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
-    let article = Article{
-        id:jarticle.id,
-        wiki_id:jarticle.id,
-        title:jarticle.title.to_owned(),
-        content:jarticle.summary.to_owned(),
-        views:jarticle.views,
+    let article = Article {
+        id: jarticle.id,
+        wiki_id: jarticle.id,
+        title: jarticle.title.to_owned(),
+        content: jarticle.summary.to_owned(),
+        views: jarticle.views,
     };
     create_article(conn, &article);
-    let mut rng = rand::thread_rng();
+    let mut id_init = 0;
     for category_name in jarticle.categories.clone().into_iter() {
-        let id_cat: i32 = rng.gen(); 
-        let category_link = Category{id: id_cat, article_id: jarticle.id, category: category_name};
+        let id_cat: i32 = id_init;
+        let category_link = Category {
+            id: id_cat,
+            article_id: jarticle.id,
+            category: category_name,
+        };
         create_category(conn, &category_link);
+        id_init += 1;
     }
 }
 
@@ -116,7 +119,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
 //     create_article(conn, &article);
 //     let mut rng = rand::thread_rng();
 //     for category_name in jarticle.categories.clone().into_iter() {
-//         let id_cat: i32 = rng.gen(); 
+//         let id_cat: i32 = rng.gen();
 //         let category_link = Category{id: id_cat, article_id: jarticle.id, category: category_name};
 //         create_category(conn, &category_link);
 //     }

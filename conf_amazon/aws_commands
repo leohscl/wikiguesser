@@ -33,7 +33,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 git clone https://github.com/leohscl/wikiguesser
 source ~/.bashrc
 cd wikiguesser
-sudo cp conf_amazon/000-default.conf /etc/apache2/sites-available/000-default.conf
+sudo cp conf_amazon/apache_default.conf /etc/apache2/sites-available/000-default.conf
 ip=$(dig +short myip.opendns.com @resolver1.opendns.com)
 sed -i "s/13.39.48.179/$ip/g" .env_amazon
 cp .env_amazon .env
@@ -42,7 +42,7 @@ export DATABASE_URL="postgres://postgres:wikiguesser@database-2.c2zgka3ai9ya.eu-
 
 cargo install diesel_cli --no-default-features --features postgres
 bash diesel_setup.sh
-cargo run
+cargo run --release
 #rm -r target
 
 
