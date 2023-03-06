@@ -60,7 +60,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection, id
         views: jarticle.views,
     };
     create_article(conn, &article);
-    println!("id current: {}", *id_count);
+    // println!("id current: {}", *id_count);
     for category_name in jarticle.categories.clone().into_iter() {
         let category_link = Category {
             id: *id_count,
