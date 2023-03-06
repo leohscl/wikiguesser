@@ -61,10 +61,10 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection, id
     };
     create_article(conn, &article);
     let mut id_init = *id_count;
+    println!("id current: {}", id_init);
     for category_name in jarticle.categories.clone().into_iter() {
-        let id_cat: i32 = id_init;
         let category_link = Category {
-            id: id_cat,
+            id: id_init,
             article_id: jarticle.id,
             category: category_name,
         };
