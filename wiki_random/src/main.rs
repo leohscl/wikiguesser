@@ -42,15 +42,16 @@ async fn main() {
     let pool: Pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
+    let mut id_count = 0;
     let mut conn = pool.get().unwrap();
     for article in data.iter() {
-        let future_insert = insert_one_articles(article, &mut conn);
+        let future_insert = insert_one_articles(article, &mut conn, &mut id_count);
         futures::executor::block_on(future_insert);
     }
     println!("\n\nDatabase Filled !!\n\n")
 }
 
-async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
+async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection, id_count: &mut i32) {
     let article = Article {
         id: jarticle.id,
         wiki_id: jarticle.id,
@@ -59,7 +60,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
         views: jarticle.views,
     };
     create_article(conn, &article);
-    let mut id_init = 0;
+    let mut id_init = *id_count;
     for category_name in jarticle.categories.clone().into_iter() {
         let id_cat: i32 = id_init;
         let category_link = Category {
@@ -70,6 +71,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection) {
         create_category(conn, &category_link);
         id_init += 1;
     }
+    *id_count += id_init;
 }
 
 // async fn insert_one_articles_old(jarticle: &JsonArticle, conn: &mut PgConnection) {
