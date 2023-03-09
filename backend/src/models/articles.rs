@@ -4,6 +4,7 @@ use crate::{
     get_common_words,
     schema::{articles, categories},
 };
+use diesel::dsl::sql;
 use diesel::PgConnection;
 use finalfusion::prelude::*;
 use serde::Deserialize;
@@ -177,6 +178,19 @@ impl Article {
             .expect("There should be an element")
             .clone();
         Ok(article)
+    }
+
+    pub fn get_match(
+        connection: &mut PgConnection,
+        prefix: &str,
+    ) -> Result<Vec<Article>, diesel::result::Error> {
+        use crate::schema::articles::dsl::*;
+        let articles_with_prefix = articles
+            .filter(sql::<diesel::sql_types::Bool>(&format!(
+                "title LIKE {prefix}%"
+            )))
+            .load::<Article>(connection)?;
+        Ok(articles_with_prefix)
     }
 
     pub fn get_engine(

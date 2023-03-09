@@ -102,6 +102,10 @@ async fn main() -> std::io::Result<()> {
                 "/articles/get_engine/{article_id}",
                 web::get().to(handlers::articles::get_engine),
             )
+            .route(
+                "/articles/get_match/{word}",
+                web::get().to(handlers::articles::get_match),
+            )
             .route("/ratings", web::post().to(handlers::ratings::create))
             .route(
                 "/reports/{article_id}",
