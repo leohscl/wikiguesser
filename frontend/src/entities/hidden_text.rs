@@ -2,6 +2,8 @@ use crate::components::guessing_page::RevealStrength;
 use crate::components::hidden_field::HiddenField;
 use crate::entities::interfaces::StringAndPos;
 use crate::entities::interfaces::WordResult;
+use crate::utils::similar_word::get_class_variants;
+use crate::utils::similar_word::same_class;
 use crate::utils::similar_word::same_root;
 use yew::prelude::*;
 
@@ -100,6 +102,7 @@ impl HiddenText {
         word: &str,
         result_engine: &Vec<StringAndPos>,
     ) -> Vec<RevealStrength> {
+        let word_class_variants = get_class_variants(word);
         self.text
             .clone()
             .into_iter()
@@ -109,6 +112,8 @@ impl HiddenText {
                 if word_lowercase == string_hidden_lowercase {
                     RevealStrength::Revealed
                 } else if same_root(&word_lowercase, &string_hidden_lowercase) {
+                    RevealStrength::Revealed
+                } else if same_class(&word_class_variants, &string_hidden_lowercase) {
                     RevealStrength::Revealed
                 } else {
                     let opt_index = result_engine

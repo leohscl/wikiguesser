@@ -2,19 +2,597 @@ pub fn same_root(candidate: &str, word: &str) -> bool {
     let l_candidate = candidate.len();
     let l_word = word.len();
     // check that words are equal for the first 60%
-    let dist = std::cmp::max_by(l_candidate as f64, l_word as f64, |a, b| a.partial_cmp(b).unwrap());
-    let min_len = std::cmp::min_by(l_candidate as f64, l_word as f64, |a, b| a.partial_cmp(b).unwrap());
+    let dist = std::cmp::max_by(l_candidate as f64, l_word as f64, |a, b| {
+        a.partial_cmp(b).unwrap()
+    });
+    let min_len = std::cmp::min_by(l_candidate as f64, l_word as f64, |a, b| {
+        a.partial_cmp(b).unwrap()
+    });
     let len_equal_target = f64::ceil(dist * 0.6);
-    let min_target_and_len = std::cmp::min_by(len_equal_target, min_len, |a, b| a.partial_cmp(b).unwrap());
+    let min_target_and_len =
+        std::cmp::min_by(len_equal_target, min_len, |a, b| a.partial_cmp(b).unwrap());
     if min_len < 5 as f64 {
         return false;
     }
     let len_final = min_target_and_len as usize;
-    let equal = word.chars().take(len_final)
+    let equal = word
+        .chars()
+        .take(len_final)
         .zip(candidate.chars().take(len_final))
-        .map(|(word_c, candidate_c)| {
-            word_c == candidate_c
-        })
+        .map(|(word_c, candidate_c)| word_c == candidate_c)
         .all(|b| b);
     equal
 }
+// here, we define equivalent classes for words
+// exemple: ["les, le, la, l"]
+
+pub fn same_class(class_variants: &Vec<String>, word: &str) -> bool {
+    class_variants.iter().any(|w| w == word)
+}
+
+pub fn get_class_variants(candidate: &str) -> Vec<String> {
+    if DETERMINANTS.iter().any(|&word| word == candidate) {
+        DETERMINANTS.iter().map(|str| str.to_string()).collect()
+    } else if UN.iter().any(|&word| word == candidate) {
+        UN.iter().map(|str| str.to_string()).collect()
+    } else if CE.iter().any(|&word| word == candidate) {
+        CE.iter().map(|str| str.to_string()).collect()
+    } else if SE.iter().any(|&word| word == candidate) {
+        SE.iter().map(|str| str.to_string()).collect()
+    } else if DE.iter().any(|&word| word == candidate) {
+        DE.iter().map(|str| str.to_string()).collect()
+    } else if DE.iter().any(|&word| word == candidate) {
+        DE.iter().map(|str| str.to_string()).collect()
+    } else if ETRE.iter().any(|&word| word == candidate) {
+        ETRE.iter().map(|str| str.to_string()).collect()
+    } else if AVOIR.iter().any(|&word| word == candidate) {
+        AVOIR.iter().map(|str| str.to_string()).collect()
+    } else if SAVOIR.iter().any(|&word| word == candidate) {
+        SAVOIR.iter().map(|str| str.to_string()).collect()
+    } else if VIVRE.iter().any(|&word| word == candidate) {
+        VIVRE.iter().map(|str| str.to_string()).collect()
+    } else if NOMMER.iter().any(|&word| word == candidate) {
+        NOMMER.iter().map(|str| str.to_string()).collect()
+    } else if NAITRE.iter().any(|&word| word == candidate) {
+        NAITRE.iter().map(|str| str.to_string()).collect()
+    } else if CONNAITRE.iter().any(|&word| word == candidate) {
+        CONNAITRE.iter().map(|str| str.to_string()).collect()
+    } else if VOULOIR.iter().any(|&word| word == candidate) {
+        VOULOIR.iter().map(|str| str.to_string()).collect()
+    } else if VOIR.iter().any(|&word| word == candidate) {
+        VOIR.iter().map(|str| str.to_string()).collect()
+    } else if POUVOIR.iter().any(|&word| word == candidate) {
+        POUVOIR.iter().map(|str| str.to_string()).collect()
+    } else if ALLER.iter().any(|&word| word == candidate) {
+        ALLER.iter().map(|str| str.to_string()).collect()
+    } else if DIRE.iter().any(|&word| word == candidate) {
+        DIRE.iter().map(|str| str.to_string()).collect()
+    } else if FAIRE.iter().any(|&word| word == candidate) {
+        FAIRE.iter().map(|str| str.to_string()).collect()
+    } else if FALLOIR.iter().any(|&word| word == candidate) {
+        FALLOIR.iter().map(|str| str.to_string()).collect()
+    } else if MOURIR.iter().any(|&word| word == candidate) {
+        MOURIR.iter().map(|str| str.to_string()).collect()
+    } else {
+        Vec::new()
+    }
+}
+static DETERMINANTS: [&str; 4] = ["les", "le", "la", "l"];
+static UN: [&str; 2] = ["un", "une"];
+static DE: [&str; 4] = ["de", "des", "d", "du"];
+static CE: [&str; 2] = ["ce", "ces"];
+static SE: [&str; 4] = ["se", "s", "ses", "sa"];
+static ALLER: [&str; 41] = [
+    "aille",
+    "aillent",
+    "ailles",
+    "alla",
+    "allai",
+    "allaient",
+    "allais",
+    "allait",
+    "allâmes",
+    "allant",
+    "allas",
+    "allasse",
+    "allassent",
+    "allasses",
+    "allassiez",
+    "allassions",
+    "allât",
+    "allâtes",
+    "allé",
+    "aller",
+    "allèrent",
+    "allés",
+    "allez",
+    "alliez",
+    "allions",
+    "allons",
+    "ira",
+    "irai",
+    "iraient",
+    "irais",
+    "irait",
+    "iras",
+    "irez",
+    "iriez",
+    "irions",
+    "irons",
+    "iront",
+    "va",
+    "vais",
+    "vas",
+    "vont",
+];
+static AVOIR: [&str; 43] = [
+    "a", "ai", "aie", "aient", "aies", "ait", "as", "aura", "aurai", "auraient", "aurais",
+    "aurait", "auras", "aurez", "auriez", "aurions", "aurons", "auront", "avaient", "avais",
+    "avait", "avez", "aviez", "avions", "avoir", "avons", "ayant", "ayez", "ayons", "eu", "eue",
+    "eûmes", "eurent", "eus", "eusse", "eussent", "eusses", "eussiez", "eussions", "eut", "eût",
+    "eûtes", "ont",
+];
+static DIRE: [&str; 35] = [
+    "dîmes", "dira", "dirai", "diraient", "dirais", "dirait", "diras", "dire", "dirent", "direz",
+    "diriez", "dirions", "dirons", "diront", "dis", "disaient", "disais", "disait", "disant",
+    "dise", "disent", "dises", "disiez", "disions", "disons", "disse", "dissent", "disses",
+    "dissiez", "dissions", "dit", "dît", "dite", "dites", "dîtes",
+];
+static ETRE: [&str; 41] = [
+    "es", "est", "étaient", "étais", "était", "étant", "été", "êtes", "étiez", "étions", "être",
+    "fûmes", "furent", "fus", "fusse", "fussent", "fusses", "fussiez", "fussions", "fut", "fût",
+    "fûtes", "sera", "serai", "seraient", "serais", "serait", "seras", "serez", "seriez",
+    "serions", "serons", "seront", "soient", "sois", "soit", "sommes", "sont", "soyez", "soyons",
+    "suis",
+];
+static FAIRE: [&str; 40] = [
+    "faire",
+    "fais",
+    "faisaient",
+    "faisais",
+    "faisait",
+    "faisant",
+    "faisiez",
+    "faisions",
+    "faisons",
+    "fait",
+    "faite",
+    "faites",
+    "fasse",
+    "fassent",
+    "fasses",
+    "fassiez",
+    "fassions",
+    "fera",
+    "ferai",
+    "feraient",
+    "ferais",
+    "ferait",
+    "feras",
+    "ferez",
+    "feriez",
+    "ferions",
+    "ferons",
+    "feront",
+    "fîmes",
+    "firent",
+    "fis",
+    "fisse",
+    "fissent",
+    "fisses",
+    "fissiez",
+    "fissions",
+    "fit",
+    "fît",
+    "fîtes",
+    "font",
+];
+static FALLOIR: [&str; 38] = [
+    "faille",
+    "failles",
+    "faillient",
+    "fallaient",
+    "fallais",
+    "fallait",
+    "fallant",
+    "fallent",
+    "fallez",
+    "falliez",
+    "fallions",
+    "falloir",
+    "fallons",
+    "fallu",
+    "fallûmes",
+    "fallurent",
+    "fallus",
+    "fallusse",
+    "fallussent",
+    "fallusses",
+    "fallussiez",
+    "fallussions",
+    "fallut",
+    "fallût",
+    "fallûtes",
+    "faudra",
+    "faudrai",
+    "faudraient",
+    "faudrais",
+    "faudrait",
+    "faudras",
+    "faudrez",
+    "faudriez",
+    "faudrions",
+    "faudrons",
+    "faudront",
+    "faut",
+    "faux",
+];
+static POUVOIR: [&str; 41] = [
+    "peut",
+    "peuvent",
+    "peux",
+    "pourra",
+    "pourrai",
+    "pourraient",
+    "pourrais",
+    "pourrait",
+    "pourras",
+    "pourrez",
+    "pourriez",
+    "pourrions",
+    "pourrons",
+    "pourront",
+    "pouvaient",
+    "pouvais",
+    "pouvait",
+    "pouvant",
+    "pouvez",
+    "pouviez",
+    "pouvions",
+    "pouvoir",
+    "pouvons",
+    "pu",
+    "puis",
+    "puisse",
+    "puissent",
+    "puisses",
+    "puissiez",
+    "puissions",
+    "pûmes",
+    "purent",
+    "pus",
+    "pusse",
+    "pussent",
+    "pusses",
+    "pussiez",
+    "pussions",
+    "put",
+    "pût",
+    "pûtes",
+];
+static SAVOIR: [&str; 43] = [
+    "sachant",
+    "sache",
+    "sachent",
+    "saches",
+    "sachez",
+    "sachiez",
+    "sachions",
+    "sachons",
+    "sais",
+    "sait",
+    "saura",
+    "saurai",
+    "sauraient",
+    "saurais",
+    "saurait",
+    "sauras",
+    "saurez",
+    "sauriez",
+    "saurions",
+    "saurons",
+    "sauront",
+    "savaient",
+    "savais",
+    "savait",
+    "savent",
+    "savez",
+    "saviez",
+    "savions",
+    "savoir",
+    "savons",
+    "su",
+    "sue",
+    "sûmes",
+    "surent",
+    "sus",
+    "susse",
+    "sussent",
+    "susses",
+    "sussiez",
+    "sussions",
+    "sut",
+    "sût",
+    "sûtes",
+];
+static VOIR: [&str; 38] = [
+    "verra",
+    "verrai",
+    "verraient",
+    "verrais",
+    "verrait",
+    "verras",
+    "verrez",
+    "verriez",
+    "verrions",
+    "verrons",
+    "verront",
+    "vîmes",
+    "virent",
+    "vis",
+    "visse",
+    "vissent",
+    "visses",
+    "vissiez",
+    "vissions",
+    "vit",
+    "vît",
+    "vîtes",
+    "voie",
+    "voient",
+    "voies",
+    "voir",
+    "vois",
+    "voit",
+    "voyaient",
+    "voyais",
+    "voyait",
+    "voyant",
+    "voyez",
+    "voyiez",
+    "voyions",
+    "voyons",
+    "vu",
+    "vue",
+];
+static VOULOIR: [&str; 41] = [
+    "veuille",
+    "veuillent",
+    "veuilles",
+    "veulent",
+    "veut",
+    "veux",
+    "veuxouveuille",
+    "voudra",
+    "voudrai",
+    "voudraient",
+    "voudrais",
+    "voudrait",
+    "voudras",
+    "voudrez",
+    "voudriez",
+    "voudrions",
+    "voudrons",
+    "voudront",
+    "voulaient",
+    "voulais",
+    "voulait",
+    "voulant",
+    "voulez",
+    "voulezouveuillez",
+    "vouliez",
+    "voulions",
+    "vouloir",
+    "voulons",
+    "voulu",
+    "voulue",
+    "voulûmes",
+    "voulurent",
+    "voulus",
+    "voulusse",
+    "voulussent",
+    "voulusses",
+    "voulussiez",
+    "voulussions",
+    "voulut",
+    "voulût",
+    "voulûtes",
+];
+static CONNAITRE: [&str; 38] = [
+    "connais",
+    "connaissaient",
+    "connaissais",
+    "connaissait",
+    "connaissant",
+    "connaisse",
+    "connaissent",
+    "connaisses",
+    "connaissez",
+    "connaissiez",
+    "connaissions",
+    "connaissons",
+    "connaît",
+    "connaîtra",
+    "connaîtrai",
+    "connaîtraient",
+    "connaîtrais",
+    "connaîtrait",
+    "connaîtras",
+    "connaître",
+    "connaîtrez",
+    "connaîtriez",
+    "connaîtrions",
+    "connaîtrons",
+    "connaîtront",
+    "connu",
+    "connue",
+    "connûmes",
+    "connurent",
+    "connus",
+    "connusse",
+    "connussent",
+    "connusses",
+    "connussiez",
+    "connussions",
+    "connut",
+    "connût",
+    "connûtes",
+];
+static MOURIR: [&str; 38] = [
+    "meure",
+    "meurent",
+    "meures",
+    "meurs",
+    "meurt",
+    "mort",
+    "morts",
+    "mouraient",
+    "mourais",
+    "mourait",
+    "mourant",
+    "mourez",
+    "mouriez",
+    "mourions",
+    "mourir",
+    "mourons",
+    "mourra",
+    "mourrai",
+    "mourraient",
+    "mourrais",
+    "mourrait",
+    "mourras",
+    "mourrez",
+    "mourriez",
+    "mourrions",
+    "mourrons",
+    "mourront",
+    "mourûmes",
+    "moururent",
+    "mourus",
+    "mourusse",
+    "mourussent",
+    "mourusses",
+    "mourussiez",
+    "mourussions",
+    "mourut",
+    "mourût",
+    "mourûtes",
+];
+static NAITRE: [&str; 38] = [
+    "nais",
+    "naissaient",
+    "naissais",
+    "naissait",
+    "naissant",
+    "naisse",
+    "naissent",
+    "naisses",
+    "naissez",
+    "naissiez",
+    "naissions",
+    "naissons",
+    "naît",
+    "naîtra",
+    "naîtrai",
+    "naîtraient",
+    "naîtrais",
+    "naîtrait",
+    "naîtras",
+    "naître",
+    "naîtrez",
+    "naîtriez",
+    "naîtrions",
+    "naîtrons",
+    "naîtront",
+    "naquîmes",
+    "naquirent",
+    "naquis",
+    "naquisse",
+    "naquissent",
+    "naquisses",
+    "naquissiez",
+    "naquissions",
+    "naquit",
+    "naquît",
+    "naquîtes",
+    "né",
+    "nés",
+];
+static NOMMER: [&str; 37] = [
+    "nomma",
+    "nommai",
+    "nommaient",
+    "nommais",
+    "nommait",
+    "nommâmes",
+    "nommant",
+    "nommas",
+    "nommasse",
+    "nommassent",
+    "nommasses",
+    "nommassiez",
+    "nommassions",
+    "nommât",
+    "nommâtes",
+    "nomme",
+    "nommé",
+    "nommée",
+    "nomment",
+    "nommer",
+    "nommera",
+    "nommerai",
+    "nommeraient",
+    "nommerais",
+    "nommerait",
+    "nommeras",
+    "nommèrent",
+    "nommerez",
+    "nommeriez",
+    "nommerions",
+    "nommerons",
+    "nommeront",
+    "nommes",
+    "nommez",
+    "nommiez",
+    "nommions",
+    "nommons",
+];
+static VIVRE: [&str; 37] = [
+    "vécu",
+    "vécûmes",
+    "vécurent",
+    "vécus",
+    "vécusse",
+    "vécussent",
+    "vécusses",
+    "vécussiez",
+    "vécussions",
+    "vécut",
+    "vécût",
+    "vécûtes",
+    "vis",
+    "vit",
+    "vivaient",
+    "vivais",
+    "vivait",
+    "vivant",
+    "vive",
+    "vivent",
+    "vives",
+    "vivez",
+    "viviez",
+    "vivions",
+    "vivons",
+    "vivra",
+    "vivrai",
+    "vivraient",
+    "vivrais",
+    "vivrait",
+    "vivras",
+    "vivre",
+    "vivrez",
+    "vivriez",
+    "vivrions",
+    "vivrons",
+    "vivront",
+];

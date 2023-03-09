@@ -166,9 +166,8 @@ h1.navbar-item {
     background-color: #333;
     color: #333;
     border-radius: 3px;
-    font-family: 'Barrio', sans-serif;
-    font-size: 1.2em;
-    line-height: 1.2;
+    font-size: 1em;
+    line-height: 1.1;
     display: inline-block;
     text-align: center;
     transition: color .3s linear, background-color .5s linear;
