@@ -12,9 +12,17 @@ pub async fn get_one_article(opt_cat: Option<String>) -> Result<Article, Status>
         format!("{}/articles/random/pick", API_URL)
     };
     let json = Fetch::get(url).await;
-    log::info!("json: {:?}", json);
     match json {
         Ok(json) => Ok(serde_wasm_bindgen::from_value::<Article>(json).unwrap()),
+        Err(_err) => Err(Status::Error),
+    }
+}
+
+pub async fn get_matches(word: &str) -> Result<Vec<Article>, Status> {
+    let url = format!("{}/articles/get_match/{}", API_URL, word);
+    let json = Fetch::get(url).await;
+    match json {
+        Ok(json) => Ok(serde_wasm_bindgen::from_value::<Vec<Article>>(json).unwrap()),
         Err(_err) => Err(Status::Error),
     }
 }
@@ -23,7 +31,6 @@ pub async fn get_article(id: &i32) -> Result<Article, Status> {
     let url = format!("{}/articles/{}", API_URL, id);
     // log::info!("url: {}", url);
     let json = Fetch::get(url).await;
-    log::info!("json: {:?}", json);
     match json {
         Ok(json) => Ok(serde_wasm_bindgen::from_value::<Article>(json).unwrap()),
         Err(_err) => Err(Status::Error),

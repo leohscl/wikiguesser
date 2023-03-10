@@ -1,4 +1,5 @@
 use crate::entities::interfaces::{Article, Status};
+use crate::service::articles::get_matches;
 use crate::service::future::handle_future;
 use crate::service::games::get_ongoing_game;
 use crate::{components::app::Route, entities::interfaces::Game};
@@ -16,7 +17,7 @@ struct LaunchPageState {
     article_id: String,
     input_title_search: String,
     potential_articles: Vec<Article>,
-    sel_index: Option<usize>,
+    sel_article: Option<Article>,
 }
 
 #[function_component(LaunchPage)]
@@ -27,7 +28,7 @@ pub fn launch_page() -> Html {
         article_id: "".to_string(),
         input_title_search: "".to_string(),
         potential_articles: Vec::new(),
-        sel_index: None,
+        sel_article: None,
     });
 
     let history = use_history().unwrap();
@@ -58,8 +59,15 @@ pub fn launch_page() -> Html {
     let clipboard: UseClipboardHandle = use_clipboard();
     let onclick_get_link = {
         let clipboard = clipboard;
+        let state = state.clone();
         Callback::from(move |_| {
-            clipboard.write_text("hello world!".to_owned());
+            let article = state
+                .sel_article
+                .clone()
+                .expect("There should be an article now");
+            let id = article.id;
+            clipboard.write_text(format!("www.wikitrouve.fr/guess/{}", id).to_owned());
+            // make toast to say text copied
         })
     };
     let onchange_cat = {
@@ -76,7 +84,7 @@ pub fn launch_page() -> Html {
                 article_id: state.article_id.clone(),
                 input_title_search: value,
                 potential_articles: Vec::new(),
-                sel_index: None,
+                sel_article: state.sel_article.clone(),
             });
         })
     };
@@ -94,7 +102,7 @@ pub fn launch_page() -> Html {
                 article_id,
                 input_title_search: state.input_title_search.clone(),
                 potential_articles: Vec::new(),
-                sel_index: None,
+                sel_article: state.sel_article.clone(),
             });
         })
     };
@@ -124,16 +132,45 @@ pub fn launch_page() -> Html {
         Callback::from(move |input_event: InputEvent| {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
-            let mut suggestion_test = Vec::new();
-            suggestion_test.push(Article::dummy());
+            let suggestion_empty = Vec::new();
+            // suggestion_test.push(Article::dummy());
+            let opt_article = state
+                .potential_articles
+                .iter()
+                .find(|article| article.title == value);
+            log::info!("opt article: {:?}", opt_article);
             state.set(LaunchPageState {
                 cat: state.cat.clone(),
                 opt_game: state.opt_game.clone(),
                 article_id: state.article_id.clone(),
-                input_title_search: value,
-                potential_articles: suggestion_test,
-                sel_index: None,
+                input_title_search: value.clone(),
+                potential_articles: suggestion_empty,
+                sel_article: opt_article.cloned(),
             });
+            if opt_article.is_none() {
+                let state_bis = state.clone();
+                let value_bis = target.value();
+                if value.len() >= 3 {
+                    let future = async move { get_matches(&value.clone()).await };
+                    handle_future(future, move |data: Result<Vec<Article>, Status>| {
+                        match data {
+                            Ok(articles) => {
+                                state_bis.set(LaunchPageState {
+                                    cat: state_bis.cat.clone(),
+                                    opt_game: state_bis.opt_game.clone(),
+                                    article_id: state_bis.article_id.clone(),
+                                    input_title_search: value_bis.clone(),
+                                    potential_articles: articles,
+                                    sel_article: None,
+                                });
+                            }
+                            Err(_) => {
+                                log::info!("Error loading the data !");
+                            }
+                        };
+                    });
+                }
+            }
         })
     };
     html! {
@@ -170,7 +207,7 @@ pub fn launch_page() -> Html {
                     }).collect::<Html>()
                 }
                 </datalist>
-                <button class="launch" onclick={onclick_get_link}> { "Get link !" } </button>
+                <button class="launch" onclick={onclick_get_link} disabled={state.sel_article.is_none()}> { "Get link !" } </button>
             </div>
         </div>
     }
