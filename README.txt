@@ -12,3 +12,4 @@ fix CORS
 thimothé chalamet
 mots en majuscules déja mis bug (add lower to comparison)
 remettre un mot
+année tagent mois
