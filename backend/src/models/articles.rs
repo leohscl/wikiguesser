@@ -187,7 +187,7 @@ impl Article {
         use crate::schema::articles::dsl::*;
         let articles_with_prefix = articles
             .filter(sql::<diesel::sql_types::Bool>(&format!(
-                "title LIKE {prefix}%"
+                "articles.title LIKE '{prefix}%'"
             )))
             .load::<Article>(connection)?;
         Ok(articles_with_prefix)

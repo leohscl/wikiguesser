@@ -18,6 +18,18 @@ pub struct Article {
     pub views: i32,
 }
 
+impl Article {
+    pub fn dummy() -> Self {
+        let dummy_str = "thé";
+        Article {
+            id: 1,
+            wiki_id: 1,
+            title: dummy_str.to_string(),
+            content: dummy_str.to_string(),
+            views: 1000000,
+        }
+    }
+}
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct IString {
     pub str: String,
