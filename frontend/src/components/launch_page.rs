@@ -196,7 +196,7 @@ pub fn launch_page() -> Html {
                 <input type="text" oninput={oninput_id} value={state.article_id.clone()} id="input_id" name="input_id" size=10/>
                 <button class="launch" onclick={onclick_launch_id}> { "Find page with id" } </button>
             </div>
-            <p> {"    Get page id !    "}</p>
+            <p> {"    Share wikipedia page with your friend !    "}</p>
             <div style="display: flex">
                 <input type="text" oninput={input_search} value={state.input_title_search.clone()} id="input_search" name="input_search" list="article_suggestion" size=10/>
                 <datalist id="article_suggestion">

@@ -18,11 +18,13 @@ pub async fn get_ongoing_game() -> Result<Option<Game>, Status> {
 }
 
 pub async fn get_game_with_id(id: i32) -> Result<OngoingGame, Status> {
-    let url = format!("{}/games/create_with_id", API_URL);
+    let url = format!("{}/games/get_or_create_with_id", API_URL);
+    log::info!("url: {}", url);
     let email = "None".to_string();
     let game_prompt_str = format!("{{\"id\": {}, \"email\":\"{}\"}}", id, email);
     let js_game_prompt = wasm_bindgen::JsValue::from_str(&game_prompt_str);
     let res_json = Fetch::post(url, &js_game_prompt).await;
+    log::info!("json: {:?}", res_json);
     match res_json {
         Ok(json) => Ok(serde_wasm_bindgen::from_value::<OngoingGame>(json).unwrap()),
         Err(_err) => Err(Status::Error),
