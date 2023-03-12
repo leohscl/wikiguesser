@@ -28,7 +28,7 @@ pub fn hidden_field(props: &HiddenFieldProps) -> Html {
     let state = use_state(|| HiddenFieldState::new());
     let style_string = get_style(&props);
     let style_number = format!(
-        "background-color: rgb(51, 51, 51);color: rgb({}, {}, {});font-size=2em",
+        "background-color: rgb(51, 51, 51);color: rgb({}, {}, {});",
         255, 150, 150
     );
     let string_with_padding = get_string_with_padding(props);
