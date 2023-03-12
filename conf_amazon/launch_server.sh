@@ -1,8 +1,6 @@
 sudo apt-get update
-sudo apt install -y postgresql git gcc make tmux pkg-config openssl libssl-dev libpq-dev apache2
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-git clone https://github.com/leohscl/wikiguesser
 source ~/.bashrc
 cd wikiguesser
 sudo cp conf_amazon/apache_default.conf /etc/apache2/sites-available/000-default.conf
