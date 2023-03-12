@@ -48,16 +48,16 @@ pub fn launch_page() -> Html {
             }
         })
     };
-    let onclick_launch_cat = {
-        let history = history.clone();
-        let state = state.clone();
-        Callback::from(move |_| {
-            let opt_str = StringWrap {
-                cat_or_id: state.cat.clone(),
-            };
-            history.push(Route::GuessingPage { opt_str });
-        })
-    };
+    // let onclick_launch_cat = {
+    //     let history = history.clone();
+    //     let state = state.clone();
+    //     Callback::from(move |_| {
+    //         let opt_str = StringWrap {
+    //             cat_or_id: state.cat.clone(),
+    //         };
+    //         history.push(Route::GuessingPage { opt_str });
+    //     })
+    // };
     let clipboard: UseClipboardHandle = use_clipboard();
     let onclick_get_link = {
         let clipboard = clipboard;
@@ -149,6 +149,7 @@ pub fn launch_page() -> Html {
             } else {
                 None
             };
+            let sel_link_bis = sel_link.clone();
             state.set(LaunchPageState {
                 cat: state.cat.clone(),
                 opt_game: state.opt_game.clone(),
@@ -172,7 +173,7 @@ pub fn launch_page() -> Html {
                                 input_title_search: value_bis.clone(),
                                 potential_articles: articles,
                                 sel_article: None,
-                                sel_link: None,
+                                sel_link: sel_link_bis.clone(),
                             });
                         }
                         Err(_) => {
@@ -195,11 +196,6 @@ pub fn launch_page() -> Html {
                     <option value="Culture&Religion">{ "Culture et religion" }</option>
                     <option value="Art&Loisir">{ "Art et loisirs" }</option>
                 </select>
-                <button class="launch" onclick={onclick_launch_cat}>
-                    {
-                        string_launch_button
-                    }
-                </button>
             </div>
             <p> {"       or..       "}</p>
             <div style="display: flex">
@@ -233,3 +229,8 @@ pub fn launch_page() -> Html {
 fn get_link(id: i32) -> String {
     format!("www.wikitrouve.fr/guess/{}", id).to_string()
 }
+// <button class="launch" onclick={onclick_launch_cat}>
+//     {
+//         string_launch_button
+//     }
+// </button>
