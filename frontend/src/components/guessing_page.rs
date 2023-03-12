@@ -655,7 +655,7 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
     if let Some(page_clone) = state.opt_page.clone() {
         let state = state.clone();
         let ongoing_game = state.opt_game.clone().expect("There should be a game");
-        let word = page_clone.input.clone();
+        let word = page_clone.input.to_lowercase();
         let word_already_queried = state.word_queried.contains(&word);
         if word == "" {
         } else if word_already_queried {
