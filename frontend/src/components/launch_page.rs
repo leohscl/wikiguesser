@@ -5,8 +5,8 @@ use crate::service::games::get_ongoing_game;
 use crate::{components::app::Route, entities::interfaces::Game};
 use web_sys::{HtmlInputElement, HtmlSelectElement, InputEvent};
 use yew::prelude::*;
-use yew_hooks::use_clipboard;
-use yew_hooks::UseClipboardHandle;
+// use yew_hooks::use_clipboard;
+// use yew_hooks::UseClipboardHandle;
 use yew_router::prelude::*;
 
 use super::app::StringWrap;
@@ -48,31 +48,31 @@ pub fn launch_page() -> Html {
             }
         })
     };
-    // let onclick_launch_cat = {
-    //     let history = history.clone();
-    //     let state = state.clone();
-    //     Callback::from(move |_| {
-    //         let opt_str = StringWrap {
-    //             cat_or_id: state.cat.clone(),
-    //         };
-    //         history.push(Route::GuessingPage { opt_str });
-    //     })
-    // };
-    let clipboard: UseClipboardHandle = use_clipboard();
-    let onclick_get_link = {
-        let clipboard = clipboard;
+    let onclick_launch_cat = {
+        let history = history.clone();
         let state = state.clone();
         Callback::from(move |_| {
-            let article = state
-                .sel_article
-                .clone()
-                .expect("There should be an article now");
-            let id = article.id;
-            let link = get_link(id);
-            clipboard.write_text(link);
-            // make toast to say text copied ?
+            let opt_str = StringWrap {
+                cat_or_id: state.cat.clone(),
+            };
+            history.push(Route::GuessingPage { opt_str });
         })
     };
+    // let clipboard: UseClipboardHandle = use_clipboard();
+    // let onclick_get_link = {
+    //     let clipboard = clipboard;
+    //     let state = state.clone();
+    //     Callback::from(move |_| {
+    //         let article = state
+    //             .sel_article
+    //             .clone()
+    //             .expect("There should be an article now");
+    //         let id = article.id;
+    //         let link = get_link(id);
+    //         clipboard.write_text(link);
+    //         // make toast to say text copied ?
+    //     })
+    // };
     let onchange_cat = {
         let state = state.clone();
         Callback::from(move |e: Event| {
@@ -196,6 +196,11 @@ pub fn launch_page() -> Html {
                     <option value="Culture&Religion">{ "Culture et religion" }</option>
                     <option value="Art&Loisir">{ "Art et loisirs" }</option>
                 </select>
+                <button class="launch" onclick={onclick_launch_cat}>
+                    {
+                        string_launch_button
+                    }
+                </button>
             </div>
             <p> {"       or..       "}</p>
             <div style="display: flex">
@@ -213,7 +218,6 @@ pub fn launch_page() -> Html {
                     }).collect::<Html>()
                 }
                 </datalist>
-                <button class="launch" onclick={onclick_get_link} disabled={state.sel_article.is_none()}> { "Get link !" } </button>
             </div>
             {
                 if let Some(link) = state.sel_link.clone() {
@@ -229,8 +233,4 @@ pub fn launch_page() -> Html {
 fn get_link(id: i32) -> String {
     format!("www.wikitrouve.fr/guess/{}", id).to_string()
 }
-// <button class="launch" onclick={onclick_launch_cat}>
-//     {
-//         string_launch_button
-//     }
-// </button>
+// <button class="launch" onclick={onclick_get_link} disabled={state.sel_article.is_none()}> { "Get link !" } </button>
