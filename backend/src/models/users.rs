@@ -1,14 +1,12 @@
-use crate::{schema::*, handlers::users::InputUser};
+use crate::diesel::ExpressionMethods;
+use crate::diesel::RunQueryDsl;
+use crate::{handlers::users::InputUser, schema::*};
+use actix_web::web;
 use chrono::NaiveDate;
 use diesel::{PgConnection, QueryDsl};
-use crate::diesel::RunQueryDsl;
-use crate::diesel::ExpressionMethods;
-use serde::Serialize;
-use actix_web::web;
 use rand::Rng;
+use serde::Serialize;
 // use uuid::Uuid;
-
-
 
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable, Insertable)]
 pub struct User {
@@ -21,12 +19,15 @@ pub struct User {
 }
 
 impl User {
-    pub fn get_all(connection: &mut PgConnection) -> Result<Vec<User>, diesel::result::Error>{
+    pub fn get_all(connection: &mut PgConnection) -> Result<Vec<User>, diesel::result::Error> {
         let all_users = users::table.load::<User>(connection)?;
         Ok(all_users)
     }
 
-    pub fn get_by_email(connection: &mut PgConnection, email: &str) -> Result<User, diesel::result::Error>{
+    pub fn get_by_email(
+        connection: &mut PgConnection,
+        email: &str,
+    ) -> Result<User, diesel::result::Error> {
         let query = users::table.into_boxed();
         let query = query.filter(users::t_email.eq(email));
         let results = query.load::<User>(connection)?;
@@ -38,7 +39,10 @@ impl User {
         }
     }
 
-    pub fn create(connection: &mut PgConnection, user: web::Json<InputUser>) -> Result<User, diesel::result::Error>{
+    pub fn create(
+        connection: &mut PgConnection,
+        user: web::Json<InputUser>,
+    ) -> Result<User, diesel::result::Error> {
         let naive_date_time = chrono::Local::now().date_naive();
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();

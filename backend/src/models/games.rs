@@ -215,9 +215,4 @@ impl Game {
             .get_result::<Game>(connection)?;
         Ok(updated_game)
     }
-
-    // fn get_all_results(game: &Game, word_model: &WordModel) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
-    //     let words_to_query: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
-    //     WordResult::query_multiple(&words_to_query, &word_model.embedding)
-    // }
 }

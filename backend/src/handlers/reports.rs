@@ -1,7 +1,7 @@
-use actix_web::{web, HttpResponse, Error};
-use serde::{Serialize, Deserialize};
-use crate::{Pool, models::reports::Report};
 use crate::errors::database_error::DatabaseError;
+use crate::{models::reports::Report, Pool};
+use actix_web::{web, Error, HttpResponse};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputReport {
@@ -11,7 +11,10 @@ pub struct InputReport {
 }
 
 // /reports/
-pub async fn create(pool: web::Data<Pool>, report: web::Json<InputReport>) -> Result<HttpResponse, Error> {
+pub async fn create(
+    pool: web::Data<Pool>,
+    report: web::Json<InputReport>,
+) -> Result<HttpResponse, Error> {
     println!("Posting report !");
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Report::create(&mut connection, &report))
@@ -21,12 +24,17 @@ pub async fn create(pool: web::Data<Pool>, report: web::Json<InputReport>) -> Re
 }
 
 // /reports/{article_id}
-pub async fn get_article_reports(pool: web::Data<Pool>, id: web::Path<i32>) -> Result<HttpResponse, Error> {
+pub async fn get_article_reports(
+    pool: web::Data<Pool>,
+    id: web::Path<i32>,
+) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
-    Ok(web::block(move || Report::get_article_reports(&mut connection, *id))
-        .await
-        .map(|report| HttpResponse::Ok().json(report))
-        .map_err(DatabaseError)?)
+    Ok(
+        web::block(move || Report::get_article_reports(&mut connection, *id))
+            .await
+            .map(|report| HttpResponse::Ok().json(report))
+            .map_err(DatabaseError)?,
+    )
 }
 
 // /reports/

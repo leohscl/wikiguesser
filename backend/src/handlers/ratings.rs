@@ -1,7 +1,7 @@
-use actix_web::{web, HttpResponse, Error};
-use serde::{Serialize, Deserialize};
-use crate::{Pool, models::ratings::Rating};
 use crate::errors::database_error::DatabaseError;
+use crate::{models::ratings::Rating, Pool};
+use actix_web::{web, Error, HttpResponse};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InputRatings {
@@ -10,7 +10,10 @@ pub struct InputRatings {
 }
 
 // /ratings
-pub async fn create(pool: web::Data<Pool>, rating: web::Json<InputRatings>) -> Result<HttpResponse, Error> {
+pub async fn create(
+    pool: web::Data<Pool>,
+    rating: web::Json<InputRatings>,
+) -> Result<HttpResponse, Error> {
     println!("Posting rating !");
     let mut connection = pool.get().unwrap();
     Ok(web::block(move || Rating::create(&mut connection, &rating))

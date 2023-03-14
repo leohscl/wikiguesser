@@ -1,9 +1,9 @@
-use serde::Serialize;
+use crate::diesel::RunQueryDsl;
 use crate::handlers::ratings::InputRatings;
 use crate::schema::ratings;
 use diesel::PgConnection;
-use crate::diesel::RunQueryDsl;
 use rand::Rng;
+use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone, Queryable, Insertable)]
 #[diesel(table_name = ratings)]
@@ -14,7 +14,10 @@ pub struct Rating {
     pub rating: i32,
 }
 impl Rating {
-    pub fn create(connection: &mut PgConnection, input_rating: &InputRatings) -> Result<Rating, diesel::result::Error>{
+    pub fn create(
+        connection: &mut PgConnection,
+        input_rating: &InputRatings,
+    ) -> Result<Rating, diesel::result::Error> {
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();
         let naive_date_time = chrono::Utc::now().naive_utc();
