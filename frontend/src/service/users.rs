@@ -2,9 +2,9 @@ use super::fetch::Fetch;
 use crate::entities::interfaces::InputUser;
 use crate::entities::interfaces::Status;
 use crate::entities::interfaces::User;
-use crate::API_URL;
 use crate::utils::hashing::hash_password;
 use crate::utils::hashing::verify_password;
+use crate::API_URL;
 
 pub async fn get_user(email: &str) -> Result<User, Status> {
     let url = format!("{}/users/{}", API_URL, email);
@@ -24,7 +24,10 @@ pub async fn create_user(user: &InputUser) -> Result<User, Status> {
         Ok(hash) => hash,
         Err(_err) => return Err(Status::Error),
     };
-    let string_user_dict = format!("{{\"email\": \"{}\", \"password\":\"{}\"}}", user.email, password_hash);
+    let string_user_dict = format!(
+        "{{\"email\": \"{}\", \"password\":\"{}\"}}",
+        user.email, password_hash
+    );
     let bool_verify = match verify_password(&user.password, &password_hash) {
         Ok(matched) => matched,
         Err(_err) => return Err(Status::Error),

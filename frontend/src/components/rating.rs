@@ -1,8 +1,8 @@
-use yew::prelude::*;
 use crate::service::future::handle_future;
+use yew::prelude::*;
 
 use crate::entities::interfaces::Status;
-use crate::{service::ratings::create_rating, entities::interfaces::InputRatings};
+use crate::{entities::interfaces::InputRatings, service::ratings::create_rating};
 
 #[derive(PartialEq, Clone)]
 enum Rate {
@@ -26,22 +26,32 @@ pub struct RatingProps {
 
 impl RatingState {
     fn to_rating_input(&self, article_id: i32) -> InputRatings {
-        let rate = self.opt_rate.clone().expect("There should be a rating at this point");
+        let rate = self
+            .opt_rate
+            .clone()
+            .expect("There should be a rating at this point");
         let rating = rate as i32;
-        InputRatings { article_id, rating}
+        InputRatings { article_id, rating }
     }
 }
 
 #[function_component(Rating)]
 pub fn rating(props: &RatingProps) -> Html {
-    let state = use_state(|| RatingState{rating_sent: false, opt_rate: None});
+    let state = use_state(|| RatingState {
+        rating_sent: false,
+        opt_rate: None,
+    });
     let onclick_send_rating = {
         let state = state.clone();
         let props = props.clone();
-        Callback::from( move |_| {
-            state.set(RatingState{rating_sent: true, opt_rate: state.opt_rate.clone()});
+        Callback::from(move |_| {
+            state.set(RatingState {
+                rating_sent: true,
+                opt_rate: state.opt_rate.clone(),
+            });
             let state = state.clone();
-            let future_user = async move { create_rating(&state.to_rating_input(props.article_id)).await };
+            let future_user =
+                async move { create_rating(&state.to_rating_input(props.article_id)).await };
             handle_future(future_user, move |data: Result<(), Status>| {
                 match data {
                     Ok(_) => {
@@ -49,7 +59,7 @@ pub fn rating(props: &RatingProps) -> Html {
                     }
                     Err(_) => {
                         log::info!("Rating failed");
-                    },
+                    }
                 };
             });
         })
@@ -57,42 +67,57 @@ pub fn rating(props: &RatingProps) -> Html {
 
     let onclick_1 = {
         let state = state.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             if !state.rating_sent {
-                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::One) })
+                state.set(RatingState {
+                    rating_sent: state.rating_sent,
+                    opt_rate: Some(Rate::One),
+                })
             }
         })
     };
     let onclick_2 = {
         let state = state.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             if !state.rating_sent {
-                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Two) })
+                state.set(RatingState {
+                    rating_sent: state.rating_sent,
+                    opt_rate: Some(Rate::Two),
+                })
             }
         })
     };
     let onclick_3 = {
         let state = state.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             if !state.rating_sent {
-                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Three) })
+                state.set(RatingState {
+                    rating_sent: state.rating_sent,
+                    opt_rate: Some(Rate::Three),
+                })
             }
         })
     };
     let onclick_4 = {
         let state = state.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             if !state.rating_sent {
-                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Four) })
+                state.set(RatingState {
+                    rating_sent: state.rating_sent,
+                    opt_rate: Some(Rate::Four),
+                })
             }
         })
     };
     let onclick_5 = {
         let state = state.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             log::info!("5 clicked!");
             if !state.rating_sent {
-                state.set(RatingState { rating_sent: state.rating_sent, opt_rate: Some(Rate::Five) })
+                state.set(RatingState {
+                    rating_sent: state.rating_sent,
+                    opt_rate: Some(Rate::Five),
+                })
             }
         })
     };

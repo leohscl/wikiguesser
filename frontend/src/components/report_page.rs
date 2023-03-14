@@ -1,11 +1,11 @@
+use super::app::Route;
+use crate::entities::interfaces::{InputReport, Status};
+use crate::service::future::handle_future;
+use crate::service::reports::create_report;
+use std::str::FromStr;
+use web_sys::{HtmlInputElement, HtmlSelectElement, InputEvent};
 use yew::prelude::*;
 use yew_router::prelude::*;
-use std::str::FromStr;
-use web_sys::{InputEvent, HtmlInputElement, HtmlSelectElement};
-use crate::service::future::handle_future;
-use crate::entities::interfaces::{Status, InputReport};
-use crate::service::reports::create_report;
-use super::app::Route;
 
 #[derive(Clone)]
 enum ReportCategory {
@@ -24,15 +24,14 @@ impl ToString for ReportCategory {
     }
 }
 
-
 impl std::str::FromStr for ReportCategory {
     type Err = ();
     fn from_str(input: &str) -> Result<ReportCategory, Self::Err> {
         match input {
-            "Bug"         => Ok(ReportCategory::Bug),
-            "BadContent"  => Ok(ReportCategory::BadContent),
-            "Other"       => Ok(ReportCategory::Other),
-             _            => Err(()),
+            "Bug" => Ok(ReportCategory::Bug),
+            "BadContent" => Ok(ReportCategory::BadContent),
+            "Other" => Ok(ReportCategory::Other),
+            _ => Err(()),
         }
     }
 }
@@ -44,7 +43,11 @@ struct ReportState {
 
 impl ReportState {
     fn to_report_input(&self, article_id: i32) -> InputReport {
-        InputReport { article_id, report_cat: self.category.to_string(), description: self.description.to_string()}
+        InputReport {
+            article_id,
+            report_cat: self.category.to_string(),
+            description: self.description.to_string(),
+        }
     }
 }
 
@@ -53,20 +56,22 @@ pub struct ReportProps {
     pub article_id: i32,
 }
 
-
-
 #[function_component(ReportPage)]
 pub fn report_page(props: &ReportProps) -> Html {
-    let state = use_state(|| ReportState{category: ReportCategory::Bug, description: "".to_string()});
+    let state = use_state(|| ReportState {
+        category: ReportCategory::Bug,
+        description: "".to_string(),
+    });
     let history = use_history().unwrap();
 
     let onclick_submit = {
         let state = state.clone();
         let props = props.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             let state = state.clone();
             let history = history.clone();
-            let future_user = async move { create_report(&state.to_report_input(props.article_id)).await };
+            let future_user =
+                async move { create_report(&state.to_report_input(props.article_id)).await };
             handle_future(future_user, move |data: Result<(), Status>| {
                 match data {
                     Ok(_) => {
@@ -75,27 +80,34 @@ pub fn report_page(props: &ReportProps) -> Html {
                     }
                     Err(_) => {
                         log::info!("Report failed");
-                    },
+                    }
                 };
             });
         })
     };
     let on_select_cat = {
         let state = state.clone();
-        Callback::from( move |e: Event | {
+        Callback::from(move |e: Event| {
             let target: HtmlSelectElement = e.target_unchecked_into();
             let value = target.value();
-            let category = ReportCategory::from_str(&value).expect("Selected values should not panic");
-            state.set(ReportState { category, description: state.description.clone() });
+            let category =
+                ReportCategory::from_str(&value).expect("Selected values should not panic");
+            state.set(ReportState {
+                category,
+                description: state.description.clone(),
+            });
         })
     };
 
     let oninput_description = {
         let state = state.clone();
-        Callback::from( move |input_event: InputEvent| {
+        Callback::from(move |input_event: InputEvent| {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
-            state.set(ReportState{category: state.category.clone(), description: value.clone()});
+            state.set(ReportState {
+                category: state.category.clone(),
+                description: value.clone(),
+            });
         })
     };
     let bug_string = ReportCategory::Bug.to_string();

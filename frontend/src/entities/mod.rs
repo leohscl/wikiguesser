@@ -1,2 +1,2 @@
-pub mod interfaces;
 pub mod hidden_text;
+pub mod interfaces;

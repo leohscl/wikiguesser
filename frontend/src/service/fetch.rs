@@ -1,14 +1,17 @@
-use wasm_bindgen_futures::JsFuture;
-use wasm_bindgen::{JsCast, JsValue};
 use ::web_sys::{Request, RequestInit, RequestMode, RequestRedirect, Response};
-
+use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen_futures::JsFuture;
 
 pub enum Method {
     Get,
     Post,
 }
 
-pub async fn fetch(url: String, method:String, opt_body:Option<&JsValue>) -> Result<JsValue, JsValue> {
+pub async fn fetch(
+    url: String,
+    method: String,
+    opt_body: Option<&JsValue>,
+) -> Result<JsValue, JsValue> {
     // log::info!("building request");
     let mut opts = RequestInit::new();
     opts.method(&method);
@@ -28,7 +31,6 @@ pub async fn fetch(url: String, method:String, opt_body:Option<&JsValue>) -> Res
     request
         .headers()
         .set("Access-Control-Request-Method", &method)?;
-
 
     // log::info!("request_url {:?}", request.url());
     // log::info!("request_headers {:?}", request.headers());
@@ -69,5 +71,3 @@ impl Fetch {
         Fetch::fetch(url, Method::Post, Some(value)).await
     }
 }
-
-

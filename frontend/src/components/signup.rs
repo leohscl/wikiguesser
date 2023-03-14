@@ -1,10 +1,10 @@
-use yew::prelude::*;
-use web_sys::{InputEvent, HtmlInputElement};
-use regex::Regex;
+use crate::entities::interfaces::Status;
+use crate::entities::interfaces::{InputUser, User};
 use crate::service::future::handle_future;
 use crate::service::users::create_user;
-use crate::entities::interfaces::Status;
-use crate::entities::interfaces::{User, InputUser};
+use regex::Regex;
+use web_sys::{HtmlInputElement, InputEvent};
+use yew::prelude::*;
 
 struct SignupState {
     email: String,
@@ -13,7 +13,10 @@ struct SignupState {
 
 impl SignupState {
     fn is_valid(self: &Self) -> bool {
-        let email_regex = Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})").unwrap();
+        let email_regex = Regex::new(
+            r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
+        )
+        .unwrap();
         let email_valid = email_regex.is_match(&self.email);
         let password_valid = self.password.len() >= 8;
         email_valid && password_valid
@@ -22,29 +25,41 @@ impl SignupState {
 
 #[function_component(Signup)]
 pub fn signup() -> Html {
-    let state = use_state(|| SignupState{email: "".to_string(), password: "".to_string()});
+    let state = use_state(|| SignupState {
+        email: "".to_string(),
+        password: "".to_string(),
+    });
     let oninput_email = {
         let state = state.clone();
-        Callback::from( move |input_event: InputEvent| {
+        Callback::from(move |input_event: InputEvent| {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
-            state.set(SignupState{email: value.clone(), password: state.password.clone()});
+            state.set(SignupState {
+                email: value.clone(),
+                password: state.password.clone(),
+            });
         })
     };
 
     let oninput_password = {
         let state = state.clone();
-        Callback::from( move |input_event: InputEvent| {
+        Callback::from(move |input_event: InputEvent| {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
-            state.set(SignupState{email: state.email.clone(), password: value.clone()});
+            state.set(SignupState {
+                email: state.email.clone(),
+                password: value.clone(),
+            });
         })
     };
-    
+
     let validate_signup = {
         let state = state.clone();
-        Callback::from( move |_| {
-            let user = InputUser{email: state.email.clone(), password: state.password.clone()};
+        Callback::from(move |_| {
+            let user = InputUser {
+                email: state.email.clone(),
+                password: state.password.clone(),
+            };
             let future = async move { create_user(&user).await };
             handle_future(future, move |data: Result<User, Status>| {
                 match data {
@@ -53,7 +68,7 @@ pub fn signup() -> Html {
                     }
                     Err(_) => {
                         log::info!("Error loading the data !");
-                    },
+                    }
                 };
             });
         })
@@ -80,4 +95,3 @@ pub fn signup() -> Html {
         </div>
     }
 }
-

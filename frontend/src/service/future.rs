@@ -10,5 +10,3 @@ where
         handler(rs);
     });
 }
-
-

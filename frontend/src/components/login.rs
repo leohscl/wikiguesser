@@ -1,13 +1,13 @@
-use yew::prelude::*;
-use yew_router::prelude::*;
-use web_sys::{InputEvent, HtmlInputElement};
-use regex::Regex;
-use crate::service::future::handle_future;
-use crate::service::users::get_user;
+use crate::components::app::Route;
 use crate::entities::interfaces::Status;
 use crate::entities::interfaces::User;
+use crate::service::future::handle_future;
+use crate::service::users::get_user;
 use crate::utils::hashing::verify_password;
-use crate::components::app::Route;
+use regex::Regex;
+use web_sys::{HtmlInputElement, InputEvent};
+use yew::prelude::*;
+use yew_router::prelude::*;
 
 const PASSWORD_MIN_LENGTH: usize = 8;
 
@@ -18,7 +18,10 @@ struct LoginState {
 
 impl LoginState {
     fn is_valid(self: &Self) -> bool {
-        let email_regex = Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})").unwrap();
+        let email_regex = Regex::new(
+            r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,6})",
+        )
+        .unwrap();
         let email_valid = email_regex.is_match(&self.email);
         let password_valid = self.password.len() >= PASSWORD_MIN_LENGTH;
         email_valid && password_valid
@@ -32,30 +35,39 @@ pub struct LoginProps {
 
 #[function_component(Login)]
 pub fn signup(props: &LoginProps) -> Html {
-    let state = use_state(|| LoginState{email: "".to_string(), password: "".to_string()});
+    let state = use_state(|| LoginState {
+        email: "".to_string(),
+        password: "".to_string(),
+    });
     let oninput_email = {
         let state = state.clone();
-        Callback::from( move |input_event: InputEvent| {
+        Callback::from(move |input_event: InputEvent| {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
-            state.set(LoginState{email: value.clone(), password: state.password.clone()});
+            state.set(LoginState {
+                email: value.clone(),
+                password: state.password.clone(),
+            });
         })
     };
 
     let oninput_password = {
         let state = state.clone();
-        Callback::from( move |input_event: InputEvent| {
+        Callback::from(move |input_event: InputEvent| {
             let target: HtmlInputElement = input_event.target_unchecked_into();
             let value = target.value();
-            state.set(LoginState{email: state.email.clone(), password: value.clone()});
+            state.set(LoginState {
+                email: state.email.clone(),
+                password: value.clone(),
+            });
         })
     };
-    
+
     let history = use_history().unwrap();
     let try_login = {
         let state = state.clone();
         let props = props.clone();
-        Callback::from( move |_| {
+        Callback::from(move |_| {
             let history = history.clone();
             let props = props.clone();
             // Step 1: check email exists in database, pull user
@@ -74,7 +86,7 @@ pub fn signup(props: &LoginProps) -> Html {
                                     props.cb_user_login.emit(user.clone());
                                     log::info!("match !");
                                     history.push(Route::LaunchPage);
-                                },
+                                }
                                 false => log::info!("no match !"),
                             }
                         } else {
@@ -83,7 +95,7 @@ pub fn signup(props: &LoginProps) -> Html {
                     }
                     Err(_) => {
                         log::info!("No username with this email. Please try again");
-                    },
+                    }
                 };
             });
         })

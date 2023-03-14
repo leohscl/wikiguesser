@@ -1,9 +1,9 @@
-pub mod guessing_page;
 pub mod app;
+pub mod guessing_page;
 pub mod hidden_field;
-pub mod login;
-pub mod signup;
 pub mod launch_page;
-pub mod report_page;
-pub mod rating;
+pub mod login;
 pub mod past_words;
+pub mod rating;
+pub mod report_page;
+pub mod signup;
