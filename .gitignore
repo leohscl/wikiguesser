@@ -4,11 +4,6 @@ compute_freq
 backend/Cargo.lock
 backend/data/corrected_model_fr.fifu
 backend/target/
-common/Cargo.lock
-common/Dockerfile
-common/migrations/
-common/startup.sh
-common/target/
 compile_backend.sh
 docker/docker_postgres.yaml
 frontend/Cargo.lock
@@ -23,3 +18,5 @@ wiki_random/target/
 backend/sens_test
 backend/tmp
 backend/benchmark/target/
+utils/wiki_process/Cargo.lock
+utils/wiki_process/target

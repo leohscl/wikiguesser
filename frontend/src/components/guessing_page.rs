@@ -14,6 +14,7 @@ use std::future::Future;
 use std::pin::Pin;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
+use wiki_process::wiki_parse::create_string_vector;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -545,8 +546,8 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
 fn page_from_json(article: Article) -> Page {
     let title = String::from(article.title + " ");
     let content = String::from(article.content + " ");
-    let title_vec = create_string_vector(title);
-    let content_vec = create_string_vector(content);
+    let title_vec = create_string_vector(&title);
+    let content_vec = create_string_vector(&content);
     let revealed_title = initialize_revealed_vector(&title_vec);
     let revealed_content = initialize_revealed_vector(&content_vec);
     let title_vec_len = title_vec.len();
@@ -612,42 +613,6 @@ fn _initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
                 }
             }
         })
-        .collect()
-}
-
-fn create_string_vector(text: String) -> Vec<String> {
-    let processed_text = text.replace("\n\n\n", "").to_string();
-    let separators = [
-        ' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[', '-',
-        '\n',
-    ];
-    let separator_indexes: Vec<_> = [0]
-        .into_iter()
-        .chain(
-            processed_text
-                .char_indices()
-                .filter_map(
-                    |(index, char)| match separators.iter().find(|c| *c == &char) {
-                        Some(_) => {
-                            let num_bytes_char = char.len_utf8();
-                            Some([index, index + num_bytes_char])
-                        }
-                        None => None,
-                    },
-                )
-                .flatten(),
-        )
-        .collect();
-    separator_indexes
-        .windows(2)
-        .map(|slice| {
-            let start = *slice.get(0).expect("slice should have 2 elements");
-            let end = *slice.get(1).expect("slice should have 2 elements");
-            let chunk = &text[start..end];
-            let chunk_string = chunk.to_string();
-            chunk_string
-        })
-        .map(|str| str.to_string())
         .collect()
 }
 

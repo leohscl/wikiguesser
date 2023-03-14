@@ -137,10 +137,6 @@ async fn main() -> std::io::Result<()> {
                 web::delete().to(handlers::games::delete),
             )
             .route("/games/finish/{id}", web::get().to(handlers::games::finish))
-        // .route("/games/update/{word}", web::post().to(handlers::games::update))
-        // .route("/games/create/", web::post().to(handlers::games::create))
-        // .route("/games/{email}", web::get().to(handlers::users::get_user))
-        // .route("/games/", web::post().to(handlers::users::create))
     })
     .workers(1)
     .bind(("127.0.0.1", 8000))?
