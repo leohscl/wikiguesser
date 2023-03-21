@@ -59,6 +59,7 @@ impl Game {
         diesel::insert_into(games::table)
             .values(&new_game)
             .execute(connection)?;
+        println!("New game: {:?}", new_game);
         Ok(new_game)
     }
     fn create(
