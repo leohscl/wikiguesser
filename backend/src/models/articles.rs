@@ -76,8 +76,8 @@ impl Article {
         let query = articles::table.into_boxed();
         let query = query.filter(articles::id.eq(article_id));
         let results = query.load::<Article>(connection)?;
-        // println!("Game: {:?}", results);
         if let Some(article) = results.into_iter().next() {
+            println!("Article: {:?}", article);
             article.get_engine(&word_model.embedding, result_common)
         } else {
             Err(diesel::result::Error::NotFound)
