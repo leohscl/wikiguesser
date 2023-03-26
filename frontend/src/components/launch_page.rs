@@ -5,8 +5,6 @@ use crate::service::games::get_ongoing_game;
 use crate::{components::app::Route, entities::interfaces::Game};
 use web_sys::{HtmlInputElement, HtmlSelectElement, InputEvent};
 use yew::prelude::*;
-// use yew_hooks::use_clipboard;
-// use yew_hooks::UseClipboardHandle;
 use yew_router::prelude::*;
 
 use super::app::StringWrap;
@@ -233,4 +231,3 @@ pub fn launch_page() -> Html {
 fn get_link(id: i32) -> String {
     format!("www.wikitrouve.fr/guess/{}", id).to_string()
 }
-// <button class="launch" onclick={onclick_get_link} disabled={state.sel_article.is_none()}> { "Get link !" } </button>
