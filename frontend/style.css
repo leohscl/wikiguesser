@@ -235,50 +235,57 @@ button.launch {
   top: 0;
   right: 0;
 }
+.progress-outer {
+  width: 300px;
+}
+.progress {
+  background-color: #eee;
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+  width: inherit;
+}
+button.launch:after,
+button.launch:before {
+  position: absolute;
+  font-family: 'Barrio', sans-serif;
+  font-weight: bold;
+  filter: brightness(0.85);
+  font-size: 1rem;
+  content: "";
+  transition: .3s all ease;
+}
 
-  button.launch:after,
-  button.launch:before {
-    position: absolute;
-    font-family: 'Barrio', sans-serif;
-    font-weight: bold;
-    filter: brightness(0.85);
-    font-size: 1rem;
-    content: "";
-    transition: .3s all ease;
-  }
+button.launch:before {
+  content: '';
+  position: absolute;
+  left: 1.4rem;
+  top: .9rem;
+}
 
-  button.launch:before {
-    content: '';
-    position: absolute;
-    left: 1.4rem;
-    top: .9rem;
-  }
+button.launch:after {
+  content: '';
+  position: absolute;
+  left: .8rem;
+  top: 1rem;
+}
 
-  button.launch:after {
-    content: '';
-    position: absolute;
-    left: .8rem;
-    top: 1rem;
-  }
+button.launch:hover {
+  box-shadow: 1px 1px 20px rgba(150,150,150,.2);
+  top: -.1rem;
+  right: -.1rem;
+  cursor: pointer;
 
-  button.launch:hover {
-    box-shadow: 1px 1px 20px rgba(150,150,150,.2);
-    top: -.1rem;
-    right: -.1rem;
-    cursor: pointer;
-
-  }
-  button.launch:hover:before {
-    content: '';
-    position: absolute;
-    left: .8rem;
-    top: .7rem;
-    transform: translateY(-1px);
-  }
-  button.launch:hover:after {
-    content: '';
-    position: absolute;
-    left: 1.1rem;
-    top: 1rem;
-  }
+}
+button.launch:hover:before {
+  content: '';
+  position: absolute;
+  left: .8rem;
+  top: .7rem;
+  transform: translateY(-1px);
+}
+button.launch:hover:after {
+  content: '';
+  position: absolute;
+  left: 1.1rem;
+  top: 1rem;
 }

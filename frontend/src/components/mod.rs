@@ -2,6 +2,7 @@ pub mod app;
 pub mod guessing_page;
 pub mod hidden_field;
 pub mod launch_page;
+pub mod loading_bar;
 pub mod login;
 pub mod past_words;
 pub mod rating;
