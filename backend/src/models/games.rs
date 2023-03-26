@@ -59,6 +59,7 @@ impl Game {
         diesel::insert_into(games::table)
             .values(&new_game)
             .execute(connection)?;
+        println!("New game: {:?}", new_game);
         Ok(new_game)
     }
     fn create(
@@ -97,7 +98,6 @@ impl Game {
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let query = query.filter(games::is_finished.eq(false));
         let results = query.load::<Game>(connection)?;
-        println!("Game: {:?}", results);
         let game = if let Some(game) = results.into_iter().next() {
             game
         } else {
@@ -121,7 +121,6 @@ impl Game {
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let query = query.filter(games::is_finished.eq(false));
         let results = query.load::<Game>(connection)?;
-        println!("Game: {:?}", results);
         let game = if let Some(game) = results.into_iter().next() {
             game
         } else {
@@ -144,7 +143,6 @@ impl Game {
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
         let query = query.filter(games::is_finished.eq(false));
         let results = query.load::<Game>(connection)?;
-        println!("Game: {:?}", results);
         if let Some(game) = results.into_iter().next() {
             Ok(Some(game))
         } else {
@@ -159,7 +157,6 @@ impl Game {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(ip_or_email));
         let results = query.load::<Game>(connection)?;
-        println!("Game: {:?}", results);
         Ok(results.into_iter().next())
     }
 
@@ -175,7 +172,7 @@ impl Game {
         let query = games::table.into_boxed();
         let query = query.filter(games::id.eq(id));
         let results = query.load::<Game>(connection)?;
-        println!("Game: {:?}", results);
+        println!("Finished Game: {:?}", results);
         if let Some(game) = results.into_iter().next() {
             let updated_game = diesel::update(&game)
                 .set(games::is_finished.eq(true))
@@ -195,7 +192,6 @@ impl Game {
         let query = games::table.into_boxed();
         let query = query.filter(games::id.eq(id));
         let results = query.load::<Game>(connection)?;
-        println!("Game: {:?}", results);
         if let Some(game) = results.into_iter().next() {
             Self::update(connection, &game, word)?;
             WordResult::query(word, &word_model.embedding)
