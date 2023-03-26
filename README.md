@@ -8,6 +8,7 @@ TODO:
 - [ ] 1er 2 mots
 - [ ] année tagent mois -- ??
 - [ ] fix CORS
+- [ ] add url/link to wiki page
 - [x] refuse words not in database
 - [x] add conjugation
 - [x] add word history without duplicate
