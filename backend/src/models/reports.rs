@@ -5,6 +5,8 @@ use crate::schema::reports;
 use diesel::{PgConnection, QueryDsl};
 use rand::Rng;
 use serde::Serialize;
+use std::thread;
+use std::time::Duration;
 
 #[derive(Debug, Serialize, Clone, Queryable, Insertable)]
 #[diesel(table_name = reports)]
@@ -30,6 +32,7 @@ impl Report {
             description: report.description.to_owned(),
             date: naive_date_time,
         };
+        thread::sleep(Duration::from_secs(2));
         diesel::insert_into(reports::table)
             .values(&report)
             .execute(connection)?;

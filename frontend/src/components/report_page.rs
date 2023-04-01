@@ -1,7 +1,9 @@
 use super::app::Route;
+
 use crate::entities::interfaces::{InputReport, Status};
 use crate::service::future::handle_future;
 use crate::service::reports::create_report;
+use material_yew::snackbar::MatSnackbar;
 use std::str::FromStr;
 use web_sys::{HtmlInputElement, HtmlSelectElement, InputEvent};
 use yew::prelude::*;
@@ -39,6 +41,7 @@ impl std::str::FromStr for ReportCategory {
 struct ReportState {
     category: ReportCategory,
     description: String,
+    sent: bool,
 }
 
 impl ReportState {
@@ -61,22 +64,27 @@ pub fn report_page(props: &ReportProps) -> Html {
     let state = use_state(|| ReportState {
         category: ReportCategory::Bug,
         description: "".to_string(),
+        sent: false,
     });
     let history = use_history().unwrap();
 
     let onclick_submit = {
         let state = state.clone();
         let props = props.clone();
-        Callback::from(move |_| {
-            let state = state.clone();
-            let history = history.clone();
+        Callback::once(move |_| {
+            let state_1 = state.clone();
+            state.set(ReportState {
+                category: state.category.clone(),
+                description: state.description.clone(),
+                sent: true,
+            });
             let future_user =
-                async move { create_report(&state.to_report_input(props.article_id)).await };
+                async move { create_report(&state_1.to_report_input(props.article_id)).await };
             handle_future(future_user, move |data: Result<(), Status>| {
                 match data {
                     Ok(_) => {
                         log::info!("Report submitted");
-                        history.push(Route::LaunchPage)
+                        history.push(Route::LaunchPage);
                     }
                     Err(_) => {
                         log::info!("Report failed");
@@ -95,6 +103,7 @@ pub fn report_page(props: &ReportProps) -> Html {
             state.set(ReportState {
                 category,
                 description: state.description.clone(),
+                sent: false,
             });
         })
     };
@@ -107,6 +116,7 @@ pub fn report_page(props: &ReportProps) -> Html {
             state.set(ReportState {
                 category: state.category.clone(),
                 description: value.clone(),
+                sent: false,
             });
         })
     };
@@ -127,6 +137,10 @@ pub fn report_page(props: &ReportProps) -> Html {
             <button onclick={onclick_submit}>
                 { "Submit report" }
             </button>
+            <MatSnackbar
+                label_text={"Thank you for your report !"}
+                open={state.sent}
+            />
         </div>
     }
 }

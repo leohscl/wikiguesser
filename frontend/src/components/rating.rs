@@ -1,4 +1,5 @@
 use crate::service::future::handle_future;
+use material_yew::snackbar::MatSnackbar;
 use yew::prelude::*;
 
 use crate::entities::interfaces::Status;
@@ -13,15 +14,15 @@ enum Rate {
     Five,
 }
 
+#[derive(Properties, PartialEq, Clone)]
+pub struct RatingProps {
+    pub article_id: i32,
+}
+
 #[derive(PartialEq)]
 struct RatingState {
     rating_sent: bool,
     opt_rate: Option<Rate>,
-}
-
-#[derive(Properties, PartialEq, Clone)]
-pub struct RatingProps {
-    pub article_id: i32,
 }
 
 impl RatingState {
@@ -140,6 +141,12 @@ pub fn rating(props: &RatingProps) -> Html {
             <button onclick={onclick_send_rating} disabled={disabled}>
                 { "Submit rating" }
             </button>
+            <section style="margin: 1em 0;">
+            <MatSnackbar
+                label_text={"Rating submitted !"}
+                open={state.rating_sent}
+            />
+            </section>
         </div>
     }
 }
