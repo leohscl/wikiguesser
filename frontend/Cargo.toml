@@ -25,6 +25,7 @@ argon2 = "0.4"
 rand_core = { version = "0.6", features = ["std"] }
 gloo-dialogs = "0.1.1"
 wiki_process = { path = "../utils/wiki_process" }
+material-yew = { version = "0.2", features = ["snackbar"] }
 
 
 [dependencies.web-sys]
