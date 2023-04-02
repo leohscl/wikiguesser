@@ -3,7 +3,6 @@ bash make.sh
 
 TODO:
 - [ ] add https
-- [ ] thimothé chalamet -- investigate
 - [ ] 1er 2 mots
 - [ ] année tagent mois -- ??
 - [ ] fix CORS
@@ -11,8 +10,9 @@ TODO:
 - [ ] Work on front end look (button, espacement mots)
 - [ ] Smartphone support
 - [ ] Add loading bar
-- [ ] Add tutorial ?
 - [ ] Add team mode
+- [ ] Add tutorial ?
+- [ ] Add global score, median number of word to complete ?
 - [x] refuse words not in database
 - [x] add conjugation
 - [x] add word history without duplicate
