@@ -419,9 +419,8 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let orange_emo = '🟧';
     let red_emo = '🟥';
     let victory = state.victory;
-    let percent = 50;
     match &(*state.clone()).opt_page {
-        None => html! {<LoadingBar {percent}/>},
+        None => html! {<LoadingBar />},
         Some(page) => {
             let views_string = if let Some(game) = &state.opt_game {
                 let daily_views = game.article.views / 30;
