@@ -5,6 +5,7 @@ TODO:
 - [ ] add https
 - [ ] 1er 2 mots
 - [ ] fix CORS
+- [ ] picking rating resets page scroll
 - [ ] add url/link to wiki page
 - [ ] citations leave trailing commas - example: https://fr.wikipedia.org/wiki/Danielle_Darrieux
 - [ ] Smartphone support
@@ -12,6 +13,7 @@ TODO:
 - [ ] Add tutorial ?
 - [ ] Add global score, median number of word to complete ?
 - [ ] Add "important" word category, word that help complete the page
+- [ ] Add daily page !
 - [x] better buttons
 - [x] better word spacing
 - [x] translate text to french
