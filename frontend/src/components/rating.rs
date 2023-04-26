@@ -138,7 +138,7 @@ pub fn rating(props: &RatingProps) -> Html {
                 <input type="radio" onclick={onclick_1} checked={is_clicked(Rate::One,state.opt_rate.clone())} id="star1" name="rate" value="1" />
                 <label for="star1" title="text">{"1 star"}</label>
               </div>
-            <button onclick={onclick_send_rating} disabled={disabled}>
+            <button class="button send_rating" onclick={onclick_send_rating} disabled={disabled}>
                 { "Submit rating" }
             </button>
             <section style="margin: 1em 0;">

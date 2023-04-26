@@ -8,19 +8,20 @@ pub struct PastWordsProps {
 #[function_component(PastWords)]
 pub fn past_words(props: &PastWordsProps) -> Html {
     // display up to 5 words
-    let iter_string = props.past_words.iter().rev().take(5);
+    let iter_string = props.past_words.iter().enumerate().skip(1).rev().take(5);
     log::info!(
         "Queried words: {:?}, len: {}",
         props.past_words,
         props.past_words.len()
     );
-    let text_words = (props.past_words.len() - 1).to_string() + &" Mots";
+    let text_words = "Mots";
     html! {
         <div class="past_word">
             <h4> {text_words}</h4>
             {
-                iter_string.map(|word| {
-                    html!{<p> {word} </p>}
+                iter_string.map(|(num, word)| {
+                    let string_display = num.to_string() + &" " + word;
+                    html!{<p class="p_word"> {string_display} </p>}
                 }).collect::<Html>()
             }
         </div>

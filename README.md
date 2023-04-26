@@ -6,11 +6,14 @@ TODO:
 - [ ] 1er 2 mots
 - [ ] fix CORS
 - [ ] add url/link to wiki page
-- [ ] Work on front end look (button, espacement mots)
+- [x] better buttons
+- [x] better word spacing
+- [ ] citations leave trailing commas - example: https://fr.wikipedia.org/wiki/Danielle_Darrieux
 - [ ] Smartphone support
 - [ ] Add team mode
 - [ ] Add tutorial ?
 - [ ] Add global score, median number of word to complete ?
+- [ ] Add "important" word category, word that help complete the page
 - [x] Add loading bar
 - [x] refuse words not in database
 - [x] add conjugation

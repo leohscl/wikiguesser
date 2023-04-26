@@ -7,6 +7,7 @@ pub struct HiddenFieldProps {
     pub close_word: String,
     pub rgb_num: u8,
     pub is_new: bool,
+    pub is_revealed: bool,
 }
 
 struct HiddenFieldState {
@@ -26,11 +27,13 @@ impl HiddenFieldState {
 #[function_component(HiddenField)]
 pub fn hidden_field(props: &HiddenFieldProps) -> Html {
     let state = use_state(|| HiddenFieldState::new());
-    let style_string = get_style(&props);
-    let style_number = format!(
-        "background-color: rgb(51, 51, 51);color: rgb({}, {}, {});",
-        255, 150, 150
-    );
+    let is_revealed = props.is_revealed;
+    let style_string = if is_revealed {
+        format!("color: rgb({}, {}, {});", 0, 0, 0)
+    } else {
+        get_style(&props)
+    };
+    let style_number = format!("color: rgb({}, {}, {});", 255, 150, 150);
     let string_with_padding = get_string_with_padding(props);
     let onclick = {
         let state = state.clone();
@@ -54,9 +57,14 @@ pub fn hidden_field(props: &HiddenFieldProps) -> Html {
         props.hidden_string.chars().count(),
         string_with_padding.chars().count(),
     );
+    let hidden_class = if is_revealed {
+        "hidden_revealed"
+    } else {
+        "hidden_field"
+    };
     html! {
         <span
-        class="w"
+        class={hidden_class}
         style={
             if state.show_num {
                 style_number
@@ -92,10 +100,7 @@ fn get_style(props: &HiddenFieldProps) -> String {
             props.rgb_num
         }
     };
-    format!(
-        "background-color: rgb(51, 51, 51);color: rgb({}, {}, {});",
-        red, green, blue
-    )
+    format!("color: rgb({}, {}, {});", red, green, blue)
 }
 
 fn get_number_with_padding(hidden_word_length: usize, str_with_padding_size: usize) -> String {
@@ -120,25 +125,34 @@ fn get_string_with_padding(props: &HiddenFieldProps) -> String {
     let len_hidden = props.hidden_string.len();
     let len_close = props.close_word.len();
     let str_to_render = &props.close_word;
-    if str_to_render == "" {
-        std::iter::repeat('\u{00a0}')
-            .take(len_hidden * 2)
-            .collect::<String>()
-    } else {
-        let padding = {
-            // Add some padding when the true word is a lot bigger
-            // than the close word
-            if len_hidden + 1 > len_close {
-                1 + (len_hidden - len_close) / 2
-            } else {
-                1
-            }
-        };
-
+    if props.is_revealed {
+        let padding = 1;
         std::iter::repeat('\u{00a0}')
             .take(padding)
-            .chain(str_to_render.chars())
+            .chain(props.hidden_string.chars())
             .chain(std::iter::repeat('\u{00a0}').take(padding))
             .collect::<String>()
+    } else {
+        if str_to_render == "" {
+            std::iter::repeat('\u{00a0}')
+                .take(len_hidden * 2)
+                .collect::<String>()
+        } else {
+            let padding = {
+                // Add some padding when the true word is a lot bigger
+                // than the close word
+                if len_hidden + 1 > len_close {
+                    1 + (len_hidden - len_close) / 2
+                } else {
+                    1
+                }
+            };
+
+            std::iter::repeat('\u{00a0}')
+                .take(padding)
+                .chain(str_to_render.chars())
+                .chain(std::iter::repeat('\u{00a0}').take(padding))
+                .collect::<String>()
+        }
     }
 }

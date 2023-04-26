@@ -134,7 +134,7 @@ pub fn report_page(props: &ReportProps) -> Html {
                 <input type="text" value={state.description.clone()} oninput={oninput_description} class="form-control" placeholder="" id="report_description"/>
                 <i class="fa fa-envelope"></i>
             </div>
-            <button onclick={onclick_submit}>
+            <button class="button bug_submit" onclick={onclick_submit}>
                 { "Submit report" }
             </button>
             <MatSnackbar

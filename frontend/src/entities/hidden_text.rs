@@ -43,33 +43,29 @@ impl HiddenText {
                 } else {
                     match new_reveal {
                         RevealStrength::NotRevealed => match revealed {
-                            RevealStrength::Revealed => html! {<span>{text}</span>},
+                            RevealStrength::Revealed => {
+                                html! {<span class="old_reveal"> {text}</span>}
+                            }
                             RevealStrength::VeryClose(str_pos) => {
-                                render_string(&str_pos.str, 230, text, false)
+                                render_string(&str_pos.str, 230, text, false, false)
                             }
                             RevealStrength::Close(str_pos) => {
-                                render_string(&str_pos.str, 196, text, false)
+                                render_string(&str_pos.str, 196, text, false, false)
                             }
                             RevealStrength::Distant(str_pos) => {
-                                render_string(&str_pos.str, 132, text, false)
+                                render_string(&str_pos.str, 132, text, false, false)
                             }
-                            _ => render_string("", 0, text, false),
+                            _ => render_string("", 0, text, false, false),
                         },
-                        RevealStrength::Revealed => {
-                            let green_style = format!(
-                                "background-color: rgb(100, {}, 100);color: rgb(0, {}, 0);",
-                                250, 50
-                            );
-                            html! {<span style={green_style}> {text}</span>}
-                        }
+                        RevealStrength::Revealed => render_string("", 232, text, true, true),
                         RevealStrength::VeryClose(str_pos) => {
-                            render_string(&str_pos.str, 232, text, true)
+                            render_string(&str_pos.str, 232, text, true, false)
                         }
                         RevealStrength::Close(str_pos) => {
-                            render_string(&str_pos.str, 182, text, true)
+                            render_string(&str_pos.str, 182, text, true, false)
                         }
                         RevealStrength::Distant(str_pos) => {
-                            render_string(&str_pos.str, 122, text, true)
+                            render_string(&str_pos.str, 122, text, true, false)
                         }
                     }
                 }
@@ -233,13 +229,20 @@ impl ToString for HiddenText {
     }
 }
 
-fn render_string(str_to_render: &str, rgb_num: u8, true_word: &str, is_new: bool) -> Html {
+fn render_string(
+    str_to_render: &str,
+    rgb_num: u8,
+    true_word: &str,
+    is_new: bool,
+    is_revealed: bool,
+) -> Html {
     html! {
         <HiddenField
             hidden_string={true_word.to_string()}
             close_word={str_to_render.to_string()}
             rgb_num={rgb_num}
             is_new={is_new}
+            is_revealed={is_revealed}
         />
     }
 }

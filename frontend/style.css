@@ -162,15 +162,35 @@ h1.navbar-item {
 	padding-right: .5em;
 	border-radius: 5px;
 }
-.w {
+.hidden_field {
     background-color: #333;
-    color: #333;
-    border-radius: 3px;
-    font-size: 1.1em;
+}
+.hidden_revealed {
+    background-color: #90ee90;
+}
+.hidden_revealed, .hidden_field {
+    margin-left: 0.1em;
+    margin-right: 0em;
+    margin-bottom: 0.15em;
+    margin-top: 0.15em;
+    border-radius: 4px;
+    font-size: 1em;
     line-height: 1.1;
+    color: #333;
+    display: inline-block;
+    transition: color .2s linear, background-color .6s linear;
+}
+.old_reveal {
+    margin-left: 0.1em;
+    margin-right: 0em;
+    margin-bottom: 0.15em;
+    margin-top: 0.15em;
+    border-radius: 4px;
+    font-size: 1em;
+    line-height: 1.1;
+    color: #333;
     display: inline-block;
     text-align: center;
-    transition: color .3s linear, background-color .5s linear;
 }
 input, #signin, #sync {
     font-size: 1.3em;
@@ -215,11 +235,32 @@ input, #signin, #sync {
 .rate > label:hover ~ input:checked ~ label {
     color: #c59b08;
 }
+.p_word {
+  display: block;
+  white-space: nowrap;
+}
 .past_word {
   box-shadow: 0 0 0.3rem #999;
   border-radius: 0.2rem;
-  padding: 1.2rem;
+  margin-top: 20px;
+  padding: 20px;
+  min-width: 150px;
   margin-bottom: 1.6rem;
+  background-color: #CBC3E3;
+}
+.button {
+  padding: 0.3rem;
+  margin: 0.3rem;
+  background-color: #00BFFF;
+  border: none;
+  border-radius: 3px;
+  box-shadow: 1px 1px 10px rgba(50,50,50,.4);
+  transition: .3s all ease;
+  letter-spacing: .05rem;
+  font-size: .85rem;
+  position: relative;
+  top: 0;
+  right: 0;
 }
 button.launch {
   padding: 0.3rem;

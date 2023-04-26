@@ -459,7 +459,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             victory,
-                            html! { <button onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
+                            html! { <button class="button reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
                         )
                     }
                     <div/>
@@ -495,7 +495,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             !victory,
-                            html! { <button onclick={onclick_give_up}> { "Give up" } </button> }
+                            html! { <button class="button give_up" onclick={onclick_give_up}> { "Give up" } </button> }
                         )
                     }
                     {
@@ -512,13 +512,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             victory,
-                            html! { <button onclick={onclick_report_page}> { "Report an issue" } </button> }
+                            html! { <button class="button report" onclick={onclick_report_page}> { "Report an issue" } </button> }
                         )
                     }
                     {
                         ifcond!(
                             victory,
-                            html! { <button onclick={onclick_new_page}> { "Try another page !" } </button> }
+                            html! { <button class= "button try_another" onclick={onclick_new_page}> { "Try another page !" } </button> }
                         )
                     }
                     {
