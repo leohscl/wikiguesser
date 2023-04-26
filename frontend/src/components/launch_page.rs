@@ -128,7 +128,7 @@ pub fn launch_page() -> Html {
             }
         };
     });
-    let string_launch_button = "Get a random page !".to_string();
+    let string_launch_button = "Nouvelle page aléatoire".to_string();
 
     let input_search = {
         let state = state.clone();
@@ -202,12 +202,12 @@ pub fn launch_page() -> Html {
             </div>
             <p> {"       or..       "}</p>
             <div style="display: flex">
-                <input type="text" oninput={oninput_id} value={state.article_id.clone()} id="input_id" name="input_id" size=10/>
-                <button class="launch" onclick={onclick_launch_id}> { "Find page with id" } </button>
+                <input class="input id" type="text" placeholder="Ex: 123" oninput={oninput_id} value={state.article_id.clone()} id="input_id" name="input_id" size=10/>
+                <button class="launch" onclick={onclick_launch_id}> { "Trouver une page avec l'identifiant" } </button>
             </div>
-            <p> {"    Share wikipedia page with your friend !    "}</p>
+            <p> {"    Prépare une page wikipédia pour quelqu'un d'autre    "}</p>
             <div style="display: flex">
-                <input type="text" oninput={input_search} value={state.input_title_search.clone()} id="input_search" name="input_search" list="article_suggestion" size=10/>
+                <input class="input title" type="text" placeholder="Ex: Télévision" oninput={input_search} value={state.input_title_search.clone()} id="input_search" name="input_search" list="article_suggestion" size=10/>
                 <datalist id="article_suggestion">
                 {
                     state.potential_articles.iter().map(|article| {

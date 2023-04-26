@@ -139,11 +139,11 @@ pub fn rating(props: &RatingProps) -> Html {
                 <label for="star1" title="text">{"1 star"}</label>
               </div>
             <button class="button send_rating" onclick={onclick_send_rating} disabled={disabled}>
-                { "Submit rating" }
+                { "Envoyer la note" }
             </button>
             <section style="margin: 1em 0;">
             <MatSnackbar
-                label_text={"Rating submitted !"}
+                label_text={"Note prise en compte"}
                 open={state.rating_sent}
             />
             </section>

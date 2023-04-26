@@ -12,6 +12,18 @@ input[type=text]:focus {
   background-color: lightblue;
 }
 
+input::placeholder {
+    font-weight: bold;
+    opacity: 0.5;
+    color: grey;
+    font-size: 12px;
+}
+
+.input {
+  border: 2px solid black;
+  border-radius: 4px;
+}
+
 br {
   margin:1em ;/* FF for instance */
   line-height:1em;/* chrome for instance */

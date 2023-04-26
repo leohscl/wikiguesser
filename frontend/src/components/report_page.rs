@@ -135,10 +135,10 @@ pub fn report_page(props: &ReportProps) -> Html {
                 <i class="fa fa-envelope"></i>
             </div>
             <button class="button bug_submit" onclick={onclick_submit}>
-                { "Submit report" }
+                { "Signaler" }
             </button>
             <MatSnackbar
-                label_text={"Thank you for your report !"}
+                label_text={"Merci pour votre rapport !"}
                 open={state.sent}
             />
         </div>

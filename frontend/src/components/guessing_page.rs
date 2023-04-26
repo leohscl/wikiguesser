@@ -369,7 +369,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let onclick_give_up = {
         let state = state.clone();
         Callback::from(move |_| {
-            if confirm("Are you sure you want to give up ?") {
+            if confirm("Êtes-vous sûr de vouloir abandonner ?") {
                 state.dispatch(ArticleAction::RevealAll);
             }
         })
@@ -424,7 +424,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         Some(page) => {
             let views_string = if let Some(game) = &state.opt_game {
                 let daily_views = game.article.views / 30;
-                "daily views: ".to_string() + &daily_views.to_string()
+                "Vues quotidiennes: ".to_string() + &daily_views.to_string()
             } else {
                 "".to_string()
             };
@@ -495,14 +495,14 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             !victory,
-                            html! { <button class="button give_up" onclick={onclick_give_up}> { "Give up" } </button> }
+                            html! { <button class="button give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
                         )
                     }
                     {
                         {
                             if let Some(ongoing_game) = &state.opt_game {
                                 let article_id = ongoing_game.article.id;
-                                let text = "Game id: ".to_string() + &article_id.to_string();
+                                let text = "Identifiant page: ".to_string() + &article_id.to_string();
                                 html! { <p> {text} </p> }
                             } else {
                                 html!{}
@@ -512,13 +512,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             victory,
-                            html! { <button class="button report" onclick={onclick_report_page}> { "Report an issue" } </button> }
+                            html! { <button class="button report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
                         )
                     }
                     {
                         ifcond!(
                             victory,
-                            html! { <button class= "button try_another" onclick={onclick_new_page}> { "Try another page !" } </button> }
+                            html! { <button class= "button try_another" onclick={onclick_new_page}> { "Essayer une autre page" } </button> }
                         )
                     }
                     {

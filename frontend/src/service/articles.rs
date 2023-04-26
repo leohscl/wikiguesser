@@ -19,7 +19,12 @@ pub async fn get_one_article(opt_cat: Option<String>) -> Result<Article, Status>
 }
 
 pub async fn get_matches(word: &str) -> Result<Vec<Article>, Status> {
-    let url = format!("{}/articles/get_match/{}", API_URL, word);
+    let mut chars_word = word.chars();
+    let capitalized_word = match chars_word.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().chain(chars_word).collect(),
+    };
+    let url = format!("{}/articles/get_match/{}", API_URL, capitalized_word);
     let json = Fetch::get(url).await;
     match json {
         Ok(json) => Ok(serde_wasm_bindgen::from_value::<Vec<Article>>(json).unwrap()),
