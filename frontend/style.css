@@ -8,9 +8,6 @@ input {
   border: 4px solid black;
   border-radius: 2px;
 }
-input[type=text]:focus {
-  background-color: lightblue;
-}
 
 input::placeholder {
     font-weight: bold;
@@ -24,6 +21,43 @@ input::placeholder {
   border-radius: 4px;
 }
 
+select {
+  /* Reset Select */
+  appearance: none;
+  outline: 0;
+  border: 0;
+  box-shadow: none;
+  /* Personalize */
+  padding: 0 1em;
+  color: #fff;
+  background-color: #34495e;
+  background-image: none;
+  cursor: pointer;
+}
+.select {
+  position: relative;
+  display: flex;
+  width: 10em;
+  height: 2em;
+  border-radius: .25em;
+  overflow: hidden;
+}
+/* Arrow */
+.select::after {
+  content: '\25BC';
+  position: absolute;
+  top: -0.6em;
+  right: 0;
+  padding: 1em;
+  background-color: #34495e;
+  transition: .25s all ease;
+  pointer-events: none;
+}
+/* Transition */
+.select:hover::after {
+  color: #f39c12;
+}
+
 br {
   margin:1em ;/* FF for instance */
   line-height:1em;/* chrome for instance */
@@ -32,135 +66,100 @@ h2.title {
   text-align: center
 }
 
-select.cat_sel {
-  position: relative;
-  display: block;
-  font-family: 'Barrio', sans-serif;
-  font-size: 13px;
-  color: #000000;
-
-  @media (min-width: 768px) {
-    width: 70%;
-  }
-
-  @media (min-width: 992px) {
-    width: 50%;
-  }
-
-  @media (min-width: 1200px) {
-    width: 30%;
-  }
-
-  &__current {
-    position: relative;
-    box-shadow: 0 15px 30px -10px transparentize(#000, 0.9);
-    cursor: pointer;
-    outline: none;
-
-    &:focus {
-      & + .select-box__list {
-        opacity: 1;
-
-        // We have to set "animation-name: none;" to make the list visible (read below how it works)
-
-        animation-name: none;
-
-        .select-box__option {
-          cursor: pointer;
-        }
-      }
-
-      .select-box__icon {
-        transform: translateY(-50%) rotate(180deg);
-      }
-    }
-  }
-
-  &__icon {
-    position: absolute;
-    top: 50%;
-    right: 15px;
-    transform: translateY(-50%);
-    width: 20px;
-    opacity: 0.3;
-    transition: 0.2s ease;
-  }
-
-  &__value {
-    display: flex;
-  }
-
-  &__input {
-    display: none;
-
-    &:checked + .select-box__input-text {
-      display: block;
-    }
-  }
-
-  &__input-text {
-    display: none;
-    width: 100%;
-    margin: 0;
-    padding: 15px;
-    background-color: #fff;
-  }
-
-  &__list {
-    position: absolute;
-    width: 100%;
-    padding: 0;
-    list-style: none;
-    opacity: 0;
-
-    // We need to use animation with delay.
-    // Otherwise the click event will not have time to run on label, because this element disapears immediately when .select-box__current element loses the focus.
-    // This delay will not be noticed because we set "opacity" to "0".
-    // We also use "animation-fill-mode: forwards" to make the list stay hidden.
-
-    animation-name: HideList;
-    animation-duration: 0.5s;
-    animation-delay: 0.5s;
-    animation-fill-mode: forwards;
-    animation-timing-function: step-start;
-    box-shadow: 0 15px 30px -10px transparentize(#000, 0.9);
-  }
-
-  &__option {
-    display: block;
-    padding: 15px;
-    background-color: #fff;
-
-    &:hover,
-    &:focus {
-      color: #546c84;
-      background-color: #fbfbfb;
-    }
-  }
-}
-
-@keyframes HideList {
-  from {
-    transform: scaleY(1);
-  }
-  to {
-    transform: scaleY(0);
-  }
-}
-
 p.content {
   background:white;
   padding:20px;
   border-radius: 6px;
 }
 
-nav.navbar-brand {
-  background:lightblue;
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+.welcome_title {
+}
+.welcome {
+  display: flex;
+  flex-direction: column;
+  padding:40px;
+  padding-right:200px;
+}
+.is-primary {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding:20px;
+  background: dodgerblue;
+  border-radius: 5px;
+}
+
+.nav-item {
+  line-height: normal;
+  padding: 7px 15px;
+  text-decoration: none;
+  text-shadow: 0 -1px 1px #a9abad;
+  font-size: 15px;
+  color: #fff;
+  background-color: transparent;
+}
+
+.navbar-start {
+  display: inline;
+}
+.logo {
+  width: 400px;
+  height: 400px;
+}
+a.navbar-item, .wikitrouve {
+  padding: 7px 15px;
+  border-radius: 10px;
+  border-width: 1px;
+  color: #000;
+  font-weight: bold;
+  display: inline;
+  text-shadow: 0 -1px 1px #a9abad;
+  font-family: proxima,Arial,Tahoma,Verdana,sans-serif;
+  text-decoration: none;
+}
+a.wikitrouve:hover {
+  text-decoration: none;
+}
+
+.link {
+  font-weight: bold;
+}
+a.navbar-item:hover {
+  background-color: transparent;
+  text-decoration: none;
+  background-color: steelblue;
+}
+
+.navbar-brand {
+  display: inline;
+  background: transparent;
+}
+ul {
+  display: inline;
+}
+ul li {
+  display: inline;
 }
 
 h1.navbar-item {
   border-radius: 5px;
   border-width: 1px;
+  display: inline;
+}
+
+.loading {
+  display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	padding: 40px;
 }
 
 .form {
@@ -274,9 +273,11 @@ input, #signin, #sync {
   top: 0;
   right: 0;
 }
-button.launch {
-  padding: 0.3rem;
+.launch_padding {
   margin-left: 1rem;
+}
+.launch {
+  padding: 0.3rem;
   background-color: #00BFFF;
   border: none;
   border-radius: 3px;
@@ -287,6 +288,9 @@ button.launch {
   position: relative;
   top: 0;
   right: 0;
+}
+.launch {
+  margin-left: 1rem;
 }
 .progress-outer {
   width: 300px;

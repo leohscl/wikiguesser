@@ -14,6 +14,13 @@ TODO:
 - [ ] Add global score, median number of word to complete ?
 - [ ] Add "important" word category, word that help complete the page
 - [ ] Add daily page !
+- [ ] Add message for failed loading
+- [ ] Add shadow to indicate which page we are on
+- [ ] Add picture for random page
+- [ ] Update wikitty picture
+- [ ] Fill information page
+- [ ] Fill preparation page
+- [x] better navigation
 - [x] better buttons
 - [x] better word spacing
 - [x] translate text to french

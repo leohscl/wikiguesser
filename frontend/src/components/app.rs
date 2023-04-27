@@ -7,6 +7,7 @@ use yew_router::prelude::*;
 use super::guessing_page::GuessingPage;
 use super::launch_page::LaunchPage;
 use super::login::Login;
+use super::random_page::RandomPage;
 use super::report_page::ReportPage;
 use super::signup::Signup;
 use crate::entities::interfaces::User;
@@ -33,7 +34,7 @@ impl FromStr for StringWrap {
     }
 }
 
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Routable, PartialEq, Debug)]
 pub enum Route {
     #[at("/")]
     LaunchPage,
@@ -45,6 +46,8 @@ pub enum Route {
     ReportForm { article_id: i32 },
     #[at("/dummy")]
     GuessingPageDummy,
+    #[at("/guess")]
+    RandomPage,
     #[at("/guess/:opt_str")]
     GuessingPage { opt_str: StringWrap },
     #[not_found]
@@ -87,6 +90,11 @@ pub fn app() -> Html {
                 let cb_user_login = cb_user_login.clone();
                 html! {
                     <Login {cb_user_login} />
+                }
+            }
+            Route::RandomPage => {
+                html! {
+                    <RandomPage />
                 }
             }
             Route::LaunchPage => {
@@ -134,16 +142,38 @@ pub fn app() -> Html {
             <BrowserRouter>
                 <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
                     <div class="navbar-brand">
-                        <h1 class="navbar-item is-size-3">{ "Wikitrouve" }</h1>
+                        <Link<Route> classes={classes!("wikitrouve")} to={Route::LaunchPage}>
+                            { "WIKITROUVE" }
+                        </Link<Route>>
                         <div class="navbar-start">
                         {
                             if user_logged_in(&state) {
-                                html!{}
+                                html!{
+                                }
                             } else {
                                 html!{
-                                    //<Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
-                                    //    { "Login" }
-                                    //</Link<Route>>
+                                    <ul class="nav navbar-nav">
+                                    <li class="nav-item" id="tutorMenuItem">
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                            { "Page du jour" }
+                                        </Link<Route>>
+                                    </li>
+                                    <li class="nav-item ">
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::RandomPage}>
+                                            { "Page aléatoire" }
+                                        </Link<Route>>
+                                    </li>
+                                    <li class="nav-item active">
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                            { "Préparation de page" }
+                                        </Link<Route>>
+                                    </li>
+                                    <li class="nav-item active">
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                            { "Informations" }
+                                        </Link<Route>>
+                                    </li>
+                                    </ul>
                                 }
                             }
                         }

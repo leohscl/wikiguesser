@@ -420,7 +420,11 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let red_emo = '🟥';
     let victory = state.victory;
     match &(*state.clone()).opt_page {
-        None => html! {<LoadingBar />},
+        None => html! {
+            <div class="loading">
+                <LoadingBar />
+            </div>
+        },
         Some(page) => {
             let views_string = if let Some(game) = &state.opt_game {
                 let daily_views = game.article.views / 30;
@@ -439,7 +443,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 }
             }
             let past_words = state.word_queried.clone();
-            let num_moves = state.word_queried.len();
+            let num_moves = state.word_queried.len() - 1;
             let no_words = past_words.len() == 1;
             html! {
                 <div style="display: flex;">
@@ -459,7 +463,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             victory,
-                            html! { <button class="button reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
+                            html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
                         )
                     }
                     <div/>
@@ -495,15 +499,16 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             !victory,
-                            html! { <button class="button give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
+                            html! { <button class="launch give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
                         )
                     }
                     {
                         {
                             if let Some(ongoing_game) = &state.opt_game {
                                 let article_id = ongoing_game.article.id;
-                                let text = "Identifiant page: ".to_string() + &article_id.to_string();
-                                html! { <p> {text} </p> }
+                                let link = String::from("www.wikitrouve.fr/guess/") + &article_id.to_string();
+                                let text = "Partage cette page: ".to_string();
+                                html! { <div> <p> {text} </p> <p class="link"> {link} </p> </div> }
                             } else {
                                 html!{}
                             }
@@ -512,7 +517,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     {
                         ifcond!(
                             victory,
-                            html! { <button class="button report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
+                            html! { <button class="launch report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
                         )
                     }
                     {
