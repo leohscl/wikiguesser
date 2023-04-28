@@ -1,3 +1,4 @@
+use crate::components::app::StringWrap;
 use crate::{components::app::Route, entities::interfaces::Game};
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -19,11 +20,16 @@ pub fn launch_page() -> Html {
     let onclick_launch_daily = {
         let history = history.clone();
         let state_copy = state.clone();
+        let wrap_daily = StringWrap {
+            cat_or_id: "Daily".to_string(),
+        };
         Callback::from(move |_| {
             if let Some(opt_game) = state_copy.opt_game.clone() {
                 log::info!("Ongoing game: {:?}", opt_game);
             }
-            history.push(Route::RandomPage);
+            history.push(Route::GuessingPage {
+                opt_str: wrap_daily.clone(),
+            });
         })
     };
     let string_launch_button = "Page du jour".to_string();

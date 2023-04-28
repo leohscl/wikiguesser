@@ -1,5 +1,7 @@
 use crate::models::words::WordModel;
 use crate::models::words::WordResult;
+use chrono::prelude::*;
+use chrono_tz::Europe::Paris;
 use finalfusion::prelude::*;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -39,6 +41,8 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
+    let today = Utc::now().with_timezone(&Paris).date_naive();
+
     let fifu_file = FILE_MODEL;
     let mut reader = BufReader::new(File::open(&fifu_file).unwrap());
     let embed: Embeddings<VocabWrap, StorageViewWrap> =
@@ -77,6 +81,7 @@ async fn main() -> std::io::Result<()> {
                     Embeddings::read_embeddings(&mut reader).unwrap();
                 WordModel { embedding: embed }
             }))
+            .app_data(web::Data::new(today.clone()))
             .service(fs::Files::new("/media", "./media").show_files_listing())
             .data(pool.clone())
             .route("/words/{word}", web::get().to(handlers::words::query))
@@ -85,6 +90,10 @@ async fn main() -> std::io::Result<()> {
             .route(
                 "/articles/random/pick",
                 web::get().to(handlers::articles::get_one),
+            )
+            .route(
+                "/articles/random/daily",
+                web::get().to(handlers::articles::get_daily),
             )
             .route(
                 "/articles/random_in/{category}",
@@ -119,6 +128,10 @@ async fn main() -> std::io::Result<()> {
             .route(
                 "/games/get_or_create_with_id",
                 web::post().to(handlers::games::get_or_create_with_id),
+            )
+            .route(
+                "/games/get_or_create_daily",
+                web::post().to(handlers::games::get_or_create_daily),
             )
             .route(
                 "/games/get_or_create",

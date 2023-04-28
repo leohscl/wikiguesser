@@ -5,10 +5,14 @@ use crate::{
     get_common_words,
     schema::{articles, categories},
 };
+use chrono::NaiveDate;
+use chrono::{Timelike, Utc};
+use chrono_tz::Europe::Paris;
 use diesel::dsl::sql;
 use diesel::PgConnection;
 use finalfusion::prelude::*;
-use rand::Rng;
+use rand::seq::SliceRandom;
+use rand::{Rng, SeedableRng};
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -100,6 +104,24 @@ impl Article {
             .clone();
         Ok(article)
     }
+
+    pub fn get_daily(
+        connection: &mut PgConnection,
+        server_start: NaiveDate,
+    ) -> Result<Article, diesel::result::Error> {
+        let num_noons: usize = count_noons_since_date(&server_start);
+        let mut vec_article = articles::table
+            .filter(articles::views.gt(10000))
+            .load::<Article>(connection)?;
+        let mut r = rand::rngs::StdRng::seed_from_u64(0);
+        vec_article.shuffle(&mut r);
+        let article = vec_article
+            .get(num_noons)
+            .expect("There should be an element")
+            .clone();
+        Ok(article)
+    }
+
     pub fn get_one_with_id(
         connection: &mut PgConnection,
         id: i32,
@@ -124,18 +146,21 @@ impl Article {
             .clone();
         Ok(article)
     }
+
     pub fn get_one_excl_filter(
         connection: &mut PgConnection,
         cat_filter: &str,
     ) -> Result<Article, diesel::result::Error> {
         Self::get_one_right_filter(connection, cat_filter, false)
     }
+
     pub fn get_one_incl_filter(
         connection: &mut PgConnection,
         cat_filter: &str,
     ) -> Result<Article, diesel::result::Error> {
         Self::get_one_right_filter(connection, cat_filter, true)
     }
+
     fn get_one_right_filter(
         connection: &mut PgConnection,
         cat_filter: &str,
@@ -211,6 +236,7 @@ impl Article {
         println!("Number of word to query: {}", content_vec.len());
         Self::create_engine_with_common(&content_vec, embed, result_common)
     }
+
     pub fn create_engine_with_common(
         words: &Vec<String>,
         embed: &Embeddings<VocabWrap, StorageViewWrap>,
@@ -247,4 +273,26 @@ impl Article {
         println!("Done creating engine !");
         Ok(GameEngine { reveals: hash })
     }
+}
+fn count_noons_since_date(date: &NaiveDate) -> usize {
+    let mut noon_count = 0;
+    let mut current_date = *date;
+
+    let paris_time = Utc::now().with_timezone(&Paris);
+
+    // Convert to UTC time
+    let current_time = paris_time;
+    // Keep incrementing the current date by one day until today
+    let today = current_time.date_naive();
+    while current_date < today {
+        current_date = current_date.succ();
+        noon_count += 1;
+    }
+    if current_time.hour() >= 12 {
+        noon_count += 1;
+    }
+
+    println!("Number of noons since start: {}", noon_count);
+
+    noon_count
 }

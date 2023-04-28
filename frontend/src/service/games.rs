@@ -30,8 +30,12 @@ pub async fn get_game_with_id(id: i32) -> Result<OngoingGame, Status> {
         Err(_err) => Err(Status::Error),
     }
 }
-pub async fn get_game(opt_cat: Option<String>) -> Result<OngoingGame, Status> {
-    let url = format!("{}/games/get_or_create", API_URL);
+pub async fn get_game(opt_cat: Option<String>, daily: bool) -> Result<OngoingGame, Status> {
+    let url = if daily {
+        format!("{}/games/get_or_create_daily", API_URL)
+    } else {
+        format!("{}/games/get_or_create", API_URL)
+    };
     let cat = if let Some(category) = opt_cat {
         category
     } else {

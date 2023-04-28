@@ -5,8 +5,10 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use super::guessing_page::GuessingPage;
+use super::information_page::InformationPage;
 use super::launch_page::LaunchPage;
 use super::login::Login;
+use super::preparation_page::PreparationPage;
 use super::random_page::RandomPage;
 use super::report_page::ReportPage;
 use super::signup::Signup;
@@ -46,6 +48,10 @@ pub enum Route {
     ReportForm { article_id: i32 },
     #[at("/dummy")]
     GuessingPageDummy,
+    #[at("/preparation")]
+    Preparation,
+    #[at("/information")]
+    Information,
     #[at("/guess")]
     RandomPage,
     #[at("/guess/:opt_str")]
@@ -83,6 +89,9 @@ pub fn app() -> Html {
     let switch = {
         let state = state.clone();
         Switch::render(move |routes: &Route| match routes {
+            Route::Information => html! {
+                <InformationPage />
+            },
             Route::Signup => html! {
                 <Signup />
             },
@@ -95,6 +104,11 @@ pub fn app() -> Html {
             Route::RandomPage => {
                 html! {
                     <RandomPage />
+                }
+            }
+            Route::Preparation => {
+                html! {
+                    <PreparationPage />
                 }
             }
             Route::LaunchPage => {
@@ -110,6 +124,11 @@ pub fn app() -> Html {
             }
             Route::GuessingPage { opt_str } => {
                 let opt_user = state.opt_user.clone();
+                let daily = match opt_str.cat_or_id.as_str() {
+                    "Daily" => true,
+                    _ => false,
+                };
+
                 let (opt_cat, opt_id) = if let Ok(id) = opt_str.cat_or_id.parse::<i32>() {
                     (None, Some(id))
                 } else {
@@ -122,20 +141,24 @@ pub fn app() -> Html {
                 };
                 let dummy = false;
                 html! {
-                    <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy}/>
+                    <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
                 }
             }
             Route::GuessingPageDummy => {
                 let opt_user = state.opt_user.clone();
                 let opt_cat: Option<String> = None;
                 let opt_id: Option<i32> = None;
+                let daily = false;
                 let dummy = true;
                 html! {
-                    <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy}/>
+                    <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
                 }
             }
             Route::NotFound => html! { <h1>{ "404" }</h1> },
         })
+    };
+    let wrap_daily = StringWrap {
+        cat_or_id: "Daily".to_string(),
     };
     html! {
         <>
@@ -154,7 +177,7 @@ pub fn app() -> Html {
                                 html!{
                                     <ul class="nav navbar-nav">
                                     <li class="nav-item" id="tutorMenuItem">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::GuessingPage { opt_str: wrap_daily }}>
                                             { "Page du jour" }
                                         </Link<Route>>
                                     </li>
@@ -164,12 +187,12 @@ pub fn app() -> Html {
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item active">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Preparation}>
                                             { "Préparation de page" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item active">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Login}>
+                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Information}>
                                             { "Informations" }
                                         </Link<Route>>
                                     </li>

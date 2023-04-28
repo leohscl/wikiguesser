@@ -4,6 +4,7 @@ use crate::diesel::RunQueryDsl;
 use crate::models::words::WordModel;
 use crate::models::words::WordResult;
 use crate::{handlers::games::InputGame, schema::*};
+use chrono::prelude::*;
 use diesel::{PgConnection, QueryDsl};
 use rand::Rng;
 use serde::Deserialize;
@@ -88,6 +89,29 @@ impl Game {
             .execute(connection)?;
         Ok(new_game)
     }
+    fn create_daily(
+        connection: &mut PgConnection,
+        game: &InputGame,
+        server_start: &NaiveDate,
+    ) -> Result<Game, diesel::result::Error> {
+        // create article
+        let new_article =
+            Article::get_daily(connection, *server_start).expect("There should be a daily page");
+        let mut rng = rand::thread_rng();
+        let id = rng.gen::<i32>();
+        let new_game = Game {
+            id,
+            article_id: new_article.id,
+            ip_or_email: game.ip_or_email.to_owned(),
+            is_ip: game.is_ip,
+            is_finished: false,
+            words: "".to_owned(),
+        };
+        diesel::insert_into(games::table)
+            .values(&new_game)
+            .execute(connection)?;
+        Ok(new_game)
+    }
 
     pub fn get_or_create_with_id(
         connection: &mut PgConnection,
@@ -112,6 +136,30 @@ impl Game {
             words,
         })
     }
+
+    pub fn get_or_create_daily(
+        connection: &mut PgConnection,
+        input_game: &InputGame,
+        server_start: &NaiveDate,
+    ) -> Result<OngoingGame, diesel::result::Error> {
+        let query = games::table.into_boxed();
+        let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
+        let query = query.filter(games::is_finished.eq(false));
+        let results = query.load::<Game>(connection)?;
+        let game = if let Some(game) = results.into_iter().next() {
+            game
+        } else {
+            Self::create_daily(connection, input_game, server_start)?
+        };
+        let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+        let article = Article::get(game.article_id, connection)?;
+        Ok(OngoingGame {
+            game,
+            article,
+            words,
+        })
+    }
+
     pub fn get_or_create(
         connection: &mut PgConnection,
         input_game: &InputGame,
@@ -126,7 +174,6 @@ impl Game {
         } else {
             Self::create(connection, input_game, opt_cat)?
         };
-        // let all_results = Self::get_all_results(&game, word_model)?;
         let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
         let article = Article::get(game.article_id, connection)?;
         Ok(OngoingGame {

@@ -13,13 +13,15 @@ TODO:
 - [ ] Add tutorial ?
 - [ ] Add global score, median number of word to complete ?
 - [ ] Add "important" word category, word that help complete the page
-- [ ] Add daily page !
+- [x] Add daily page !
+- [ ] Test daily page !
 - [ ] Add message for failed loading
 - [ ] Add shadow to indicate which page we are on
 - [ ] Add picture for random page
 - [ ] Update wikitty picture
-- [ ] Fill information page
-- [ ] Fill preparation page
+- [x] make information page
+- [ ] Complete information page
+- [x] Fill preparation page
 - [x] better navigation
 - [x] better buttons
 - [x] better word spacing

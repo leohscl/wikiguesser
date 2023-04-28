@@ -45,7 +45,7 @@ pub fn random_page() -> Html {
     let string_launch_button = "Nouvelle page aléatoire".to_string();
     html! {
         <div class="row">
-            <div class="wikitty" title="Trouvons une page ensemble !">
+            <div class="wikitty" title="Page aléatoire">
                 <img class="logo" src="https://upload.wikimedia.org/wikipedia/commons/6/61/Wikipedia-logo-transparent.png"/>
             </div>
             <div class="welcome">

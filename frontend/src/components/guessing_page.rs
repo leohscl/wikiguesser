@@ -265,6 +265,7 @@ pub struct GuessingPageProps {
     pub opt_cat: Option<String>,
     pub opt_id: Option<i32>,
     pub dummy: bool,
+    pub daily: bool,
 }
 
 // Use macro to simplify html
@@ -287,6 +288,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             let dummy = props.dummy;
             let opt_cat = props.opt_cat.clone();
             let opt_id = props.opt_id.clone();
+            let daily = props.daily;
             let state = state.clone();
             move |_| {
                 if !dummy {
@@ -295,7 +297,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         if let Some(id) = opt_id {
                             Box::pin(async move { get_game_with_id(id).await })
                         } else {
-                            Box::pin(async move { get_game(opt_cat).await })
+                            Box::pin(async move { get_game(opt_cat, daily).await })
                         };
                     let state = state.clone();
                     handle_future(future, move |data: Result<OngoingGame, Status>| {

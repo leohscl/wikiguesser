@@ -36,4 +36,4 @@
 # $curl_get_game
 # testing titles queries
 # curl -v localhost:8000/articles/get_match/Chat
-curl -v localhost:8000/games/get_ongoing/
+curl -v localhost:8000/articles/random/daily

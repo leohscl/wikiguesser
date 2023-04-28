@@ -6,6 +6,7 @@ use crate::{
     models::games::{GamePrompt, GamePromptId},
 };
 use actix_web::{web, Error, HttpRequest, HttpResponse};
+use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -70,6 +71,30 @@ pub async fn get_or_create_with_id(
             .map_err(DatabaseError)?,
     )
 }
+pub async fn get_or_create_daily(
+    req: HttpRequest,
+    pool: web::Data<Pool>,
+    web_server_start: web::Data<NaiveDate>,
+    game_prompt: web::Json<GamePrompt>,
+) -> Result<HttpResponse, Error> {
+    let mut connection = pool.get().unwrap();
+    let server_start = **web_server_start;
+
+    let opt_email = if game_prompt.email == "None" {
+        None
+    } else {
+        Some(game_prompt.email.to_string())
+    };
+    let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email);
+    let input_game = InputGame { ip_or_email, is_ip };
+    Ok(
+        web::block(move || Game::get_or_create_daily(&mut connection, &input_game, &server_start))
+            .await
+            .map(|user| HttpResponse::Ok().json(user))
+            .map_err(DatabaseError)?,
+    )
+}
+
 // /games/get_or_create
 pub async fn get_or_create(
     req: HttpRequest,
