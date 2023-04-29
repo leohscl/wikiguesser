@@ -392,7 +392,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
 
     let onclick_new_page = {
         Callback::from(move |_| {
-            history.push(Route::LaunchPage);
+            history.push(Route::RandomPage);
         })
     };
 
