@@ -21,6 +21,10 @@ TODO:
 - [ ] Update wikitty picture
 - [x] make information page
 - [ ] Complete information page
+- [ ] anglais -- equ britannique ?
+- [ ] Daily page can be random page if random page was created before
+- [ ] Daily page should not be reloaded if already done
+- [ ] Add easy mode - reveal some uncommon words ?
 - [x] Fill preparation page
 - [x] better navigation
 - [x] better buttons
