@@ -62,7 +62,10 @@ sudo cp dist/* /var/www/html/
 sudo a2enmod ssl
 sudo a2enmod proxy_http
 sudo a2enmod rewrite
-sudo sh -c 'echo "<Directory /var/www/html> AllowOverride ALL </Directory>" >> /etc/apache2/apache2.conf'
+sudo sh -c 'echo "
+<Directory /var/www/html>
+  AllowOverride ALL 
+</Directory>" >> /etc/apache2/apache2.conf'
 sudo mkdir /etc/apache2/certs
 cd /etc/apache2/certs
 sudo openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out apache.crt -keyout apache.keyout \
