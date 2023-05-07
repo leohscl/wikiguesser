@@ -66,10 +66,13 @@ sudo sh -c 'echo "
 <Directory /var/www/html>
   AllowOverride ALL 
 </Directory>" >> /etc/apache2/apache2.conf'
-sudo mkdir /etc/apache2/certs
-cd /etc/apache2/certs
-sudo openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out apache.crt -keyout apache.keyout \
--subj "/C=FR/ST=PARIS/L=PARIS /O=wikitrouve/CN=wikitrouve.fr/emailAddress=leo.henches@gmail.com"
+# run certbot 
+# remove prompts ?
+sudo certbot certonly --apache
+# sudo mkdir /etc/apache2/certs
+# cd /etc/apache2/certs
+#sudo openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out apache.crt -keyout apache.keyout \
+#-subj "/C=FR/ST=PARIS/L=PARIS /O=wikitrouve/CN=wikitrouve.fr/emailAddress=leo.henches@gmail.com"
 
 sudo systemctl restart apache2
 

@@ -1,4 +1,5 @@
 /target
+conf_amazon/apache_default_old.conf
 compute_freq
 .dockerignore
 backend/Cargo.lock
