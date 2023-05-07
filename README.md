@@ -1,7 +1,7 @@
 launch application with:
 bash make.sh
 
-TODO:
+TODO: \
 -- Design
 - [ ] Add message for failed loading
 - [ ] Add shadow to indicate which page we are on
@@ -16,6 +16,7 @@ TODO:
 - [x] better word spacing
 - [x] translate text to french
 - [x] Add loading bar
+\
 -- frontend bugs
 - [ ] picking rating resets page scroll
 -- Features
@@ -33,6 +34,7 @@ TODO:
 - [x] add conjugation
 - [x] add popup for confirmation of bug report and rating
 - [x] remettre un mot doit surligner
+\
 -- Bugs backend
 - [ ] fix CORS
 - [ ] Daily page can be random page if random page was created before
@@ -44,4 +46,3 @@ TODO:
 - [x] refuse words not in database
 - [x] add word history without duplicate
 - [x] mots en majuscules déja mis bug (add lower to comparison)
-Done:
