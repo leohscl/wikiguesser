@@ -4,7 +4,7 @@ bash make.sh
 TODO: 
 
 
--- Design
+Design
 - [ ] Add message for failed loading
 - [ ] Add shadow to indicate which page we are on
 - [ ] Add picture for random page
@@ -20,11 +20,11 @@ TODO:
 - [x] Add loading bar
 
 
--- frontend bugs
+frontend bugs
 - [ ] picking rating resets page scroll
 
 
--- Features
+Features
 - [ ] Add team mode
 - [ ] Add tutorial ?
 - [ ] Add global score, median number of word to complete ?
@@ -41,7 +41,7 @@ TODO:
 - [x] remettre un mot doit surligner
 
 
--- Bugs backend
+Bugs backend
 - [ ] fix CORS
 - [ ] Daily page can be random page if random page was created before
 - [ ] Daily page should not be reloaded if already done
