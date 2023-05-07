@@ -1,6 +1,7 @@
 pub mod wiki_parse {
+    use regex::Regex;
     pub fn create_string_vector(text: &str) -> Vec<String> {
-        let processed_text = text.replace("\n\n\n", "").to_string();
+        let processed_text = process(text);
         let separators = [
             ' ', '\'', '.', '(', ')', ',', '!', '?', ';', ':', '/', '§', '%', '*', '€', ']', '[',
             '-', '\n',
@@ -27,11 +28,29 @@ pub mod wiki_parse {
             .map(|slice| {
                 let start = *slice.get(0).expect("slice should have 2 elements");
                 let end = *slice.get(1).expect("slice should have 2 elements");
-                let chunk = &text[start..end];
+                let chunk = &processed_text[start..end];
                 let chunk_string = chunk.to_string();
                 chunk_string
             })
             .map(|str| str.to_string())
             .collect()
+    }
+
+    pub fn process(s: &str) -> String {
+        let no_dup_enter = s.replace("\n\n\n", "");
+        let re = Regex::new(r#",{2,}"#).unwrap();
+        re.replace_all(&no_dup_enter, "").to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn commas_removed() {
+        let test_string = "Hello !,,, Hi".to_string();
+        assert_eq!(
+            "Hello ! Hi".to_string(),
+            crate::wiki_parse::process(&test_string)
+        );
     }
 }

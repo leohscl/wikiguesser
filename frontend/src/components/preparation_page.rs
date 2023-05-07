@@ -44,6 +44,7 @@ pub fn preparation_page() -> Html {
                 sel_article: opt_article.cloned(),
                 sel_link,
             });
+            log::info!("Sel article: {:?}", state.sel_article);
             let state_bis = state.clone();
             let value_bis = target.value();
             if opt_article.is_none() {

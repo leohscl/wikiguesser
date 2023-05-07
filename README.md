@@ -34,13 +34,13 @@ TODO:
 - [x] add popup for confirmation of bug report and rating
 - [x] remettre un mot doit surligner
 -- Bugs backend
-- [ ] citations leave trailing commas - example: https://fr.wikipedia.org/wiki/Danielle_Darrieux
 - [ ] fix CORS
 - [ ] 1er 2 mots
 - [ ] Daily page can be random page if random page was created before
 - [ ] Daily page should not be reloaded if already done
 - [ ] After reloading duplicate words
 - [ ] Stop count after victory
+- [x] citations leave trailing commas - example: https://fr.wikipedia.org/wiki/Danielle_Darrieux
 - [x] refuse words not in database
 - [x] add word history without duplicate
 - [x] mots en majuscules déja mis bug (add lower to comparison)
