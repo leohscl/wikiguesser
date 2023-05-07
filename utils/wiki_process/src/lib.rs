@@ -38,8 +38,11 @@ pub mod wiki_parse {
 
     pub fn process(s: &str) -> String {
         let no_dup_enter = s.replace("\n\n\n", "");
+        let no_ier = no_dup_enter
+            .replace("Ier", "Premier")
+            .replace(" ier", " premier");
         let re = Regex::new(r#",{2,}"#).unwrap();
-        re.replace_all(&no_dup_enter, "").to_string()
+        re.replace_all(&no_ier, "").to_string()
     }
 }
 
@@ -50,6 +53,15 @@ mod tests {
         let test_string = "Hello !,,, Hi".to_string();
         assert_eq!(
             "Hello ! Hi".to_string(),
+            crate::wiki_parse::process(&test_string)
+        );
+    }
+
+    #[test]
+    fn ier_removed() {
+        let test_string = "Alexandre Ier".to_string();
+        assert_eq!(
+            "Alexandre Premier".to_string(),
             crate::wiki_parse::process(&test_string)
         );
     }

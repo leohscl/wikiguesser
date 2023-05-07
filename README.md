@@ -35,11 +35,11 @@ TODO:
 - [x] remettre un mot doit surligner
 -- Bugs backend
 - [ ] fix CORS
-- [ ] 1er 2 mots
 - [ ] Daily page can be random page if random page was created before
 - [ ] Daily page should not be reloaded if already done
 - [ ] After reloading duplicate words
 - [ ] Stop count after victory
+- [x] 1er 2 mots
 - [x] citations leave trailing commas - example: https://fr.wikipedia.org/wiki/Danielle_Darrieux
 - [x] refuse words not in database
 - [x] add word history without duplicate
