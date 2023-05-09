@@ -32,6 +32,7 @@ Features
 - [ ] anglais -- equ britannique ?
 - [ ] Add "important" word category, word that help complete the page
 - [ ] add url/link to wiki page
+- [ ] Add best words -- like previous words
 - [x] Add daily page !
 - [x] Test daily page !
 - [x] Make information page
