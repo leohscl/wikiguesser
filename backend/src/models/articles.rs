@@ -5,9 +5,7 @@ use crate::{
     get_common_words,
     schema::{articles, categories},
 };
-use chrono::NaiveDate;
-use chrono::{Timelike, Utc};
-use chrono_tz::Europe::Paris;
+use daily_functions::count_daily::count_noons_since_start;
 use diesel::dsl::sql;
 use diesel::PgConnection;
 use finalfusion::prelude::*;
@@ -105,11 +103,8 @@ impl Article {
         Ok(article)
     }
 
-    pub fn get_daily(
-        connection: &mut PgConnection,
-        server_start: NaiveDate,
-    ) -> Result<Article, diesel::result::Error> {
-        let num_noons: usize = count_noons_since_date(&server_start);
+    pub fn get_daily(connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
+        let num_noons: usize = count_noons_since_start();
         let mut vec_article = articles::table
             .filter(articles::views.gt(10000))
             .load::<Article>(connection)?;
@@ -273,26 +268,4 @@ impl Article {
         println!("Done creating engine !");
         Ok(GameEngine { reveals: hash })
     }
-}
-fn count_noons_since_date(date: &NaiveDate) -> usize {
-    let mut noon_count = 0;
-    let mut current_date = *date;
-
-    let paris_time = Utc::now().with_timezone(&Paris);
-
-    // Convert to UTC time
-    let current_time = paris_time;
-    // Keep incrementing the current date by one day until today
-    let today = current_time.date_naive();
-    while current_date < today {
-        current_date = current_date.succ();
-        noon_count += 1;
-    }
-    if current_time.hour() >= 12 {
-        noon_count += 1;
-    }
-
-    println!("Number of noons since start: {}", noon_count);
-
-    noon_count
 }

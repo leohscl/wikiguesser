@@ -1,5 +1,3 @@
-use chrono::NaiveDate;
-
 use crate::models::words::{WordModel, WordResult};
 use {
     crate::{errors::database_error::DatabaseError, models::articles::Article, Pool},
@@ -30,18 +28,12 @@ pub async fn get_match(
 }
 
 // /articles/random/pick
-pub async fn get_daily(
-    pool: web::Data<Pool>,
-    web_server_start: web::Data<NaiveDate>,
-) -> Result<HttpResponse, Error> {
+pub async fn get_daily(pool: web::Data<Pool>) -> Result<HttpResponse, Error> {
     let mut connection = pool.get().unwrap();
-    let server_start = **web_server_start;
-    Ok(
-        web::block(move || Article::get_daily(&mut connection, server_start))
-            .await
-            .map(|article| HttpResponse::Ok().json(article))
-            .map_err(DatabaseError)?,
-    )
+    Ok(web::block(move || Article::get_daily(&mut connection))
+        .await
+        .map(|article| HttpResponse::Ok().json(article))
+        .map_err(DatabaseError)?)
 }
 
 // /articles/random/pick

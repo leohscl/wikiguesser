@@ -142,6 +142,10 @@ async fn main() -> std::io::Result<()> {
                 web::post().to(handlers::games::get_ongoing),
             )
             .route(
+                "/games/finished_daily",
+                web::post().to(handlers::games::finished_daily),
+            )
+            .route(
                 "/games/update/{id}",
                 web::post().to(handlers::games::update),
             )

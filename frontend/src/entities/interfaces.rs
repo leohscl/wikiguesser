@@ -87,6 +87,7 @@ pub struct Game {
 pub struct GamePrompt {
     pub cat: String,
     pub email: String,
+    pub mode: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

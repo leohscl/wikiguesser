@@ -25,3 +25,4 @@ rand = "^0.8"
 distance = "0.4"
 uuid = { version = "1.2.2", features = ["v4"]}
 wiki_process = { path = "../utils/wiki_process" }
+daily_functions = { path = "../utils/daily_functions" }

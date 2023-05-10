@@ -41,12 +41,23 @@ Features
 - [x] remettre un mot doit surligner
 
 
+Challenge mode (geoguesser like)
+
+- [ ] Time mode
+- [ ] si trouve pas titre, plus trouve de mot moins de perte (croquettes. il doit rentrer à la maison si plus). Il faut en perdre le moins, si tu pert tout remis à 0
+- [ ] enchainement de page défini avec choix de thème
+- [ ] mode avec beaucoup de mots déja définis
+- [ ] + choix de thème: bouffe, histoire collège, animal ?
+- [ ] bonus: reveler 1 mot ?
+
+
+
 Bugs backend
 - [ ] fix CORS
-- [ ] Daily page can be random page if random page was created before
-- [ ] Daily page should not be reloaded if already done
-- [ ] After reloading duplicate words
-- [ ] Stop count after victory
+- [x] Daily page should not be reloaded if already done
+- [x] Daily page can be random page if random page was created before
+- [x] After reloading duplicate words
+- [x] Stop count after victory
 - [x] 1er 2 mots
 - [x] citations leave trailing commas - example: https://fr.wikipedia.org/wiki/Danielle_Darrieux
 - [x] refuse words not in database

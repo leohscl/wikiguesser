@@ -19,6 +19,9 @@ wiki_random/target/
 backend/sens_test
 backend/tmp
 backend/benchmark/target/
+utils/daily_functions/Cargo.lock
+utils/daily_functions/target
 utils/wiki_process/Cargo.lock
 utils/wiki_process/target
 conjugaison
+categorize

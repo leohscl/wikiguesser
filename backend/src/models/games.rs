@@ -4,7 +4,6 @@ use crate::diesel::RunQueryDsl;
 use crate::models::words::WordModel;
 use crate::models::words::WordResult;
 use crate::{handlers::games::InputGame, schema::*};
-use chrono::prelude::*;
 use diesel::{PgConnection, QueryDsl};
 use rand::Rng;
 use serde::Deserialize;
@@ -14,6 +13,7 @@ use serde::Serialize;
 pub struct GamePrompt {
     pub cat: String,
     pub email: String,
+    pub mode: String,
 }
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GamePromptId {
@@ -92,11 +92,9 @@ impl Game {
     fn create_daily(
         connection: &mut PgConnection,
         game: &InputGame,
-        server_start: &NaiveDate,
     ) -> Result<Game, diesel::result::Error> {
         // create article
-        let new_article =
-            Article::get_daily(connection, *server_start).expect("There should be a daily page");
+        let new_article = Article::get_daily(connection).expect("There should be a daily page");
         let mut rng = rand::thread_rng();
         let id = rng.gen::<i32>();
         let new_game = Game {
@@ -140,7 +138,6 @@ impl Game {
     pub fn get_or_create_daily(
         connection: &mut PgConnection,
         input_game: &InputGame,
-        server_start: &NaiveDate,
     ) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
@@ -149,7 +146,7 @@ impl Game {
         let game = if let Some(game) = results.into_iter().next() {
             game
         } else {
-            Self::create_daily(connection, input_game, server_start)?
+            Self::create_daily(connection, input_game)?
         };
         let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
         let article = Article::get(game.article_id, connection)?;
@@ -213,6 +210,22 @@ impl Game {
     ) -> Result<(), diesel::result::Error> {
         diesel::delete(games::table.filter(games::id.eq(game_id))).execute(connection)?;
         Ok(())
+    }
+
+    pub fn get_finished_daily(
+        connection: &mut PgConnection,
+        game: &InputGame,
+    ) -> Result<bool, diesel::result::Error> {
+        let query = games::table.into_boxed();
+        let id = game.ip_or_email.clone();
+        println!("Id: {}", id);
+        let query = query.filter(games::ip_or_email.eq(id));
+        let results = query.load::<Game>(connection)?;
+        Ok(results
+            .iter()
+            .next()
+            .expect("There should be a game")
+            .is_finished)
     }
 
     pub fn finish(connection: &mut PgConnection, id: i32) -> Result<Game, diesel::result::Error> {
