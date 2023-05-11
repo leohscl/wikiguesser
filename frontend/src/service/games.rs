@@ -64,7 +64,7 @@ pub async fn get_game(opt_cat: Option<String>, daily: bool) -> Result<Option<Ong
         let res_json = Fetch::post(url_finished, &js_game_prompt).await;
         match res_json {
             Ok(json) => serde_wasm_bindgen::from_value::<bool>(json).unwrap(),
-            Err(_err) => true,
+            Err(_err) => return Err(Status::Error),
         }
     } else {
         false

@@ -65,7 +65,7 @@ enum ArticleAction {
     _Reveal(WordResult),
     RevealWithEngine(String),
     HighlightPrevious(String),
-    UnknownWord(String),
+    // UnknownWord(String),
     RevealAll,
 }
 #[derive(PartialEq, Clone)]
@@ -140,15 +140,15 @@ impl Reducible for ArticleState {
                 }
                 .into()
             }
-            ArticleAction::UnknownWord(word) => Self {
-                word_queried: self.word_queried.clone(),
-                victory: self.victory,
-                opt_user: self.opt_user.clone(),
-                opt_game: self.opt_game.clone(),
-                opt_engine: self.opt_engine.clone(),
-                status: self.status.clone(),
-            }
-            .into(),
+            // ArticleAction::UnknownWord(_word) => Self {
+            //     word_queried: self.word_queried.clone(),
+            //     victory: self.victory,
+            //     opt_user: self.opt_user.clone(),
+            //     opt_game: self.opt_game.clone(),
+            //     opt_engine: self.opt_engine.clone(),
+            //     status: self.status.clone(),
+            // }
+            // .into(),
             ArticleAction::HighlightPrevious(word) => {
                 // let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 let engine = self
@@ -684,7 +684,7 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
                                 panic!("Not playing when triggering query")
                             }
                         } else {
-                            state.dispatch(ArticleAction::UnknownWord(word_clone.clone()));
+                            // state.dispatch(ArticleAction::UnknownWord(word_clone.clone()));
                         }
                     }
                     Err(_) => {

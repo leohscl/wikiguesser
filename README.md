@@ -5,13 +5,13 @@ TODO:
 
 
 Design
-- [ ] Add message for failed loading
 - [ ] Add shadow to indicate which page we are on
 - [ ] Add picture for random page
 - [ ] Update wikitty picture
 - [ ] Add favicon
 - [ ] Complete information page
 - [ ] Smartphone support
+- [x] Add message for failed loading
 - [x] Fill preparation page
 - [x] better navigation
 - [x] better buttons
@@ -45,11 +45,17 @@ Features
 Challenge mode (geoguesser like)
 
 - [ ] Time mode
-- [ ] si trouve pas titre, plus trouve de mot moins de perte (croquettes. il doit rentrer à la maison si plus). Il faut en perdre le moins, si tu pert tout remis à 0
-- [ ] enchainement de page défini avec choix de thème
-- [ ] mode avec beaucoup de mots déja définis
-- [ ] + choix de thème: bouffe, histoire collège, animal ?
-- [ ] bonus: reveler 1 mot ?
+- [ ] Mode avec beaucoup de mots déja révélés
+- [ ] Définir mot "importants" par page ?
+- [ ] Ajouter bonus pathé (nouveau mot: +10 ?)
+- [ ] Ajouter possibilité reveler certains mots (pas importants) ou de donner mot proche (top 10) ?
+
+- enchainement de page défini avec choix de thème.
+Si trouve pas titre, plus trouve de mot moins de perte
+(croquettes. il doit rentrer à la maison si plus).
+Il faut en perdre le moins, si tu pert tout remis à 0
+
+- [ ] + choix de thème: bouffe, histoire, collège, animal ?
 
 
 
