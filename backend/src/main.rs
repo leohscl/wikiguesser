@@ -61,7 +61,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(
                 Cors::default()
                     .allowed_origin("http://wikitrouve.fr:80")
-                    .allowed_origin("https://wikitrouve.fr:80")
+                    .allowed_origin("https://www.wikitrouve.fr")
                     .allowed_origin("http://localhost:8080")
                     .allowed_origin("https://localhost:8080")
                     .allowed_methods(vec!["GET", "OPTIONS", "POST"])
