@@ -181,8 +181,8 @@ fn get_ip_or_email(req: &HttpRequest, opt_email: &Option<String>, mode: &str) ->
     if let Some(email) = opt_email {
         (false, email.to_string())
     } else {
-        // (true, get_ip(req))
-        (true, get_ip_dummy(mode))
+        (true, get_ip(req, mode))
+        // (true, get_ip_dummy(mode))
     }
 }
 fn get_ip(req: &HttpRequest, mode: &str) -> String {

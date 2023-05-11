@@ -57,21 +57,18 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Cors::permissive())
-            // .wrap(
-            //     Cors::default()
-            //         .allowed_origin("http://localhost:3001")
-            //         .allowed_origin("http://localhost:3333")
-            //         .allowed_origin("http://localhost:8080")
-            //         .allowed_origin("http://localhost:8080/signup/")
-            //         .allowed_origin("http://localhost:8080/login")
-            //         .allowed_origin("http://127.0.0.1:8080")
-            //         .allowed_origin("http://127.0.0.1:8080/signup/")
-            //         .allowed_methods(vec!["GET", "OPTIONS", "POST"])
-            //         .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
-            //         .allowed_header(http::header::CONTENT_TYPE)
-            //         .max_age(3600),
-            // )
+            // .wrap(Cors::permissive())
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://wikitrouve.fr:80")
+                    .allowed_origin("https://wikitrouve.fr:80")
+                    .allowed_origin("http://localhost:8080")
+                    .allowed_origin("https://localhost:8080")
+                    .allowed_methods(vec!["GET", "OPTIONS", "POST"])
+                    .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+                    .allowed_header(http::header::CONTENT_TYPE)
+                    .max_age(3600),
+            )
             .app_data(web::Data::new(result_common.clone()))
             .app_data(web::Data::new({
                 println!("Creating word model from embeddings !");
