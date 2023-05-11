@@ -54,7 +54,7 @@ Challenge mode (geoguesser like)
 
 
 Bugs backend
-- [ ] fix CORS
+- [x] fix CORS
 - [x] Daily page should not be reloaded if already done
 - [x] Daily page can be random page if random page was created before
 - [x] After reloading duplicate words
