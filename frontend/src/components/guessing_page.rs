@@ -79,7 +79,6 @@ enum PageStatus {
 struct ArticleState {
     victory: bool,
     word_queried: Vec<String>,
-    word_checked: WordChecked,
     opt_user: Option<User>,
     opt_game: Option<OngoingGame>,
     opt_engine: Option<GameEngine>,
@@ -90,10 +89,6 @@ impl Default for ArticleState {
     fn default() -> Self {
         Self {
             word_queried: Vec::new(),
-            word_checked: WordChecked {
-                is_right: true,
-                opt_word: None,
-            },
             victory: false,
             opt_user: None,
             opt_game: None,
@@ -109,7 +104,6 @@ impl Reducible for ArticleState {
         match action {
             ArticleAction::FailedLoad(error) => Self {
                 word_queried: self.word_queried.clone(),
-                word_checked: self.word_checked.clone(),
                 victory: self.victory,
                 opt_user: self.opt_user.clone(),
                 opt_game: self.opt_game.clone(),
@@ -121,10 +115,6 @@ impl Reducible for ArticleState {
                 let word_queried = vec!["".to_string()];
                 Self {
                     word_queried,
-                    word_checked: WordChecked {
-                        is_right: true,
-                        opt_word: None,
-                    },
                     victory: false,
                     opt_user: self.opt_user.clone(),
                     opt_game,
@@ -142,7 +132,6 @@ impl Reducible for ArticleState {
                 };
                 Self {
                     word_queried: self.word_queried.clone(),
-                    word_checked: self.word_checked.clone(),
                     victory: self.victory,
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -154,10 +143,6 @@ impl Reducible for ArticleState {
             ArticleAction::UnknownWord(word) => Self {
                 word_queried: self.word_queried.clone(),
                 victory: self.victory,
-                word_checked: WordChecked {
-                    is_right: false,
-                    opt_word: Some(word),
-                },
                 opt_user: self.opt_user.clone(),
                 opt_game: self.opt_game.clone(),
                 opt_engine: self.opt_engine.clone(),
@@ -187,7 +172,6 @@ impl Reducible for ArticleState {
                 Self {
                     victory,
                     word_queried: self.word_queried.clone(),
-                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: self.opt_engine.clone(),
@@ -228,7 +212,6 @@ impl Reducible for ArticleState {
                 Self {
                     victory,
                     word_queried,
-                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: self.opt_engine.clone(),
@@ -255,7 +238,6 @@ impl Reducible for ArticleState {
                 Self {
                     victory,
                     word_queried: self.word_queried.clone(),
-                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: self.opt_engine.clone(),
@@ -278,7 +260,6 @@ impl Reducible for ArticleState {
                 Self {
                     victory: true,
                     word_queried: self.word_queried.clone(),
-                    word_checked: self.word_checked.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: None,
