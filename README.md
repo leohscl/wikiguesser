@@ -22,6 +22,7 @@ Design
 
 frontend bugs
 - [ ] picking rating resets page scroll
+- [x] when giving up, message should not be "trouvé en x mots"
 
 
 Features

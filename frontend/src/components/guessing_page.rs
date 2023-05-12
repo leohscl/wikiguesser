@@ -75,9 +75,18 @@ enum PageStatus {
     FailedLoad(String),
 }
 
+#[derive(PartialEq, Clone)]
+enum ProgessStatus {
+    Ongoing,
+    Found,
+    Abandonned,
+    #[allow(dead_code)]
+    TimeOut,
+}
+
 #[derive(PartialEq)]
 struct ArticleState {
-    victory: bool,
+    progress: ProgessStatus,
     word_queried: Vec<String>,
     opt_user: Option<User>,
     opt_game: Option<OngoingGame>,
@@ -85,11 +94,13 @@ struct ArticleState {
     status: PageStatus,
 }
 
+use ProgessStatus::*;
+
 impl Default for ArticleState {
     fn default() -> Self {
         Self {
             word_queried: Vec::new(),
-            victory: false,
+            progress: Ongoing,
             opt_user: None,
             opt_game: None,
             opt_engine: None,
@@ -104,7 +115,7 @@ impl Reducible for ArticleState {
         match action {
             ArticleAction::FailedLoad(error) => Self {
                 word_queried: self.word_queried.clone(),
-                victory: self.victory,
+                progress: self.progress.clone(),
                 opt_user: self.opt_user.clone(),
                 opt_game: self.opt_game.clone(),
                 opt_engine: self.opt_engine.clone(),
@@ -115,7 +126,7 @@ impl Reducible for ArticleState {
                 let word_queried = vec!["".to_string()];
                 Self {
                     word_queried,
-                    victory: false,
+                    progress: Ongoing,
                     opt_user: self.opt_user.clone(),
                     opt_game,
                     opt_engine,
@@ -132,7 +143,7 @@ impl Reducible for ArticleState {
                 };
                 Self {
                     word_queried: self.word_queried.clone(),
-                    victory: self.victory,
+                    progress: self.progress.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
                     opt_engine: self.opt_engine.clone(),
@@ -142,7 +153,7 @@ impl Reducible for ArticleState {
             }
             // ArticleAction::UnknownWord(_word) => Self {
             //     word_queried: self.word_queried.clone(),
-            //     victory: self.victory,
+            //     progress: self.progress,
             //     opt_user: self.opt_user.clone(),
             //     opt_game: self.opt_game.clone(),
             //     opt_engine: self.opt_engine.clone(),
@@ -161,16 +172,23 @@ impl Reducible for ArticleState {
                 } else {
                     &empty_vec
                 };
-                let (page_clone, victory) =
+                let (page_clone, finished) =
                     if let PageStatus::Playing(mut page_clone) = self.status.clone() {
                         page_clone.input = "".to_string();
-                        let victory = page_clone.reveal_with_engine(&word, result);
-                        (page_clone, victory)
+                        let finished = page_clone.reveal_with_engine(&word, result);
+                        (page_clone, finished)
                     } else {
                         panic!("Not playing when highlighting")
                     };
+                let progress = {
+                    if finished {
+                        Found
+                    } else {
+                        Ongoing
+                    }
+                };
                 Self {
-                    victory,
+                    progress,
                     word_queried: self.word_queried.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -191,26 +209,33 @@ impl Reducible for ArticleState {
                 } else {
                     &empty_vec
                 };
-                let (page_clone, victory) =
+                let (page_clone, finished) =
                     if let PageStatus::Playing(mut page_clone) = self.status.clone() {
                         page_clone.input = "".to_string();
-                        let victory = page_clone.reveal_with_engine(&word, result);
-                        (page_clone, victory)
+                        let finished = page_clone.reveal_with_engine(&word, result);
+                        (page_clone, finished)
                     } else {
                         panic!("Not playing when revealing")
                     };
-                if victory {
+                if finished {
                     if let Some(ongoing_game) = self.opt_game.clone() {
                         let future = async move { finish_game(ongoing_game.game.id).await };
                         handle_future(future, finish);
                     }
                 }
                 let mut word_queried = self.word_queried.clone();
-                if !self.victory {
+                if self.progress != Found {
                     word_queried.push(word.clone());
                 }
+                let progress = {
+                    if finished {
+                        Found
+                    } else {
+                        self.progress.clone()
+                    }
+                };
                 Self {
-                    victory,
+                    progress,
                     word_queried,
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -221,22 +246,29 @@ impl Reducible for ArticleState {
             }
             ArticleAction::_Reveal(word_res) => {
                 // let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
-                let (page_clone, victory) =
+                let (page_clone, finished) =
                     if let PageStatus::Playing(mut page_clone) = self.status.clone() {
                         page_clone.input = "".to_string();
-                        let victory = page_clone.reveal(&word_res);
-                        (page_clone, victory)
+                        let finished = page_clone.reveal(&word_res);
+                        (page_clone, finished)
                     } else {
                         panic!("Not playing when revealing")
                     };
-                if victory {
+                if finished {
                     if let Some(ongoing_game) = self.opt_game.clone() {
                         let future = async move { finish_game(ongoing_game.game.id).await };
                         handle_future(future, finish);
                     }
                 }
+                let progress = {
+                    if finished {
+                        Found
+                    } else {
+                        Ongoing
+                    }
+                };
                 Self {
-                    victory,
+                    progress,
                     word_queried: self.word_queried.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -258,7 +290,7 @@ impl Reducible for ArticleState {
                     handle_future(future, finish);
                 }
                 Self {
-                    victory: true,
+                    progress: Abandonned,
                     word_queried: self.word_queried.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -451,7 +483,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let green_emo = '🟩';
     let orange_emo = '🟧';
     let red_emo = '🟥';
-    let victory = state.victory;
+    let progress = state.progress.clone();
     match state.clone().status.clone() {
         PageStatus::FailedLoad(error) => html! {
             <h2 class="title"> {error} </h2>
@@ -481,16 +513,22 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             let past_words = state.word_queried.clone();
             let num_moves = state.word_queried.len() - 1;
             let no_words = past_words.len() == 1;
+            let string_display = match progress {
+                Found => format!("Page trouvée en {} coups", num_moves),
+                Abandonned => format!("Abandon après {} coups", num_moves),
+                TimeOut => format!("Temps écoulé après {} coups", num_moves),
+                Ongoing => format!(""),
+            };
+            let finished = progress != Ongoing;
             html! {
                 <div style="display: flex;">
                 <PastWords {past_words} />
                 <p align="justified" class="content">
                     {
                         ifcond!(
-                            victory,
+                            finished,
                             {
-                                let victory_text = format!("Page trouvée en {} coups", num_moves);
-                                html! {<span id="victory"> {victory_text} </span>}
+                                html! {<span id="finished"> {string_display} </span>}
                             }
                         )
                     }
@@ -498,7 +536,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
                     {
                         ifcond!(
-                            victory,
+                            finished,
                             html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
                         )
                     }
@@ -534,7 +572,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     }
                     {
                         ifcond!(
-                            !victory,
+                            !finished,
                             html! { <button class="launch give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
                         )
                     }
@@ -552,13 +590,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     }
                     {
                         ifcond!(
-                            victory,
+                            finished,
                             html! { <button class="launch report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
                         )
                     }
                     {
                         ifcond!(
-                            victory,
+                            finished,
                             html! { <button class= "button try_another" onclick={onclick_new_page}> { "Essayer une autre page" } </button> }
                         )
                     }
@@ -572,11 +610,11 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                             } else {
                                 html!{}
                             };
-                            ifcond!(victory, html_rating)
+                            ifcond!(finished, html_rating)
                         }
                     }
                     {
-                        ifcond!(victory, html! { <b> {views_string}</b> })
+                        ifcond!(finished, html! { <b> {views_string}</b> })
                     }
                 </p>
                 </div>
