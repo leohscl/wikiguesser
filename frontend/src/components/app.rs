@@ -64,6 +64,7 @@ pub enum Route {
 #[derive(Debug, PartialEq, Clone)]
 struct AppState {
     opt_user: Option<User>,
+    current_route: Route,
 }
 
 fn user_logged_in(appstate: &AppState) -> bool {
@@ -75,7 +76,10 @@ fn user_logged_in(appstate: &AppState) -> bool {
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let state = use_state(|| AppState { opt_user: None });
+    let state = use_state(|| AppState {
+        opt_user: None,
+        current_route: Route::LaunchPage,
+    });
     let cb_user_login: Callback<User> = {
         let state = state.clone();
         Callback::from(move |user: User| {
@@ -83,78 +87,98 @@ pub fn app() -> Html {
             log::info!("{}", greeting);
             state.set(AppState {
                 opt_user: Some(user),
+                current_route: state.current_route.clone(),
             });
         })
     };
+
+    let state_clone = state.clone();
+    let cb_route = Callback::from(move |route: Route| {
+        state_clone.set(AppState {
+            opt_user: state_clone.opt_user.clone(),
+            current_route: route.clone(),
+        })
+    });
+
     let switch = {
         let state = state.clone();
-        Switch::render(move |routes: &Route| match routes {
-            Route::Information => html! {
-                <InformationPage />
-            },
-            Route::Signup => html! {
-                <Signup />
-            },
-            Route::Login => {
-                let cb_user_login = cb_user_login.clone();
-                html! {
-                    <Login {cb_user_login} />
+        Switch::render(move |routes: &Route| {
+            let cb_route = cb_route.clone();
+            // state.set(AppState {
+            //     opt_user: state.opt_user.clone(),
+            //     current_route: routes.clone(),
+            // });
+            log::info!("Route: {:?}", routes);
+            match routes {
+                Route::Information => {
+                    html! {
+                    <InformationPage {cb_route} />
+                    }
                 }
-            }
-            Route::RandomPage => {
-                html! {
-                    <RandomPage />
+                Route::Signup => html! {
+                    <Signup />
+                },
+                Route::Login => {
+                    let cb_user_login = cb_user_login.clone();
+                    html! {
+                        <Login {cb_user_login} />
+                    }
                 }
-            }
-            Route::Preparation => {
-                html! {
-                    <PreparationPage />
+                Route::RandomPage => {
+                    html! {
+                        <RandomPage />
+                    }
                 }
-            }
-            Route::LaunchPage => {
-                html! {
-                    <LaunchPage />
+                Route::Preparation => {
+                    html! {
+                        <PreparationPage />
+                    }
                 }
-            }
-            Route::ReportForm { article_id } => {
-                let article_id = article_id.clone();
-                html! {
-                    <ReportPage {article_id}/>
+                Route::LaunchPage => {
+                    html! {
+                        <LaunchPage />
+                    }
                 }
-            }
-            Route::GuessingPage { opt_str } => {
-                let opt_user = state.opt_user.clone();
-                let daily = match opt_str.cat_or_id.as_str() {
-                    "Daily" => true,
-                    _ => false,
-                };
-
-                let (opt_cat, opt_id) = if let Ok(id) = opt_str.cat_or_id.parse::<i32>() {
-                    (None, Some(id))
-                } else {
-                    let opt_cat = if opt_str.cat_or_id == "Default" {
-                        None
-                    } else {
-                        Some(opt_str.cat_or_id.clone())
+                Route::ReportForm { article_id } => {
+                    let article_id = article_id.clone();
+                    html! {
+                        <ReportPage {article_id}/>
+                    }
+                }
+                Route::GuessingPage { opt_str } => {
+                    let opt_user = state.opt_user.clone();
+                    let daily = match opt_str.cat_or_id.as_str() {
+                        "Daily" => true,
+                        _ => false,
                     };
-                    (opt_cat, None)
-                };
-                let dummy = false;
-                html! {
-                    <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
+
+                    let (opt_cat, opt_id) = if let Ok(id) = opt_str.cat_or_id.parse::<i32>() {
+                        (None, Some(id))
+                    } else {
+                        let opt_cat = if opt_str.cat_or_id == "Default" {
+                            None
+                        } else {
+                            Some(opt_str.cat_or_id.clone())
+                        };
+                        (opt_cat, None)
+                    };
+                    let dummy = false;
+                    html! {
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
+                    }
                 }
-            }
-            Route::GuessingPageDummy => {
-                let opt_user = state.opt_user.clone();
-                let opt_cat: Option<String> = None;
-                let opt_id: Option<i32> = None;
-                let daily = false;
-                let dummy = true;
-                html! {
-                    <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
+                Route::GuessingPageDummy => {
+                    let opt_user = state.opt_user.clone();
+                    let opt_cat: Option<String> = None;
+                    let opt_id: Option<i32> = None;
+                    let daily = false;
+                    let dummy = true;
+                    html! {
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
+                    }
                 }
+                Route::NotFound => html! { <h1>{ "404" }</h1> },
             }
-            Route::NotFound => html! { <h1>{ "404" }</h1> },
         })
     };
     let wrap_daily = StringWrap {

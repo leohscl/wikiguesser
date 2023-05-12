@@ -1,11 +1,18 @@
+use crate::components::app::Route;
 use yew::prelude::*;
 
+#[derive(Properties, PartialEq, Clone)]
+pub struct InfoProps {
+    pub cb_route: Callback<Route>,
+}
+
 #[function_component(InformationPage)]
-pub fn information_page() -> Html {
+pub fn information_page(props: &InfoProps) -> Html {
     let section_introduction = "Vous trouverez ici les informations par rapport au fonctionnement du site : Sur quels critères
         les pages sont choisies, comment fonctionne la similarité entre les mots, etc..";
     let section_page = "Cette section n'est pas encore prête";
     let section_algorithme = "Cette section n'est pas encore prête";
+    props.cb_route.emit(Route::Information);
     html! {
         <div class="row">
             <div class="wikitty" title="Informations">
