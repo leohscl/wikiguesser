@@ -2,6 +2,7 @@ use super::app::Route;
 use super::loading_bar::LoadingBar;
 use super::past_words::PastWords;
 use super::rating::Rating;
+use crate::components::timer::Timer;
 use crate::entities::hidden_text::HiddenText;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::entities::interfaces::{BoolWrapper, User};
@@ -319,6 +320,7 @@ pub struct GuessingPageProps {
     pub opt_user: Option<User>,
     pub opt_cat: Option<String>,
     pub opt_id: Option<i32>,
+    pub opt_timer_secs: Option<u32>,
     pub dummy: bool,
     pub daily: bool,
 }
@@ -520,103 +522,106 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 Ongoing => format!(""),
             };
             let finished = progress != Ongoing;
+            // <div style="display: flex;">
+            //     <Timer />
+            // </div>
             html! {
                 <div style="display: flex;">
-                <PastWords {past_words} />
-                <p align="justified" class="content">
-                    {
-                        ifcond!(
-                            finished,
-                            {
-                                html! {<span id="finished"> {string_display} </span>}
+                    <PastWords {past_words} />
+                    <p align="justified" class="content">
+                        {
+                            ifcond!(
+                                finished,
+                                {
+                                    html! {<span id="finished"> {string_display} </span>}
+                                }
+                            )
+                        }
+                        <div/>
+                        <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
+                        {
+                            ifcond!(
+                                finished,
+                                html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
+                            )
+                        }
+                        <div/>
+                        {
+                            if no_words {
+                                html!{}
+                            } else {
+                                if num_found + num_close == 0 {
+                                    if !page.content.fully_revealed {
+                                        html!{<span > {red_emo.to_string()} </span>}
+                                    } else {
+                                        html!{}
+                                    }
+                                } else {
+                                    html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
+                                }
                             }
-                        )
-                    }
-                    <div/>
-                    <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
-                    {
-                        ifcond!(
-                            finished,
-                            html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
-                        )
-                    }
-                    <div/>
-                    {
-                        if no_words {
-                            html!{}
-                        } else {
-                            if num_found + num_close == 0 {
-                                if !page.content.fully_revealed {
-                                    html!{<span > {red_emo.to_string()} </span>}
+                        }
+
+                        <div/>
+                        <div id="title">
+                            { page.title.render() }
+                        </div>
+                        <div id="content" class="content">
+                            { page.content.render() }
+                        </div>
+                        {
+                            ifcond!(
+                                props.opt_user.is_some(),
+                                html!{ <button onclick={onclick_like}> { "Like" } </button> }
+                            )
+                        }
+                        {
+                            ifcond!(
+                                !finished,
+                                html! { <button class="launch give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
+                            )
+                        }
+                        {
+                            {
+                                if let Some(ongoing_game) = &state.opt_game {
+                                    let article_id = ongoing_game.article.id;
+                                    let link = String::from("www.wikitrouve.fr/guess/") + &article_id.to_string();
+                                    let text = "Partage cette page: ".to_string();
+                                    html! { <div> <p> {text} </p> <p class="link"> {link} </p> </div> }
                                 } else {
                                     html!{}
                                 }
-                            } else {
-                                html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
                             }
                         }
-                    }
-
-                    <div/>
-                    <div id="title">
-                        { page.title.render() }
-                    </div>
-                    <div id="content" class="content">
-                        { page.content.render() }
-                    </div>
-                    {
-                        ifcond!(
-                            props.opt_user.is_some(),
-                            html!{ <button onclick={onclick_like}> { "Like" } </button> }
-                        )
-                    }
-                    {
-                        ifcond!(
-                            !finished,
-                            html! { <button class="launch give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
-                        )
-                    }
-                    {
                         {
-                            if let Some(ongoing_game) = &state.opt_game {
-                                let article_id = ongoing_game.article.id;
-                                let link = String::from("www.wikitrouve.fr/guess/") + &article_id.to_string();
-                                let text = "Partage cette page: ".to_string();
-                                html! { <div> <p> {text} </p> <p class="link"> {link} </p> </div> }
-                            } else {
-                                html!{}
+                            ifcond!(
+                                finished,
+                                html! { <button class="launch report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
+                            )
+                        }
+                        {
+                            ifcond!(
+                                finished,
+                                html! { <button class= "button try_another" onclick={onclick_new_page}> { "Essayer une autre page" } </button> }
+                            )
+                        }
+                        {
+                            {
+                                let html_rating = if let Some(ongoing_game) = &state.opt_game {
+                                    let article_id = ongoing_game.article.id;
+                                    html! {
+                                        <Rating {article_id}/>
+                                    }
+                                } else {
+                                    html!{}
+                                };
+                                ifcond!(finished, html_rating)
                             }
                         }
-                    }
-                    {
-                        ifcond!(
-                            finished,
-                            html! { <button class="launch report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
-                        )
-                    }
-                    {
-                        ifcond!(
-                            finished,
-                            html! { <button class= "button try_another" onclick={onclick_new_page}> { "Essayer une autre page" } </button> }
-                        )
-                    }
-                    {
                         {
-                            let html_rating = if let Some(ongoing_game) = &state.opt_game {
-                                let article_id = ongoing_game.article.id;
-                                html! {
-                                    <Rating {article_id}/>
-                                }
-                            } else {
-                                html!{}
-                            };
-                            ifcond!(finished, html_rating)
+                            ifcond!(finished, html! { <b> {views_string}</b> })
                         }
-                    }
-                    {
-                        ifcond!(finished, html! { <b> {views_string}</b> })
-                    }
-                </p>
+                    </p>
                 </div>
             }
         }
