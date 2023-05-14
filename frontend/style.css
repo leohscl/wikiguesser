@@ -126,13 +126,13 @@ a.wikitrouve:hover {
   text-decoration: none;
 }
 
-.link {
-  font-weight: bold;
-}
-a.navbar-item:hover {
+a.navbar-item:hover, .selected_nav {
   background-color: transparent;
   text-decoration: none;
   background-color: steelblue;
+}
+.link {
+  font-weight: bold;
 }
 
 .navbar-brand {

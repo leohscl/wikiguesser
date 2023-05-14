@@ -4,6 +4,7 @@ use yew::prelude::*;
 #[derive(Properties, PartialEq, Clone)]
 pub struct InfoProps {
     pub cb_route: Callback<Route>,
+    pub route: Route,
 }
 
 #[function_component(InformationPage)]
@@ -12,7 +13,9 @@ pub fn information_page(props: &InfoProps) -> Html {
         les pages sont choisies, comment fonctionne la similarité entre les mots, etc..";
     let section_page = "Cette section n'est pas encore prête";
     let section_algorithme = "Cette section n'est pas encore prête";
-    props.cb_route.emit(Route::Information);
+    if props.route != Route::Information {
+        props.cb_route.emit(Route::Information);
+    }
     html! {
         <div class="row">
             <div class="wikitty" title="Informations">

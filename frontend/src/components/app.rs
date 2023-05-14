@@ -61,6 +61,29 @@ pub enum Route {
     NotFound,
 }
 
+impl Route {
+    pub fn get_selection(&self) -> (String, String, String, String) {
+        let e1 = "".to_string();
+        let e2 = "".to_string();
+        let e3 = "".to_string();
+        let e4 = "".to_string();
+        let sel = "selected_nav".to_string();
+        match self {
+            Self::Preparation => (e1, e2, sel, e4),
+            Self::Information => (e1, e2, e3, sel),
+            Self::RandomPage => (e1, sel, e3, e4),
+            Self::GuessingPage { opt_str } => {
+                if opt_str.cat_or_id == "Daily" {
+                    (sel, e2, e3, e4)
+                } else {
+                    (e1, sel, e3, e4)
+                }
+            }
+            _ => (e1, e2, e3, e4),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 struct AppState {
     opt_user: Option<User>,
@@ -97,22 +120,21 @@ pub fn app() -> Html {
         state_clone.set(AppState {
             opt_user: state_clone.opt_user.clone(),
             current_route: route.clone(),
-        })
+        });
+        // log::info!("Route: {:?}", route);
     });
 
     let switch = {
         let state = state.clone();
         Switch::render(move |routes: &Route| {
             let cb_route = cb_route.clone();
-            // state.set(AppState {
-            //     opt_user: state.opt_user.clone(),
-            //     current_route: routes.clone(),
-            // });
+            let route = state.current_route.clone();
+            // let route = routes.clone();
             log::info!("Route: {:?}", routes);
             match routes {
                 Route::Information => {
                     html! {
-                    <InformationPage {cb_route} />
+                    <InformationPage {cb_route} {route} />
                     }
                 }
                 Route::Signup => html! {
@@ -126,12 +148,12 @@ pub fn app() -> Html {
                 }
                 Route::RandomPage => {
                     html! {
-                        <RandomPage />
+                        <RandomPage {cb_route} {route} />
                     }
                 }
                 Route::Preparation => {
                     html! {
-                        <PreparationPage />
+                        <PreparationPage {cb_route} {route} />
                     }
                 }
                 Route::LaunchPage => {
@@ -146,7 +168,8 @@ pub fn app() -> Html {
                     }
                 }
                 Route::GuessingPage { opt_str } => {
-                    let opt_user = state.opt_user.clone();
+                    // let opt_user = state.opt_user.clone();
+                    let opt_user = None;
                     let daily = match opt_str.cat_or_id.as_str() {
                         "Daily" => true,
                         _ => false,
@@ -164,17 +187,18 @@ pub fn app() -> Html {
                     };
                     let dummy = false;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} />
                     }
                 }
                 Route::GuessingPageDummy => {
-                    let opt_user = state.opt_user.clone();
+                    // let opt_user = state.opt_user.clone();
+                    let opt_user = None;
                     let opt_cat: Option<String> = None;
                     let opt_id: Option<i32> = None;
                     let daily = false;
                     let dummy = true;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} />
                     }
                 }
                 Route::NotFound => html! { <h1>{ "404" }</h1> },
@@ -184,6 +208,7 @@ pub fn app() -> Html {
     let wrap_daily = StringWrap {
         cat_or_id: "Daily".to_string(),
     };
+    let tuple_selected = state.current_route.get_selection();
     html! {
         <>
             <BrowserRouter>
@@ -201,22 +226,22 @@ pub fn app() -> Html {
                                 html!{
                                     <ul class="nav navbar-nav">
                                     <li class="nav-item" id="tutorMenuItem">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::GuessingPage { opt_str: wrap_daily }}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.0)} to={Route::GuessingPage { opt_str: wrap_daily }}>
                                             { "Page du jour" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item ">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::RandomPage}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.1)} to={Route::RandomPage}>
                                             { "Page aléatoire" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item active">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Preparation}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.2)} to={Route::Preparation}>
                                             { "Préparation de page" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item active">
-                                        <Link<Route> classes={classes!("navbar-item")} to={Route::Information}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.3)} to={Route::Information}>
                                             { "Informations" }
                                         </Link<Route>>
                                     </li>

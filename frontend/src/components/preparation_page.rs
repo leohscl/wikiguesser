@@ -1,3 +1,4 @@
+use crate::components::app::Route;
 use crate::entities::interfaces::{Article, Status};
 use crate::service::articles::get_matches;
 use crate::service::future::handle_future;
@@ -11,14 +12,24 @@ struct PreparationPageState {
     sel_link: Option<String>,
 }
 
+#[derive(Properties, PartialEq, Clone)]
+pub struct PreparationProps {
+    pub cb_route: Callback<Route>,
+    pub route: Route,
+}
+
 #[function_component(PreparationPage)]
-pub fn preparation_page() -> Html {
+pub fn preparation_page(props: &PreparationProps) -> Html {
     let state = use_state(|| PreparationPageState {
         input_title_search: "".to_string(),
         potential_articles: Vec::new(),
         sel_article: None,
         sel_link: None,
     });
+
+    if props.route != Route::Preparation {
+        props.cb_route.emit(Route::Preparation);
+    }
 
     let input_search = {
         let state = state.clone();

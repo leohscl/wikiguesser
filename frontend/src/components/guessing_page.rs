@@ -1,4 +1,5 @@
 use super::app::Route;
+use super::app::StringWrap;
 use super::loading_bar::LoadingBar;
 use super::past_words::PastWords;
 use super::rating::Rating;
@@ -323,6 +324,8 @@ pub struct GuessingPageProps {
     pub opt_timer_secs: Option<u32>,
     pub dummy: bool,
     pub daily: bool,
+    pub cb_route: Callback<Route>,
+    pub route: Route,
 }
 
 // Use macro to simplify html
@@ -339,6 +342,19 @@ macro_rules! ifcond {
 #[function_component(GuessingPage)]
 pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let state = use_reducer(move || ArticleState::default());
+
+    let mode = if props.daily { "Daily" } else { "Random" };
+    let current_mode = StringWrap {
+        cat_or_id: mode.to_string(),
+    };
+    match props.route {
+        Route::GuessingPage { opt_str: _ } => {}
+        _ => {
+            props.cb_route.emit(Route::GuessingPage {
+                opt_str: current_mode,
+            });
+        }
+    }
 
     use_effect_with_deps(
         {

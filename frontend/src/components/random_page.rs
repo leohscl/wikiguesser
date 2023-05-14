@@ -10,12 +10,22 @@ struct RandomPageState {
     opt_game: Option<Option<Game>>,
 }
 
+#[derive(Properties, PartialEq, Clone)]
+pub struct RandomProps {
+    pub cb_route: Callback<Route>,
+    pub route: Route,
+}
+
 #[function_component(RandomPage)]
-pub fn random_page() -> Html {
+pub fn random_page(props: &RandomProps) -> Html {
     let state = use_state(|| RandomPageState {
         cat: "Default".to_string(),
         opt_game: None,
     });
+
+    if props.route != Route::RandomPage {
+        props.cb_route.emit(Route::RandomPage);
+    }
 
     let history = use_history().unwrap();
     let onclick_launch_cat = {
