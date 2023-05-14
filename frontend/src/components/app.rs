@@ -5,6 +5,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use super::guessing_page::GuessingPage;
+use super::guessing_page::TimeConstraint;
 use super::information_page::InformationPage;
 use super::launch_page::LaunchPage;
 use super::login::Login;
@@ -186,8 +187,10 @@ pub fn app() -> Html {
                         (opt_cat, None)
                     };
                     let dummy = false;
+                    let constraint = TimeConstraint::Unconstrained;
+                    // let constraint = TimeConstraint::Constraint(1000);
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} />
                     }
                 }
                 Route::GuessingPageDummy => {
@@ -197,8 +200,9 @@ pub fn app() -> Html {
                     let opt_id: Option<i32> = None;
                     let daily = false;
                     let dummy = true;
+                    let constraint = TimeConstraint::Unconstrained;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} />
                     }
                 }
                 Route::NotFound => html! { <h1>{ "404" }</h1> },

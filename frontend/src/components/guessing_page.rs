@@ -69,6 +69,7 @@ enum ArticleAction {
     HighlightPrevious(String),
     // UnknownWord(String),
     RevealAll,
+    TimeOut,
 }
 #[derive(PartialEq, Clone)]
 enum PageStatus {
@@ -115,6 +116,15 @@ impl Reducible for ArticleState {
     type Action = ArticleAction;
     fn reduce(self: std::rc::Rc<Self>, action: Self::Action) -> std::rc::Rc<Self> {
         match action {
+            ArticleAction::TimeOut => Self {
+                word_queried: self.word_queried.clone(),
+                progress: ProgessStatus::TimeOut,
+                opt_user: self.opt_user.clone(),
+                opt_game: self.opt_game.clone(),
+                opt_engine: self.opt_engine.clone(),
+                status: self.status.clone(),
+            }
+            .into(),
             ArticleAction::FailedLoad(error) => Self {
                 word_queried: self.word_queried.clone(),
                 progress: self.progress.clone(),
@@ -226,7 +236,7 @@ impl Reducible for ArticleState {
                     }
                 }
                 let mut word_queried = self.word_queried.clone();
-                if self.progress != Found {
+                if self.progress == Ongoing {
                     word_queried.push(word.clone());
                 }
                 let progress = {
@@ -315,6 +325,11 @@ fn finish(data: Result<Game, Status>) {
         }
     };
 }
+#[derive(PartialEq, Debug)]
+pub enum TimeConstraint {
+    Constraint(u32),
+    Unconstrained,
+}
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct GuessingPageProps {
@@ -326,6 +341,7 @@ pub struct GuessingPageProps {
     pub daily: bool,
     pub cb_route: Callback<Route>,
     pub route: Route,
+    pub constraint: TimeConstraint,
 }
 
 // Use macro to simplify html
@@ -538,106 +554,120 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                 Ongoing => format!(""),
             };
             let finished = progress != Ongoing;
-            // <div style="display: flex;">
-            //     <Timer />
-            // </div>
+            let state_time = state.clone();
+
             html! {
-                <div style="display: flex;">
+                <div style="display: flex; flex-direction: column">
+                {
+                    if let TimeConstraint::Constraint(time) = props.constraint {
+                        let cb_time_up = Callback::from(move |_| {
+                            state_time.dispatch(ArticleAction::TimeOut);
+                            log::info!("Time is up !");
+                        });
+                        let num_secs = time;
+                        let stop_count = finished;
+                        html!{ <Timer {cb_time_up} {num_secs} {stop_count}/> }
+                    } else {
+                        html!{}
+                    }
+                }
+                    <div style="display: flex">
                     <PastWords {past_words} />
-                    <p align="justified" class="content">
-                        {
-                            ifcond!(
-                                finished,
-                                {
-                                    html! {<span id="finished"> {string_display} </span>}
+                        <p align="justified" class="content">
+                            {
+                                ifcond!(
+                                    finished,
+                                    {
+                                        html! {<span id="finished"> {string_display} </span>}
+                                    }
+                                )
+                            }
+                            <div/>
+                            <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
+                            {
+                                ifcond!(
+                                    finished,
+                                    html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
+                                )
+                            }
+                            <div/>
+                            {
+                                if no_words {
+                                    html!{}
+                                } else {
+                                    if num_found + num_close == 0 {
+                                        if !page.content.fully_revealed {
+                                            html!{<span > {red_emo.to_string()} </span>}
+                                        } else {
+                                            html!{}
+                                        }
+                                    } else {
+                                        html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
+                                    }
                                 }
-                            )
-                        }
-                        <div/>
-                        <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
-                        {
-                            ifcond!(
-                                finished,
-                                html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
-                            )
-                        }
-                        <div/>
-                        {
-                            if no_words {
-                                html!{}
-                            } else {
-                                if num_found + num_close == 0 {
-                                    if !page.content.fully_revealed {
-                                        html!{<span > {red_emo.to_string()} </span>}
+                            }
+
+                            <div/>
+                            <div id="title">
+                                { page.title.render() }
+                            </div>
+                            <div id="content" class="content">
+                                { page.content.render() }
+                            </div>
+                            {
+                                ifcond!(
+                                    props.opt_user.is_some(),
+                                    html!{ <button onclick={onclick_like}> { "Like" } </button> }
+                                )
+                            }
+                            {
+                                ifcond!(
+                                    !finished,
+                                    html! { <button class="launch give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
+                                )
+                            }
+                            {
+                                {
+                                    if let Some(ongoing_game) = &state.opt_game {
+                                        let article_id = ongoing_game.article.id;
+                                        let link = String::from("www.wikitrouve.fr/guess/") + &article_id.to_string();
+                                        let text = "Partage cette page: ".to_string();
+                                        html! { <div> <p> {text} </p> <p class="link"> {link} </p> </div> }
                                     } else {
                                         html!{}
                                     }
-                                } else {
-                                    html! {<span > {std::iter::repeat(green_emo).take(num_found).chain(std::iter::repeat(orange_emo).take(num_close)).collect::<String>()}</span>}
                                 }
                             }
-                        }
-
-                        <div/>
-                        <div id="title">
-                            { page.title.render() }
-                        </div>
-                        <div id="content" class="content">
-                            { page.content.render() }
-                        </div>
-                        {
-                            ifcond!(
-                                props.opt_user.is_some(),
-                                html!{ <button onclick={onclick_like}> { "Like" } </button> }
-                            )
-                        }
-                        {
-                            ifcond!(
-                                !finished,
-                                html! { <button class="launch give_up" onclick={onclick_give_up}> { "Abandonner" } </button> }
-                            )
-                        }
-                        {
                             {
-                                if let Some(ongoing_game) = &state.opt_game {
-                                    let article_id = ongoing_game.article.id;
-                                    let link = String::from("www.wikitrouve.fr/guess/") + &article_id.to_string();
-                                    let text = "Partage cette page: ".to_string();
-                                    html! { <div> <p> {text} </p> <p class="link"> {link} </p> </div> }
-                                } else {
-                                    html!{}
+                                ifcond!(
+                                    finished,
+                                    html! { <button class="launch report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
+                                )
+                            }
+                            {
+                                ifcond!(
+                                    finished,
+                                    html! { <button class= "button try_another" onclick={onclick_new_page}> { "Essayer une autre page" } </button> }
+                                )
+                            }
+                            {
+                                {
+                                    let html_rating = if let Some(ongoing_game) = &state.opt_game {
+                                        let article_id = ongoing_game.article.id;
+                                        html! {
+                                            <Rating {article_id}/>
+                                        }
+                                    } else {
+                                        html!{}
+                                    };
+                                    ifcond!(finished, html_rating)
                                 }
                             }
-                        }
-                        {
-                            ifcond!(
-                                finished,
-                                html! { <button class="launch report" onclick={onclick_report_page}> { "Signaler un bug" } </button> }
-                            )
-                        }
-                        {
-                            ifcond!(
-                                finished,
-                                html! { <button class= "button try_another" onclick={onclick_new_page}> { "Essayer une autre page" } </button> }
-                            )
-                        }
-                        {
                             {
-                                let html_rating = if let Some(ongoing_game) = &state.opt_game {
-                                    let article_id = ongoing_game.article.id;
-                                    html! {
-                                        <Rating {article_id}/>
-                                    }
-                                } else {
-                                    html!{}
-                                };
-                                ifcond!(finished, html_rating)
+                                ifcond!(finished, html! { <b> {views_string}</b> })
                             }
-                        }
-                        {
-                            ifcond!(finished, html! { <b> {views_string}</b> })
-                        }
-                    </p>
+                        </p>
+                    </div>
                 </div>
             }
         }
