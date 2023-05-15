@@ -18,6 +18,7 @@ use std::pin::Pin;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
 use wiki_process::wiki_parse::create_string_vector;
+use word_frequency::read_freq_csv;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -67,7 +68,6 @@ enum ArticleAction {
     _Reveal(WordResult),
     RevealWithEngine(String),
     HighlightPrevious(String),
-    // UnknownWord(String),
     RevealAll,
     TimeOut,
 }
@@ -331,6 +331,13 @@ pub enum TimeConstraint {
     Unconstrained,
 }
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum Prereveal {
+    LowThreshold(f64),
+    HighThreshold(f64),
+    Base,
+}
+
 #[derive(Properties, PartialEq, Debug)]
 pub struct GuessingPageProps {
     pub opt_user: Option<User>,
@@ -342,6 +349,7 @@ pub struct GuessingPageProps {
     pub cb_route: Callback<Route>,
     pub route: Route,
     pub constraint: TimeConstraint,
+    pub prereveal: Prereveal,
 }
 
 // Use macro to simplify html
@@ -378,6 +386,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             let opt_cat = props.opt_cat.clone();
             let opt_id = props.opt_id.clone();
             let daily = props.daily;
+            let prereveal = props.prereveal.clone();
             let state = state.clone();
             move |_| {
                 if !dummy {
@@ -390,11 +399,12 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         };
                     let state = state.clone();
                     handle_future(future, move |data: Result<Option<OngoingGame>, Status>| {
+                        let prereveal = prereveal.clone();
                         match data {
                             Ok(Some(ongoing_game)) => {
                                 let state_1 = state.clone();
                                 let article = ongoing_game.article.clone();
-                                let page = page_from_json(article);
+                                let page = page_from_json(article, prereveal);
                                 let article_id = ongoing_game.article.id;
                                 let future = async move { get_engine(article_id).await };
                                 let state = state.clone();
@@ -436,6 +446,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     });
                 } else {
                     let state = state.clone();
+                    let prereveal = Prereveal::Base;
                     let article = Article {
                         id: 1,
                         wiki_id: 2,
@@ -443,7 +454,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         content: "thé".to_string(),
                         views: 0,
                     };
-                    let page = page_from_json(article);
+                    let page = page_from_json(article, prereveal);
                     state.dispatch(ArticleAction::Render(page, None, None));
                 }
                 || {}
@@ -674,13 +685,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     }
 }
 
-fn page_from_json(article: Article) -> Page {
+fn page_from_json(article: Article, prereveal: Prereveal) -> Page {
     let title = String::from(article.title + " ");
     let content = String::from(article.content + " ");
     let title_vec = create_string_vector(&title);
     let content_vec = create_string_vector(&content);
-    let revealed_title = initialize_revealed_vector(&title_vec);
-    let revealed_content = initialize_revealed_vector(&content_vec);
+    let revealed_title = initialize_revealed_vector(&title_vec, prereveal);
+    let revealed_content = initialize_revealed_vector(&content_vec, Prereveal::Base);
     let title_vec_len = title_vec.len();
     let content_vec_len = content_vec.len();
     let hidden_title = HiddenText {
@@ -704,7 +715,13 @@ fn page_from_json(article: Article) -> Page {
     }
 }
 
-fn initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
+#[allow(unused_variables)]
+fn initialize_revealed_vector(vec_text: &Vec<String>, prereveal: Prereveal) -> Vec<RevealStrength> {
+    // try to call frequency for some words
+    // let hash_test = read_freq_csv("./../../../utils/word_frequency/Lexique383.csv").expect("Error getting Hashmap");
+    // let freq = hash_test.get("Salut").expect("Should know this word");
+    // // console.log("")
+    // let freq = hash_test.get("Salut").expect("Should know this word");
     vec_text
         .iter()
         .map(|str| match str.chars().count() <= 1 {

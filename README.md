@@ -45,7 +45,7 @@ Features
 
 Challenge mode (geoguesser like)
 
-- [ ] Time mode
+- [x] Time mode
 - [ ] Mode avec beaucoup de mots déja révélés
 - [ ] Définir mot "importants" par page ?
 - [ ] Ajouter bonus pathé (nouveau mot: +10 ?)

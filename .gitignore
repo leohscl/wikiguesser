@@ -25,3 +25,5 @@ utils/wiki_process/Cargo.lock
 utils/wiki_process/target
 conjugaison
 categorize
+./utils/word_frequency/Cargo.lock
+./utils/word_frequency/target/

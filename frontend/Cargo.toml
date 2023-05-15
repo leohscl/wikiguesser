@@ -27,6 +27,7 @@ gloo-dialogs = "0.1.1"
 wiki_process = { path = "../utils/wiki_process" }
 material-yew = { version = "0.2", features = ["snackbar"] }
 
+word_frequency = { path = "../utils/word_frequency" }
 
 [dependencies.web-sys]
 version = "0.3"

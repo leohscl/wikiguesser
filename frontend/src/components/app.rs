@@ -5,6 +5,7 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use super::guessing_page::GuessingPage;
+use super::guessing_page::Prereveal;
 use super::guessing_page::TimeConstraint;
 use super::information_page::InformationPage;
 use super::launch_page::LaunchPage;
@@ -187,10 +188,11 @@ pub fn app() -> Html {
                         (opt_cat, None)
                     };
                     let dummy = false;
-                    let constraint = TimeConstraint::Unconstrained;
-                    // let constraint = TimeConstraint::Constraint(1000);
+                    // let constraint = TimeConstraint::Unconstrained;
+                    let constraint = TimeConstraint::Constraint(300);
+                    let prereveal = Prereveal::LowThreshold(0.001);
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} {prereveal} />
                     }
                 }
                 Route::GuessingPageDummy => {
@@ -201,8 +203,9 @@ pub fn app() -> Html {
                     let daily = false;
                     let dummy = true;
                     let constraint = TimeConstraint::Unconstrained;
+                    let prereveal = Prereveal::LowThreshold(0.001);
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} {prereveal} />
                     }
                 }
                 Route::NotFound => html! { <h1>{ "404" }</h1> },
