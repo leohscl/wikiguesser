@@ -40,6 +40,7 @@ pub struct WordResult {
     pub word: String,
     pub close_words: Vec<IString>,
     pub variants: Vec<IString>,
+    pub frequency: Option<f64>,
 }
 
 #[derive(Deserialize)]
@@ -69,8 +70,8 @@ pub struct User {
 pub struct OngoingGame {
     pub game: Game,
     pub article: Article,
-    pub words: Vec<String>,
-    // pub all_results: Vec<Option<WordResult>>,
+    // pub words: Vec<String>,
+    pub all_results: Vec<Option<WordResult>>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]

@@ -28,7 +28,6 @@ impl CountdownStatus {
         let time_left = self.get_left();
         let min = time_left / 60;
         let secs = time_left % 60;
-        log::info!("secs: {}", secs);
         (min, secs)
     }
 

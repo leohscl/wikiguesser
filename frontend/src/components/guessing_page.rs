@@ -18,7 +18,6 @@ use std::pin::Pin;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
 use wiki_process::wiki_parse::create_string_vector;
-use word_frequency::read_freq_csv;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -404,14 +403,24 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                             Ok(Some(ongoing_game)) => {
                                 let state_1 = state.clone();
                                 let article = ongoing_game.article.clone();
-                                let page = page_from_json(article, prereveal);
                                 let article_id = ongoing_game.article.id;
                                 let future = async move { get_engine(article_id).await };
                                 let state = state.clone();
-                                let words = ongoing_game.words.clone();
+                                let words: Vec<String> = ongoing_game
+                                    .all_results
+                                    .iter()
+                                    .map(|word_res| {
+                                        word_res.clone().expect("There should be a word here").word
+                                    })
+                                    .collect();
                                 handle_future(future, move |data: Result<GameEngine, Status>| {
                                     match data {
                                         Ok(game_engine) => {
+                                            let page = page_from_json(
+                                                article.clone(),
+                                                prereveal.clone(),
+                                                Some(game_engine.clone()),
+                                            );
                                             state_1.dispatch(ArticleAction::Render(
                                                 page.clone(),
                                                 Some(ongoing_game.clone()),
@@ -454,7 +463,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         content: "thé".to_string(),
                         views: 0,
                     };
-                    let page = page_from_json(article, prereveal);
+                    let page = page_from_json(article, prereveal, None);
                     state.dispatch(ArticleAction::Render(page, None, None));
                 }
                 || {}
@@ -685,13 +694,13 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     }
 }
 
-fn page_from_json(article: Article, prereveal: Prereveal) -> Page {
+fn page_from_json(article: Article, prereveal: Prereveal, game_engine: Option<GameEngine>) -> Page {
     let title = String::from(article.title + " ");
     let content = String::from(article.content + " ");
     let title_vec = create_string_vector(&title);
     let content_vec = create_string_vector(&content);
-    let revealed_title = initialize_revealed_vector(&title_vec, prereveal);
-    let revealed_content = initialize_revealed_vector(&content_vec, Prereveal::Base);
+    let revealed_title = initialize_revealed_vector(&title_vec, prereveal, game_engine);
+    let revealed_content = initialize_revealed_vector(&content_vec, Prereveal::Base, None);
     let title_vec_len = title_vec.len();
     let content_vec_len = content_vec.len();
     let hidden_title = HiddenText {
@@ -716,19 +725,34 @@ fn page_from_json(article: Article, prereveal: Prereveal) -> Page {
 }
 
 #[allow(unused_variables)]
-fn initialize_revealed_vector(vec_text: &Vec<String>, prereveal: Prereveal) -> Vec<RevealStrength> {
-    // try to call frequency for some words
-    // let hash_test = read_freq_csv("./../../../utils/word_frequency/Lexique383.csv").expect("Error getting Hashmap");
-    // let freq = hash_test.get("Salut").expect("Should know this word");
-    // // console.log("")
-    // let freq = hash_test.get("Salut").expect("Should know this word");
-    vec_text
-        .iter()
-        .map(|str| match str.chars().count() <= 1 {
-            true => RevealStrength::Revealed,
-            false => RevealStrength::NotRevealed,
-        })
-        .collect()
+fn initialize_revealed_vector(
+    vec_text: &Vec<String>,
+    prereveal: Prereveal,
+    game_engine: Option<GameEngine>,
+) -> Vec<RevealStrength> {
+    // We need some info on frequency, and on protected status
+    if let Some(game_eng) = game_engine {
+        vec_text
+            .iter()
+            .map(|str| match str.chars().count() <= 1 {
+                true => RevealStrength::Revealed,
+                false => {
+                    log::info!("Game engine loaded");
+                    let opt_frequency = game_eng.reveals.get(str);
+                    log::info!("frequency found : {:?}", opt_frequency);
+                    RevealStrength::NotRevealed
+                }
+            })
+            .collect()
+    } else {
+        vec_text
+            .iter()
+            .map(|str| match str.chars().count() <= 1 {
+                true => RevealStrength::Revealed,
+                false => RevealStrength::NotRevealed,
+            })
+            .collect()
+    }
 }
 
 fn _initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
@@ -804,7 +828,7 @@ fn trigger_query(state: UseReducerHandle<ArticleState>) {
             };
             handle_future(future, move |data: Result<Option<WordResult>, Status>| {
                 match data {
-                    Ok(opt_word_res) => if let Some(_word_res) = opt_word_res {},
+                    Ok(_) => {}
                     Err(_) => {
                         log::info!("Error finishing game");
                     }

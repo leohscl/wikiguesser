@@ -29,6 +29,7 @@ pub async fn query(word: &str) -> Result<Option<WordResult>, Status> {
             word: word.to_string(),
             close_words,
             variants: vec![],
+            frequency: None,
         };
         Ok(Some(word_res))
     } else {

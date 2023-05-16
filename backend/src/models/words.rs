@@ -4,6 +4,7 @@ use finalfusion::prelude::*;
 use finalfusion::similarity::WordSimilarity;
 use finalfusion::vocab::Vocab;
 use serde::Serialize;
+use word_frequency::read_freq_csv;
 
 pub struct WordModel {
     pub embedding: Embeddings<VocabWrap, StorageViewWrap>,
@@ -19,6 +20,7 @@ pub struct WordResult {
     pub word: String,
     pub close_words: Vec<IString>,
     pub variants: Vec<IString>,
+    pub frequency: Option<f64>,
 }
 
 impl WordResult {
@@ -26,6 +28,9 @@ impl WordResult {
         word: &str,
         embed: &Embeddings<VocabWrap, StorageViewWrap>,
     ) -> Result<Option<WordResult>, diesel::result::Error> {
+        let hash_freq =
+            read_freq_csv("data/Lexique383.csv").expect("The hashmap should be read properly");
+        let frequency = hash_freq.get(word).cloned();
         // skip quering if word is a number
         if let Ok(num) = word.parse::<i32>() {
             let close_words: Vec<_> = (1..500)
@@ -36,6 +41,7 @@ impl WordResult {
                 word: word.to_string(),
                 close_words,
                 variants: vec![],
+                frequency: None,
             };
             Ok(Some(word_res))
         } else {
@@ -54,6 +60,7 @@ impl WordResult {
                     word: word.to_string(),
                     close_words: word_res,
                     variants,
+                    frequency,
                 }))
             } else {
                 Ok(None)

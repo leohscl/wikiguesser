@@ -25,8 +25,8 @@ pub struct GamePromptId {
 pub struct OngoingGame {
     game: Game,
     article: Article,
-    words: Vec<String>,
-    // all_results: Vec<Option<WordResult>>,
+    // words: Vec<String>,
+    all_results: Vec<Option<WordResult>>,
 }
 
 #[derive(Identifiable, Debug, Serialize, Clone, Queryable, Insertable)]
@@ -125,13 +125,13 @@ impl Game {
         } else {
             Self::create_with_id(connection, input_game, article_id)?
         };
-        // let all_results = Self::get_all_results(&game, word_model)?;
-        let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+        let all_results = Self::get_all_results(&game, word_model)?;
+        // let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
         let article = Article::get(game.article_id, connection)?;
         Ok(OngoingGame {
             game,
             article,
-            words,
+            all_results,
         })
     }
 
@@ -148,12 +148,13 @@ impl Game {
         } else {
             Self::create_daily(connection, input_game)?
         };
-        let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+        let all_results = Self::get_all_results(&game, word_model)?;
+        // let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
         let article = Article::get(game.article_id, connection)?;
         Ok(OngoingGame {
             game,
             article,
-            words,
+            all_results,
         })
     }
 
@@ -171,12 +172,13 @@ impl Game {
         } else {
             Self::create(connection, input_game, opt_cat)?
         };
-        let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
+        let all_results = Self::get_all_results(&game, word_model)?;
+        // let words: Vec<String> = game.words.split(" ").map(|str| String::from(str)).collect();
         let article = Article::get(game.article_id, connection)?;
         Ok(OngoingGame {
             game,
             article,
-            words,
+            all_results,
         })
     }
     pub fn get_ongoing(
