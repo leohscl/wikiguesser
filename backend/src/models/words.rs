@@ -3,6 +3,7 @@ use crate::NUM_WORD_RESULTS;
 use finalfusion::prelude::*;
 use finalfusion::similarity::WordSimilarity;
 use finalfusion::vocab::Vocab;
+use serde::Deserialize;
 use serde::Serialize;
 use word_frequency::read_freq_csv;
 
@@ -10,12 +11,12 @@ pub struct WordModel {
     pub embedding: Embeddings<VocabWrap, StorageViewWrap>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct IString {
     pub str: String,
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct WordResult {
     pub word: String,
     pub close_words: Vec<IString>,
@@ -30,7 +31,7 @@ impl WordResult {
     ) -> Result<Option<WordResult>, diesel::result::Error> {
         let hash_freq =
             read_freq_csv("data/Lexique383.csv").expect("The hashmap should be read properly");
-        let frequency = hash_freq.get(word).cloned();
+        let frequency = hash_freq.get(&word.to_lowercase()).cloned();
         // skip quering if word is a number
         if let Ok(num) = word.parse::<i32>() {
             let close_words: Vec<_> = (1..500)

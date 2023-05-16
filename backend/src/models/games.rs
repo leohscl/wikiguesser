@@ -115,6 +115,7 @@ impl Game {
         connection: &mut PgConnection,
         input_game: &InputGame,
         article_id: i32,
+        word_model: &WordModel,
     ) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
@@ -138,6 +139,7 @@ impl Game {
     pub fn get_or_create_daily(
         connection: &mut PgConnection,
         input_game: &InputGame,
+        word_model: &WordModel,
     ) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
@@ -162,6 +164,7 @@ impl Game {
         connection: &mut PgConnection,
         input_game: &InputGame,
         opt_cat: &Option<String>,
+        word_model: &WordModel,
     ) -> Result<OngoingGame, diesel::result::Error> {
         let query = games::table.into_boxed();
         let query = query.filter(games::ip_or_email.eq(input_game.ip_or_email.to_owned()));
@@ -181,6 +184,16 @@ impl Game {
             all_results,
         })
     }
+
+    fn get_all_results(
+        game: &Game,
+        word_model: &WordModel,
+    ) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
+        let words_to_query: Vec<String> =
+            game.words.split(" ").map(|str| String::from(str)).collect();
+        WordResult::query_multiple(&words_to_query, &word_model.embedding)
+    }
+
     pub fn get_ongoing(
         connection: &mut PgConnection,
         input_game: &InputGame,

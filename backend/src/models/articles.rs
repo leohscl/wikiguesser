@@ -36,6 +36,7 @@ struct StringAndPos {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GameEngine {
     reveals: HashMap<String, Vec<StringAndPos>>,
+    list_results: Vec<Option<WordResult>>,
 }
 
 impl Article {
@@ -266,6 +267,9 @@ impl Article {
             }
         }
         println!("Done creating engine !");
-        Ok(GameEngine { reveals: hash })
+        Ok(GameEngine {
+            reveals: hash,
+            list_results: query_results.clone(),
+        })
     }
 }

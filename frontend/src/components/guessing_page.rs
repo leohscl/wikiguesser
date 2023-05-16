@@ -406,16 +406,32 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                 let article_id = ongoing_game.article.id;
                                 let future = async move { get_engine(article_id).await };
                                 let state = state.clone();
+                                log::info!("all_results: {:?}", ongoing_game.all_results);
                                 let words: Vec<String> = ongoing_game
                                     .all_results
-                                    .iter()
+                                    .clone()
+                                    .into_iter()
+                                    .filter_map(|x| x)
                                     .map(|word_res| {
-                                        word_res.clone().expect("There should be a word here").word
+                                        // log::info!("frequency: {:?}", word_res);
+                                        word_res.word
                                     })
                                     .collect();
                                 handle_future(future, move |data: Result<GameEngine, Status>| {
                                     match data {
                                         Ok(game_engine) => {
+                                            for word_res in game_engine
+                                                .list_results
+                                                .clone()
+                                                .into_iter()
+                                                .filter_map(|x| x)
+                                            {
+                                                log::info!(
+                                                    "word: {}, frequency: {:?}",
+                                                    word_res.word,
+                                                    word_res.frequency
+                                                );
+                                            }
                                             let page = page_from_json(
                                                 article.clone(),
                                                 prereveal.clone(),

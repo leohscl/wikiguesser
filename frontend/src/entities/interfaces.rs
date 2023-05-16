@@ -124,4 +124,5 @@ impl Ord for StringAndPos {
 #[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
 pub struct GameEngine {
     pub reveals: HashMap<String, Vec<StringAndPos>>,
+    pub list_results: Vec<Option<WordResult>>,
 }
