@@ -5,12 +5,12 @@ TODO:
 
 
 Design
-- [ ] Add shadow to indicate which page we are on
 - [ ] Add picture for random page
 - [ ] Update wikitty picture
 - [ ] Add favicon
 - [ ] Complete information page
 - [ ] Smartphone support
+- [x] Add shadow to indicate which page we are on
 - [x] Add message for failed loading
 - [x] Fill preparation page
 - [x] better navigation
@@ -34,6 +34,7 @@ Features
 - [ ] Add "important" word category, word that help complete the page
 - [ ] add url/link to wiki page
 - [ ] Add best words -- like previous words
+- [ ] Filter page on length of content (not too small) and on title (not too long ?)
 - [x] Add daily page !
 - [x] Test daily page !
 - [x] Make information page
@@ -46,7 +47,7 @@ Features
 Challenge mode (geoguesser like)
 
 - [x] Time mode
-- [ ] Mode avec beaucoup de mots déja révélés
+- [x] Mode avec beaucoup de mots déja révélés
 - [ ] Définir mot "importants" par page ?
 - [ ] Ajouter bonus pathé (nouveau mot: +10 ?)
 - [ ] Ajouter possibilité reveler certains mots (pas importants) ou de donner mot proche (top 10) ?

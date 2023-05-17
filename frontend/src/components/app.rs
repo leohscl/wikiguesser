@@ -190,7 +190,9 @@ pub fn app() -> Html {
                     let dummy = false;
                     // let constraint = TimeConstraint::Unconstrained;
                     let constraint = TimeConstraint::Constraint(300);
-                    let prereveal = Prereveal::LowThreshold(0.001);
+                    // let prereveal = Prereveal::HighThreshold(10.0);
+                    // let prereveal = Prereveal::Over(50.0);
+                    let prereveal = Prereveal::OverAndHintUnder(50.0, 10.0);
                     html! {
                         <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} {prereveal} />
                     }
@@ -203,7 +205,7 @@ pub fn app() -> Html {
                     let daily = false;
                     let dummy = true;
                     let constraint = TimeConstraint::Unconstrained;
-                    let prereveal = Prereveal::LowThreshold(0.001);
+                    let prereveal = Prereveal::Base;
                     html! {
                         <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} {prereveal} />
                     }

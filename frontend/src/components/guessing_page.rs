@@ -13,6 +13,8 @@ use crate::service::future::handle_future;
 use crate::service::games::{self, finish_game, get_game, get_game_with_id};
 use crate::service::words::check;
 use gloo::dialogs::confirm;
+use rand::Rng;
+use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
@@ -67,7 +69,7 @@ enum ArticleAction {
     _Reveal(WordResult),
     RevealWithEngine(String),
     HighlightPrevious(String),
-    RevealAll,
+    RevealAll(bool),
     TimeOut,
 }
 #[derive(PartialEq, Clone)]
@@ -288,7 +290,7 @@ impl Reducible for ArticleState {
                 }
                 .into()
             }
-            ArticleAction::RevealAll => {
+            ArticleAction::RevealAll(abandon) => {
                 // let mut page_clone = self.opt_page.clone().expect("There should be a page now..");
                 let page_clone = if let PageStatus::Playing(mut page_clone) = self.status.clone() {
                     page_clone.reveal_all();
@@ -300,8 +302,13 @@ impl Reducible for ArticleState {
                     let future = async move { finish_game(ongoing_game.game.id).await };
                     handle_future(future, finish);
                 }
+                let progress = if abandon {
+                    Abandonned
+                } else {
+                    self.progress.clone()
+                };
                 Self {
-                    progress: Abandonned,
+                    progress,
                     word_queried: self.word_queried.clone(),
                     opt_user: self.opt_user.clone(),
                     opt_game: self.opt_game.clone(),
@@ -332,8 +339,9 @@ pub enum TimeConstraint {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum Prereveal {
-    LowThreshold(f64),
-    HighThreshold(f64),
+    Under(f64),
+    Over(f64),
+    OverAndHintUnder(f64, f64),
     Base,
 }
 
@@ -420,18 +428,18 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                 handle_future(future, move |data: Result<GameEngine, Status>| {
                                     match data {
                                         Ok(game_engine) => {
-                                            for word_res in game_engine
-                                                .list_results
-                                                .clone()
-                                                .into_iter()
-                                                .filter_map(|x| x)
-                                            {
-                                                log::info!(
-                                                    "word: {}, frequency: {:?}",
-                                                    word_res.word,
-                                                    word_res.frequency
-                                                );
-                                            }
+                                            // for word_res in game_engine
+                                            //     .list_results
+                                            //     .clone()
+                                            //     .into_iter()
+                                            //     .filter_map(|x| x)
+                                            // {
+                                            //     log::info!(
+                                            //         "word: {}, frequency: {:?}",
+                                            //         word_res.word,
+                                            //         word_res.frequency
+                                            //     );
+                                            // }
                                             let page = page_from_json(
                                                 article.clone(),
                                                 prereveal.clone(),
@@ -490,7 +498,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let onclick_reveal_all = {
         let state = state.clone();
         Callback::from(move |_| {
-            state.dispatch(ArticleAction::RevealAll);
+            state.dispatch(ArticleAction::RevealAll(false));
         })
     };
 
@@ -505,7 +513,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
         let state = state.clone();
         Callback::from(move |_| {
             if confirm("Êtes-vous sûr de vouloir abandonner ?") {
-                state.dispatch(ArticleAction::RevealAll);
+                state.dispatch(ArticleAction::RevealAll(true));
             }
         })
     };
@@ -715,8 +723,8 @@ fn page_from_json(article: Article, prereveal: Prereveal, game_engine: Option<Ga
     let content = String::from(article.content + " ");
     let title_vec = create_string_vector(&title);
     let content_vec = create_string_vector(&content);
-    let revealed_title = initialize_revealed_vector(&title_vec, prereveal, game_engine);
-    let revealed_content = initialize_revealed_vector(&content_vec, Prereveal::Base, None);
+    let revealed_title = initialize_revealed_vector(&title_vec, Prereveal::Base, None);
+    let revealed_content = initialize_revealed_vector(&content_vec, prereveal, game_engine);
     let title_vec_len = title_vec.len();
     let content_vec_len = content_vec.len();
     let hidden_title = HiddenText {
@@ -740,7 +748,6 @@ fn page_from_json(article: Article, prereveal: Prereveal, game_engine: Option<Ga
     }
 }
 
-#[allow(unused_variables)]
 fn initialize_revealed_vector(
     vec_text: &Vec<String>,
     prereveal: Prereveal,
@@ -748,15 +755,57 @@ fn initialize_revealed_vector(
 ) -> Vec<RevealStrength> {
     // We need some info on frequency, and on protected status
     if let Some(game_eng) = game_engine {
+        let mut hash_freq = HashMap::new();
+        for word_res in game_eng.list_results.clone().into_iter().filter_map(|x| x) {
+            hash_freq.insert(word_res.word.clone(), word_res);
+        }
         vec_text
             .iter()
-            .map(|str| match str.chars().count() <= 1 {
+            .map(|word| match word.chars().count() <= 1 {
                 true => RevealStrength::Revealed,
                 false => {
                     log::info!("Game engine loaded");
-                    let opt_frequency = game_eng.reveals.get(str);
-                    log::info!("frequency found : {:?}", opt_frequency);
-                    RevealStrength::NotRevealed
+                    let opt_word_res = hash_freq.get(word).cloned();
+                    if let Some(word_res) = opt_word_res {
+                        let opt_frequency = word_res.frequency;
+                        log::info!("word: {}, frequency: {:?}", word, opt_frequency);
+                        if let Some(frequency) = opt_frequency {
+                            match prereveal {
+                                Prereveal::Under(freq_threshold) => {
+                                    if frequency < freq_threshold {
+                                        RevealStrength::Revealed
+                                    } else {
+                                        RevealStrength::NotRevealed
+                                    }
+                                }
+                                Prereveal::Over(freq_threshold) => {
+                                    if frequency > freq_threshold {
+                                        RevealStrength::Revealed
+                                    } else {
+                                        RevealStrength::NotRevealed
+                                    }
+                                }
+                                Prereveal::OverAndHintUnder(over, hint_under) => {
+                                    if frequency > over {
+                                        RevealStrength::Revealed
+                                    } else if frequency < hint_under {
+                                        let mut rng = rand::thread_rng();
+                                        let random_rank = rng.gen_range(6..20);
+                                        let hint = word_res.close_words[random_rank].str.clone();
+                                        let string_pos = StringAndPos { str: hint, pos: 10 };
+                                        RevealStrength::Close(string_pos)
+                                    } else {
+                                        RevealStrength::NotRevealed
+                                    }
+                                }
+                                _ => RevealStrength::NotRevealed,
+                            }
+                        } else {
+                            RevealStrength::NotRevealed
+                        }
+                    } else {
+                        RevealStrength::NotRevealed
+                    }
                 }
             })
             .collect()
