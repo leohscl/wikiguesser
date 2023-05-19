@@ -1,33 +1,22 @@
+use crate::components::app::Route;
 use crate::components::app::StringWrap;
-use crate::{components::app::Route, entities::interfaces::Game};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-struct LaunchPageState {
-    opt_game: Option<Option<Game>>,
-}
-
 #[function_component(LaunchPage)]
 pub fn launch_page() -> Html {
-    let state = use_state(|| LaunchPageState { opt_game: None });
-    let opt_location = use_location();
-    if let Some(any_loc) = opt_location {
-        let route = any_loc.route::<Route>();
-        log::info!("Route: {:?}", route);
-    }
-
     let history = use_history().unwrap();
     let onclick_launch_daily = {
         let history = history.clone();
-        let state_copy = state.clone();
+        // let state_copy = state.clone();
         let wrap_daily = StringWrap {
             cat_or_id: "Daily".to_string(),
         };
         Callback::from(move |_| {
-            if let Some(opt_game) = state_copy.opt_game.clone() {
-                log::info!("Ongoing game: {:?}", opt_game);
-            }
-            history.push(Route::GuessingPage {
+            // if let Some(opt_game) = state_copy.opt_game.clone() {
+            // log::info!("Ongoing game: {:?}", opt_game);
+            // }
+            history.push(Route::Guessing {
                 opt_str: wrap_daily.clone(),
             });
         })

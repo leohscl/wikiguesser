@@ -114,7 +114,7 @@ pub fn launch_page() -> Html {
     handle_future(future, move |data: Result<Option<Game>, Status>| {
         match data {
             Ok(opt_ongoig) => {
-                log::info!("Game ongoing: {:?}", opt_ongoig);
+                // log::info!("Game ongoing: {:?}", opt_ongoig);
                 if let Some(_ongoing) = opt_ongoig {
                     history.push(Route::GuessingPage {
                         opt_str: StringWrap {

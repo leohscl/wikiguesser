@@ -4,57 +4,22 @@ use super::loading_bar::LoadingBar;
 use super::past_words::PastWords;
 use super::rating::Rating;
 use crate::components::timer::Timer;
-use crate::entities::hidden_text::HiddenText;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::entities::interfaces::{BoolWrapper, User};
-use crate::entities::interfaces::{Game, GameEngine, OngoingGame, Status, StringAndPos};
+use crate::entities::interfaces::{Game, GameEngine, OngoingGame, Status};
 use crate::service::articles::get_engine;
 use crate::service::future::handle_future;
 use crate::service::games::{self, finish_game, get_game, get_game_with_id};
 use crate::service::words::check;
+use crate::utils::page::{page_from_json, Page};
+use crate::utils::reveal_strength::RevealStrength;
 use gloo::dialogs::confirm;
-use rand::Rng;
-use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use wasm_bindgen::{JsCast, UnwrapThrowExt};
 use web_sys::{Event, HtmlInputElement, InputEvent};
-use wiki_process::wiki_parse::create_string_vector;
 use yew::prelude::*;
 use yew_router::prelude::*;
-
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub enum RevealStrength {
-    Revealed,
-    VeryClose(StringAndPos),
-    Close(StringAndPos),
-    Distant(StringAndPos),
-    NotRevealed,
-}
-
-#[derive(Clone, PartialEq)]
-struct Page {
-    title: HiddenText,
-    content: HiddenText,
-    input: String,
-}
-
-impl Page {
-    fn reveal_with_engine(&mut self, word: &str, result_engine: &Vec<StringAndPos>) -> bool {
-        let title_fully_revealed = self.title.reveal_with_engine(word, result_engine);
-        self.content.reveal_with_engine(word, result_engine);
-        title_fully_revealed
-    }
-    fn reveal(&mut self, word_res: &WordResult) -> bool {
-        let title_fully_revealed = self.title.reveal(word_res);
-        self.content.reveal(word_res);
-        title_fully_revealed
-    }
-    fn reveal_all(&mut self) {
-        self.title.reveal_all();
-        self.content.reveal_all();
-    }
-}
 
 #[derive(PartialEq, Clone)]
 struct WordChecked {
@@ -84,18 +49,17 @@ enum ProgessStatus {
     Ongoing,
     Found,
     Abandonned,
-    #[allow(dead_code)]
     TimeOut,
 }
 
 #[derive(PartialEq)]
 struct ArticleState {
     progress: ProgessStatus,
+    status: PageStatus,
     word_queried: Vec<String>,
     opt_user: Option<User>,
     opt_game: Option<OngoingGame>,
     opt_engine: Option<GameEngine>,
-    status: PageStatus,
 }
 
 use ProgessStatus::*;
@@ -344,6 +308,22 @@ pub enum Prereveal {
     OverAndHintUnder(f64, f64),
     Base,
 }
+#[derive(PartialEq, Debug, Clone)]
+pub enum Mode {
+    Daily,
+    Random,
+    Challenge,
+}
+
+impl ToString for Mode {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Daily => "daily".to_string(),
+            Self::Random => "random".to_string(),
+            Self::Challenge => "challenge".to_string(),
+        }
+    }
+}
 
 #[derive(Properties, PartialEq, Debug)]
 pub struct GuessingPageProps {
@@ -352,7 +332,7 @@ pub struct GuessingPageProps {
     pub opt_id: Option<i32>,
     pub opt_timer_secs: Option<u32>,
     pub dummy: bool,
-    pub daily: bool,
+    pub mode: Mode,
     pub cb_route: Callback<Route>,
     pub route: Route,
     pub constraint: TimeConstraint,
@@ -374,14 +354,14 @@ macro_rules! ifcond {
 pub fn guessing_page(props: &GuessingPageProps) -> Html {
     let state = use_reducer(move || ArticleState::default());
 
-    let mode = if props.daily { "Daily" } else { "Random" };
+    let mode = &props.mode;
     let current_mode = StringWrap {
         cat_or_id: mode.to_string(),
     };
     match props.route {
-        Route::GuessingPage { opt_str: _ } => {}
+        Route::Guessing { opt_str: _ } => {}
         _ => {
-            props.cb_route.emit(Route::GuessingPage {
+            props.cb_route.emit(Route::Guessing {
                 opt_str: current_mode,
             });
         }
@@ -392,7 +372,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             let dummy = props.dummy;
             let opt_cat = props.opt_cat.clone();
             let opt_id = props.opt_id.clone();
-            let daily = props.daily;
+            let mode = props.mode.clone();
             let prereveal = props.prereveal.clone();
             let state = state.clone();
             move |_| {
@@ -402,7 +382,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                         if let Some(id) = opt_id {
                             Box::pin(async move { get_game_with_id(id).await })
                         } else {
-                            Box::pin(async move { get_game(opt_cat, daily).await })
+                            Box::pin(async move { get_game(opt_cat, mode).await })
                         };
                     let state = state.clone();
                     handle_future(future, move |data: Result<Option<OngoingGame>, Status>| {
@@ -716,141 +696,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
             }
         }
     }
-}
-
-fn page_from_json(article: Article, prereveal: Prereveal, game_engine: Option<GameEngine>) -> Page {
-    let title = String::from(article.title + " ");
-    let content = String::from(article.content + " ");
-    let title_vec = create_string_vector(&title);
-    let content_vec = create_string_vector(&content);
-    let revealed_title = initialize_revealed_vector(&title_vec, Prereveal::Base, None);
-    let revealed_content = initialize_revealed_vector(&content_vec, prereveal, game_engine);
-    let title_vec_len = title_vec.len();
-    let content_vec_len = content_vec.len();
-    let hidden_title = HiddenText {
-        is_title: true,
-        text: title_vec,
-        revealed: revealed_title,
-        new_revelations: vec![RevealStrength::NotRevealed; title_vec_len],
-        fully_revealed: false,
-    };
-    let hidden_content = HiddenText {
-        is_title: false,
-        text: content_vec,
-        revealed: revealed_content,
-        new_revelations: vec![RevealStrength::NotRevealed; content_vec_len],
-        fully_revealed: false,
-    };
-    Page {
-        title: hidden_title,
-        content: hidden_content,
-        input: "".to_string(),
-    }
-}
-
-fn initialize_revealed_vector(
-    vec_text: &Vec<String>,
-    prereveal: Prereveal,
-    game_engine: Option<GameEngine>,
-) -> Vec<RevealStrength> {
-    // We need some info on frequency, and on protected status
-    if let Some(game_eng) = game_engine {
-        let mut hash_freq = HashMap::new();
-        for word_res in game_eng.list_results.clone().into_iter().filter_map(|x| x) {
-            hash_freq.insert(word_res.word.clone(), word_res);
-        }
-        vec_text
-            .iter()
-            .map(|word| match word.chars().count() <= 1 {
-                true => RevealStrength::Revealed,
-                false => {
-                    log::info!("Game engine loaded");
-                    let opt_word_res = hash_freq.get(word).cloned();
-                    if let Some(word_res) = opt_word_res {
-                        let opt_frequency = word_res.frequency;
-                        log::info!("word: {}, frequency: {:?}", word, opt_frequency);
-                        if let Some(frequency) = opt_frequency {
-                            match prereveal {
-                                Prereveal::Under(freq_threshold) => {
-                                    if frequency < freq_threshold {
-                                        RevealStrength::Revealed
-                                    } else {
-                                        RevealStrength::NotRevealed
-                                    }
-                                }
-                                Prereveal::Over(freq_threshold) => {
-                                    if frequency > freq_threshold {
-                                        RevealStrength::Revealed
-                                    } else {
-                                        RevealStrength::NotRevealed
-                                    }
-                                }
-                                Prereveal::OverAndHintUnder(over, hint_under) => {
-                                    if frequency > over {
-                                        RevealStrength::Revealed
-                                    } else if frequency < hint_under {
-                                        let mut rng = rand::thread_rng();
-                                        let random_rank = rng.gen_range(6..20);
-                                        let hint = word_res.close_words[random_rank].str.clone();
-                                        let string_pos = StringAndPos { str: hint, pos: 10 };
-                                        RevealStrength::Close(string_pos)
-                                    } else {
-                                        RevealStrength::NotRevealed
-                                    }
-                                }
-                                _ => RevealStrength::NotRevealed,
-                            }
-                        } else {
-                            RevealStrength::NotRevealed
-                        }
-                    } else {
-                        RevealStrength::NotRevealed
-                    }
-                }
-            })
-            .collect()
-    } else {
-        vec_text
-            .iter()
-            .map(|str| match str.chars().count() <= 1 {
-                true => RevealStrength::Revealed,
-                false => RevealStrength::NotRevealed,
-            })
-            .collect()
-    }
-}
-
-fn _initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
-    //TODO(léo): handle all pre_revealed words ?
-    let determinants = vec!["le", "la", "les", "un", "une", "des"];
-    let pronoms = vec!["ce", "ces", "de", "du"];
-    let avoir_conj = vec!["eu", "aura", "a"];
-    let etre_conj = vec!["était", "sera", "est"];
-    let conjonction_coord = vec!["et", "en"];
-    let pre_revealed: Vec<_> = [
-        determinants,
-        pronoms,
-        avoir_conj,
-        etre_conj,
-        conjonction_coord,
-    ]
-    .concat();
-    vec_text
-        .iter()
-        .map(|str| match str.chars().count() <= 1 {
-            true => RevealStrength::Revealed,
-            false => {
-                if let Some(_) = pre_revealed
-                    .iter()
-                    .position(|candidate| candidate.to_lowercase() == str.to_lowercase())
-                {
-                    RevealStrength::Revealed
-                } else {
-                    RevealStrength::NotRevealed
-                }
-            }
-        })
-        .collect()
 }
 
 fn trigger_query(state: UseReducerHandle<ArticleState>) {

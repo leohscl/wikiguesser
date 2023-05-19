@@ -269,7 +269,8 @@ impl Game {
         let results = query.load::<Game>(connection)?;
         if let Some(game) = results.into_iter().next() {
             Self::update(connection, &game, word)?;
-            WordResult::query(word, &word_model.embedding)
+            // WordResult::query(word, &word_model.embedding)
+            Ok(None)
         } else {
             Err(diesel::result::Error::NotFound)
         }

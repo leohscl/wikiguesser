@@ -48,8 +48,9 @@ Challenge mode (geoguesser like)
 
 - [x] Time mode
 - [x] Mode avec beaucoup de mots déja révélés
-- [ ] Définir mot "importants" par page ?
-- [ ] Ajouter bonus pathé (nouveau mot: +10 ?)
+- [x] Définir mot protégés par page
+- [ ] Définir points par mots, comptabilité par page (si peu de mots, pas beaucoup de mots..)
+- [ ] Ajouter bonus pathé
 - [ ] Ajouter possibilité reveler certains mots (pas importants) ou de donner mot proche (top 10) ?
 
 - enchainement de page défini avec choix de thème.

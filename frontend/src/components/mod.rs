@@ -1,4 +1,5 @@
 pub mod app;
+pub mod challenge_page;
 pub mod guessing_page;
 pub mod hidden_field;
 pub mod information_page;

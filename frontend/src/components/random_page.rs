@@ -35,7 +35,7 @@ pub fn random_page(props: &RandomProps) -> Html {
             let opt_str = StringWrap {
                 cat_or_id: state.cat.clone(),
             };
-            history.push(Route::GuessingPage { opt_str });
+            history.push(Route::Guessing { opt_str });
         })
     };
     let onchange_cat = {

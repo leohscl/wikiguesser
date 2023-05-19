@@ -4,7 +4,9 @@ use std::str::FromStr;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+use super::challenge_page::ChallengePage;
 use super::guessing_page::GuessingPage;
+use super::guessing_page::Mode;
 use super::guessing_page::Prereveal;
 use super::guessing_page::TimeConstraint;
 use super::information_page::InformationPage;
@@ -57,31 +59,39 @@ pub enum Route {
     #[at("/guess")]
     RandomPage,
     #[at("/guess/:opt_str")]
-    GuessingPage { opt_str: StringWrap },
+    Guessing { opt_str: StringWrap },
+    #[at("/challenge/:opt_str")]
+    Challenge { opt_str: StringWrap },
+    #[at("/challenge")]
+    ChallengePage,
     #[not_found]
     #[at("/404")]
     NotFound,
 }
 
 impl Route {
-    pub fn get_selection(&self) -> (String, String, String, String) {
+    pub fn get_selection(&self) -> (String, String, String, String, String) {
+        let e0 = "".to_string();
         let e1 = "".to_string();
         let e2 = "".to_string();
         let e3 = "".to_string();
         let e4 = "".to_string();
         let sel = "selected_nav".to_string();
         match self {
-            Self::Preparation => (e1, e2, sel, e4),
-            Self::Information => (e1, e2, e3, sel),
-            Self::RandomPage => (e1, sel, e3, e4),
-            Self::GuessingPage { opt_str } => {
-                if opt_str.cat_or_id == "Daily" {
-                    (sel, e2, e3, e4)
+            Self::ChallengePage => (sel, e1, e2, e3, e4),
+            Self::Preparation => (e0, e1, e2, sel, e4),
+            Self::Information => (e0, e1, e2, e3, sel),
+            Self::RandomPage => (e0, e1, sel, e3, e4),
+            Self::Guessing { opt_str } => {
+                if opt_str.cat_or_id == "daily" {
+                    (e0, sel, e2, e3, e4)
+                } else if opt_str.cat_or_id == "challenge" {
+                    (sel, e1, e2, e3, e4)
                 } else {
-                    (e1, sel, e3, e4)
+                    (e0, e1, sel, e3, e4)
                 }
             }
-            _ => (e1, e2, e3, e4),
+            _ => (e0, e1, e2, e3, e4),
         }
     }
 }
@@ -123,7 +133,6 @@ pub fn app() -> Html {
             opt_user: state_clone.opt_user.clone(),
             current_route: route.clone(),
         });
-        // log::info!("Route: {:?}", route);
     });
 
     let switch = {
@@ -169,12 +178,11 @@ pub fn app() -> Html {
                         <ReportPage {article_id}/>
                     }
                 }
-                Route::GuessingPage { opt_str } => {
-                    // let opt_user = state.opt_user.clone();
+                Route::Guessing { opt_str } => {
                     let opt_user = None;
-                    let daily = match opt_str.cat_or_id.as_str() {
-                        "Daily" => true,
-                        _ => false,
+                    let mode = match opt_str.cat_or_id.as_str() {
+                        "Daily" => Mode::Daily,
+                        _ => Mode::Random,
                     };
 
                     let (opt_cat, opt_id) = if let Ok(id) = opt_str.cat_or_id.parse::<i32>() {
@@ -188,13 +196,32 @@ pub fn app() -> Html {
                         (opt_cat, None)
                     };
                     let dummy = false;
-                    // let constraint = TimeConstraint::Unconstrained;
-                    let constraint = TimeConstraint::Constraint(300);
-                    // let prereveal = Prereveal::HighThreshold(10.0);
-                    // let prereveal = Prereveal::Over(50.0);
-                    let prereveal = Prereveal::OverAndHintUnder(50.0, 10.0);
+                    let constraint = TimeConstraint::Unconstrained;
+                    let prereveal = Prereveal::Base;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} {prereveal} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {mode} {cb_route} {route} {constraint} {prereveal} />
+                    }
+                }
+                Route::ChallengePage => {
+                    html! {
+                        <ChallengePage {cb_route} {route}/>
+                    }
+                }
+                Route::Challenge { opt_str } => {
+                    let opt_user = None;
+                    let mode = Mode::Challenge;
+
+                    let opt_id = if let Ok(id) = opt_str.cat_or_id.parse::<i32>() {
+                        Some(id)
+                    } else {
+                        None
+                    };
+                    let dummy = false;
+                    let constraint = TimeConstraint::Constraint(300);
+                    let prereveal = Prereveal::OverAndHintUnder(100.0, 10.0);
+                    let opt_cat: Option<String> = None;
+                    html! {
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {mode} {cb_route} {route} {constraint} {prereveal} />
                     }
                 }
                 Route::GuessingPageDummy => {
@@ -202,12 +229,12 @@ pub fn app() -> Html {
                     let opt_user = None;
                     let opt_cat: Option<String> = None;
                     let opt_id: Option<i32> = None;
-                    let daily = false;
+                    let mode = Mode::Challenge;
                     let dummy = true;
                     let constraint = TimeConstraint::Unconstrained;
                     let prereveal = Prereveal::Base;
                     html! {
-                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {daily} {cb_route} {route} {constraint} {prereveal} />
+                        <GuessingPage {opt_user} {opt_cat} {opt_id} {dummy} {mode} {cb_route} {route} {constraint} {prereveal} />
                     }
                 }
                 Route::NotFound => html! { <h1>{ "404" }</h1> },
@@ -235,22 +262,27 @@ pub fn app() -> Html {
                                 html!{
                                     <ul class="nav navbar-nav">
                                     <li class="nav-item" id="tutorMenuItem">
-                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.0)} to={Route::GuessingPage { opt_str: wrap_daily }}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.0)} to={Route::ChallengePage}>
+                                            { "Défi" }
+                                        </Link<Route>>
+                                    </li>
+                                    <li class="nav-item" id="tutorMenuItem">
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.1)} to={Route::Guessing{ opt_str: wrap_daily }}>
                                             { "Page du jour" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item ">
-                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.1)} to={Route::RandomPage}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.2)} to={Route::RandomPage}>
                                             { "Page aléatoire" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item active">
-                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.2)} to={Route::Preparation}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.3)} to={Route::Preparation}>
                                             { "Préparation de page" }
                                         </Link<Route>>
                                     </li>
                                     <li class="nav-item active">
-                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.3)} to={Route::Information}>
+                                        <Link<Route> classes={classes!("navbar-item", tuple_selected.4)} to={Route::Information}>
                                             { "Informations" }
                                         </Link<Route>>
                                     </li>

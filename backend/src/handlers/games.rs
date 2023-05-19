@@ -148,7 +148,7 @@ pub async fn finished_daily(
     } else {
         Some(game_prompt.email.to_string())
     };
-    let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email, "daily");
+    let (is_ip, ip_or_email) = get_ip_or_email(&req, &opt_email, &game_prompt.mode);
     let input_game = InputGame { ip_or_email, is_ip };
     Ok(
         web::block(move || Game::get_finished_daily(&mut connection, &input_game))
@@ -184,8 +184,8 @@ fn get_ip_or_email(req: &HttpRequest, opt_email: &Option<String>, mode: &str) ->
     if let Some(email) = opt_email {
         (false, email.to_string())
     } else {
-        (true, get_ip(req, mode))
-        // (true, get_ip_dummy(mode))
+        // (true, get_ip(req, mode))
+        (true, get_ip_dummy(mode))
     }
 }
 fn get_ip(req: &HttpRequest, mode: &str) -> String {

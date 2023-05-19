@@ -1,7 +1,7 @@
-use crate::components::guessing_page::RevealStrength;
 use crate::components::hidden_field::HiddenField;
 use crate::entities::interfaces::StringAndPos;
 use crate::entities::interfaces::WordResult;
+use crate::utils::reveal_strength::RevealStrength;
 use crate::utils::similar_word::get_class_variants;
 use crate::utils::similar_word::same_class;
 use crate::utils::similar_word::same_root;

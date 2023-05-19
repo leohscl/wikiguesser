@@ -86,7 +86,7 @@ pub fn preparation_page(props: &PreparationProps) -> Html {
                 <img class="logo" src="img/wikitty_v1.png"/>
             </div>
             <div class="welcome">
-                <h1 class="welcome_title">{"Mode défi"}</h1>
+                <h1 class="welcome_title">{"Préparation de page"}</h1>
                 <p class="welcome_desc">
                     {"Lance un défi à un(e) ami(e) ! Prépare une page wikipédia à trouver, et partage lui le lien."}
                 </p>

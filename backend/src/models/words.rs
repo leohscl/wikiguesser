@@ -28,11 +28,8 @@ impl WordResult {
     pub fn query(
         word: &str,
         embed: &Embeddings<VocabWrap, StorageViewWrap>,
+        opt_freq: Option<f64>,
     ) -> Result<Option<WordResult>, diesel::result::Error> {
-        let hash_freq =
-            read_freq_csv("data/Lexique383.csv").expect("The hashmap should be read properly");
-        let frequency = hash_freq.get(&word.to_lowercase()).cloned();
-        // skip quering if word is a number
         if let Ok(num) = word.parse::<i32>() {
             let close_words: Vec<_> = (1..500)
                 .flat_map(|n| [num + n, num - n].into_iter())
@@ -61,7 +58,7 @@ impl WordResult {
                     word: word.to_string(),
                     close_words: word_res,
                     variants,
-                    frequency,
+                    frequency: opt_freq,
                 }))
             } else {
                 Ok(None)
@@ -78,8 +75,22 @@ impl WordResult {
         words: &Vec<String>,
         embed: &Embeddings<VocabWrap, StorageViewWrap>,
     ) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
-        words.iter().map(|word| Self::query(word, embed)).collect()
+        let freqs = get_frequency_batch(words);
+        words
+            .iter()
+            .zip(freqs.into_iter())
+            .map(|(word, opt_freq)| Self::query(word, embed, opt_freq))
+            .collect()
     }
+}
+
+fn get_frequency_batch(words: &Vec<String>) -> Vec<Option<f64>> {
+    let hash_freq =
+        read_freq_csv("data/Lexique383.csv").expect("The hashmap should be read properly");
+    words
+        .into_iter()
+        .map(|word| hash_freq.get(&word.to_lowercase()).cloned())
+        .collect()
 }
 
 fn get_variants(word: &str, word_res: &Vec<IString>) -> Vec<IString> {

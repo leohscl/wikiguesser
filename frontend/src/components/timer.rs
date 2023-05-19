@@ -10,7 +10,6 @@ pub struct TimerProps {
 #[derive(Debug, PartialEq, Clone)]
 enum CountdownStatus {
     Running(u32),
-    #[allow(dead_code)]
     Stopped(u32),
 }
 

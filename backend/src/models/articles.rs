@@ -34,9 +34,16 @@ struct StringAndPos {
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct GameEngine {
+pub struct TextEngine {
     reveals: HashMap<String, Vec<StringAndPos>>,
     list_results: Vec<Option<WordResult>>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct GameEngine {
+    reveals: HashMap<String, Vec<StringAndPos>>,
+    list_results_title: Vec<Option<WordResult>>,
+    list_results_content: Vec<Option<WordResult>>,
 }
 
 impl Article {
@@ -63,7 +70,7 @@ impl Article {
         }
     }
 
-    pub fn get_dummy_engine(word_model: &WordModel) -> Result<GameEngine, diesel::result::Error> {
+    pub fn get_dummy_engine(word_model: &WordModel) -> Result<TextEngine, diesel::result::Error> {
         let dummy_article = Article::dummy_2();
         let content = String::from(dummy_article.content.clone() + " ");
         let content_vec = create_string_vector(&content);
@@ -219,25 +226,32 @@ impl Article {
     ) -> Result<GameEngine, diesel::result::Error> {
         let content = String::from(self.content.clone() + " ");
         let mut content_vec = create_string_vector(&content);
+        let title = String::from(self.title.clone() + " ");
+        let title_vec = create_string_vector(&title);
         println!("Number of word in page: {}", content_vec.len());
         content_vec.sort();
         content_vec.dedup();
         println!("Number of word after dedup: {}", content_vec.len());
         // remove common words
         let common_words = get_common_words();
-        for common_w in common_words.iter() {
-            content_vec.retain(|word| word != common_w);
-        }
-
+        content_vec.retain(|word| !common_words.contains(word));
         println!("Number of word to query: {}", content_vec.len());
-        Self::create_engine_with_common(&content_vec, embed, result_common)
+        let text_engine_title = Self::create_engine_with_common(&title_vec, embed, result_common)?;
+        // dbg!(&text_engine_title.list_results);
+        let text_engine_content =
+            Self::create_engine_with_common(&content_vec, embed, result_common)?;
+        Ok(GameEngine {
+            reveals: text_engine_content.reveals,
+            list_results_title: text_engine_title.list_results,
+            list_results_content: text_engine_content.list_results,
+        })
     }
 
     pub fn create_engine_with_common(
         words: &Vec<String>,
         embed: &Embeddings<VocabWrap, StorageViewWrap>,
         result_common: &Vec<Option<WordResult>>,
-    ) -> Result<GameEngine, diesel::result::Error> {
+    ) -> Result<TextEngine, diesel::result::Error> {
         let mut hash = HashMap::new();
 
         let query_results = WordResult::query_multiple(words, embed)?;
@@ -267,7 +281,7 @@ impl Article {
             }
         }
         println!("Done creating engine !");
-        Ok(GameEngine {
+        Ok(TextEngine {
             reveals: hash,
             list_results: query_results.clone(),
         })

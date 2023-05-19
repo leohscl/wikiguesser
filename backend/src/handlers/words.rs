@@ -14,7 +14,7 @@ pub async fn query(
     word: web::Path<String>,
 ) -> Result<HttpResponse, Error> {
     Ok(
-        web::block(move || WordResult::query(&word, &model.embedding))
+        web::block(move || WordResult::query(&word, &model.embedding, None))
             .await
             .map(|reveal| HttpResponse::Ok().json(reveal))
             .map_err(DatabaseError)?,
