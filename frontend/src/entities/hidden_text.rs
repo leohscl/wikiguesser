@@ -1,3 +1,4 @@
+use crate::components::hidden_field::Category;
 use crate::components::hidden_field::HiddenField;
 use crate::entities::interfaces::StringAndPos;
 use crate::entities::interfaces::WordResult;
@@ -7,35 +8,53 @@ use crate::utils::similar_word::same_class;
 use crate::utils::similar_word::same_root;
 use yew::prelude::*;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct HiddenText {
     pub is_title: bool,
     pub text: Vec<String>,
     pub revealed: Vec<RevealStrength>,
     pub new_revelations: Vec<RevealStrength>,
+    pub categories: Vec<Category>,
     pub fully_revealed: bool,
 }
 
-impl Clone for HiddenText {
-    fn clone(&self) -> HiddenText {
-        HiddenText {
-            is_title: self.is_title,
-            text: self.text.clone(),
-            revealed: self.revealed.clone(),
-            new_revelations: self.new_revelations.clone(),
-            fully_revealed: self.fully_revealed,
+#[derive(PartialEq, Clone)]
+pub enum RevealState {
+    Plain,
+    NewReveal,
+    NewHint(u8),
+    OldHint(u8),
+    Hidden,
+}
+impl RevealState {
+    pub fn get_class(&self) -> String {
+        match self {
+            RevealState::Plain => "revealed".to_string(),
+            RevealState::NewReveal => "hidden_revealed".to_string(),
+            _ => "hidden_field".to_string(),
+        }
+    }
+    pub fn get_style(&self) -> String {
+        match self {
+            // RevealState::Plain => format!("color: rgb(255, 255, 255);"),
+            RevealState::Plain => format!("color: rgb(0, 0, 0);"),
+            RevealState::NewReveal => format!("color: rgb(0, 0, 0);"),
+            RevealState::NewHint(code) => format!("color: rgb(255, {}, 0);", code),
+            RevealState::OldHint(code) => format!("color: rgb({}, {}, {});", code, code, code),
+            RevealState::Hidden => format!(""),
         }
     }
 }
 
 impl HiddenText {
-    pub fn render(&self) -> Html {
+    pub fn render(self) -> Html {
         let html_in = self
             .text
             .iter()
             .zip(&self.revealed)
             .zip(&self.new_revelations)
-            .map(|((text, revealed), new_reveal)| {
+            .zip(self.categories)
+            .map(|(((text, revealed), new_reveal), cat)| {
                 if text == &"\n" {
                     html! {<p><div/><div/></p>}
                 } else if text == "" {
@@ -44,28 +63,41 @@ impl HiddenText {
                     match new_reveal {
                         RevealStrength::NotRevealed => match revealed {
                             RevealStrength::Revealed => {
-                                html! {<span class="old_reveal"> {text}</span>}
+                                let style = RevealState::Plain;
+                                render_string(text, text, style, cat)
                             }
                             RevealStrength::VeryClose(str_pos) => {
-                                render_string(&str_pos.str, 230, text, false, false)
+                                let style = RevealState::OldHint(230);
+                                render_string(text, &str_pos.str, style, cat)
                             }
                             RevealStrength::Close(str_pos) => {
-                                render_string(&str_pos.str, 196, text, false, false)
+                                let style = RevealState::OldHint(196);
+                                render_string(text, &str_pos.str, style, cat)
                             }
                             RevealStrength::Distant(str_pos) => {
-                                render_string(&str_pos.str, 132, text, false, false)
+                                let style = RevealState::OldHint(132);
+                                render_string(text, &str_pos.str, style, cat)
                             }
-                            _ => render_string("", 0, text, false, false),
+                            RevealStrength::NotRevealed => {
+                                let style = RevealState::Hidden;
+                                render_string(text, "", style, cat)
+                            }
                         },
-                        RevealStrength::Revealed => render_string("", 232, text, true, true),
+                        RevealStrength::Revealed => {
+                            let style = RevealState::NewReveal;
+                            render_string(text, "", style, cat)
+                        }
                         RevealStrength::VeryClose(str_pos) => {
-                            render_string(&str_pos.str, 232, text, true, false)
+                            let style = RevealState::NewHint(230);
+                            render_string(text, &str_pos.str, style, cat)
                         }
                         RevealStrength::Close(str_pos) => {
-                            render_string(&str_pos.str, 182, text, true, false)
+                            let style = RevealState::NewHint(180);
+                            render_string(text, &str_pos.str, style, cat)
                         }
                         RevealStrength::Distant(str_pos) => {
-                            render_string(&str_pos.str, 122, text, true, false)
+                            let style = RevealState::NewHint(122);
+                            render_string(text, &str_pos.str, style, cat)
                         }
                     }
                 }
@@ -122,14 +154,11 @@ impl HiddenText {
                             str_pos.str = word.to_string();
                             let position = str_pos.pos;
                             // if it is a variant
-                            if position == 0 {
-                                RevealStrength::Revealed
-                            } else if position < 10 {
-                                RevealStrength::VeryClose(str_pos)
-                            } else if position < 100 {
-                                RevealStrength::Close(str_pos)
-                            } else {
-                                RevealStrength::Distant(str_pos)
+                            match position {
+                                0 => RevealStrength::Revealed,
+                                1..=9 => RevealStrength::VeryClose(str_pos),
+                                10..=100 => RevealStrength::Close(str_pos),
+                                _ => RevealStrength::Distant(str_pos),
                             }
                         }
                     }
@@ -230,19 +259,17 @@ impl ToString for HiddenText {
 }
 
 fn render_string(
-    str_to_render: &str,
-    rgb_num: u8,
     true_word: &str,
-    is_new: bool,
-    is_revealed: bool,
+    str_to_render: &str,
+    reveal_state: RevealState,
+    category: Category,
 ) -> Html {
     html! {
         <HiddenField
             hidden_string={true_word.to_string()}
+            reveal_state={reveal_state}
             close_word={str_to_render.to_string()}
-            rgb_num={rgb_num}
-            is_new={is_new}
-            is_revealed={is_revealed}
+            category={category}
         />
     }
 }

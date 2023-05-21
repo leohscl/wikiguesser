@@ -17,7 +17,7 @@ pub fn initialize_revealed_vector(
     vec_text: &Vec<String>,
     prereveal: Prereveal,
     game_engine: Option<GameEngine>,
-    protected: Option<Vec<String>>,
+    protected: Option<&Vec<String>>,
 ) -> Vec<RevealStrength> {
     // We need some info on frequency, and on protected status
     if let Some(game_eng) = game_engine {
@@ -36,7 +36,7 @@ pub fn initialize_revealed_vector(
                 true => RevealStrength::Revealed,
                 false => {
                     if let Some(word_res) = hash_res.get(word) {
-                        get_reveal_status(word_res, prereveal.clone(), protected.clone())
+                        get_reveal_status(word_res, prereveal.clone(), protected)
                     } else {
                         RevealStrength::NotRevealed
                     }
@@ -90,7 +90,7 @@ fn _initialize_revealed_vector(vec_text: &Vec<String>) -> Vec<RevealStrength> {
 fn get_reveal_status(
     word_res: &WordResult,
     prereveal: Prereveal,
-    opt_protected: Option<Vec<String>>,
+    opt_protected: Option<&Vec<String>>,
 ) -> RevealStrength {
     let word = word_res.word.clone();
     let opt_frequency = word_res.frequency;

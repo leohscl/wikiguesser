@@ -1,4 +1,5 @@
 use crate::components::guessing_page::Prereveal;
+use crate::components::hidden_field::Category;
 use crate::entities::hidden_text::HiddenText;
 use crate::entities::interfaces::{Article, WordResult};
 use crate::entities::interfaces::{GameEngine, StringAndPos};
@@ -42,7 +43,7 @@ pub fn page_from_json(
     let protected_words = get_protected(&game_engine, &title_vec);
     let revealed_title = initialize_revealed_vector(&title_vec, Prereveal::Base, None, None);
     let revealed_content =
-        initialize_revealed_vector(&content_vec, prereveal, game_engine, Some(protected_words));
+        initialize_revealed_vector(&content_vec, prereveal, game_engine, Some(&protected_words));
     let title_vec_len = title_vec.len();
     let content_vec_len = content_vec.len();
     let hidden_title = HiddenText {
@@ -50,13 +51,27 @@ pub fn page_from_json(
         text: title_vec,
         revealed: revealed_title,
         new_revelations: vec![RevealStrength::NotRevealed; title_vec_len],
+        categories: vec![Category::Normal; title_vec_len],
         fully_revealed: false,
     };
+
+    let importance_content: Vec<Category> = content_vec
+        .iter()
+        .map(|word| {
+            if protected_words.contains(word) {
+                Category::Important
+            } else {
+                Category::Normal
+            }
+        })
+        .collect();
+
     let hidden_content = HiddenText {
         is_title: false,
         text: content_vec,
         revealed: revealed_content,
         new_revelations: vec![RevealStrength::NotRevealed; content_vec_len],
+        categories: importance_content,
         fully_revealed: false,
     };
     Page {

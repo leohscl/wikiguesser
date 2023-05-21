@@ -75,6 +75,7 @@ impl WordResult {
         words: &Vec<String>,
         embed: &Embeddings<VocabWrap, StorageViewWrap>,
     ) -> Result<Vec<Option<WordResult>>, diesel::result::Error> {
+        //TODO(leo): remove duplicates, optimize query ?
         let freqs = get_frequency_batch(words);
         words
             .iter()

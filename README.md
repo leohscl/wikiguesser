@@ -22,6 +22,7 @@ Design
 
 frontend bugs
 - [ ] picking rating resets page scroll
+- [ ] going back to wikitrouve does not reset shadow
 - [x] when giving up, message should not be "trouvé en x mots"
 
 
@@ -49,7 +50,8 @@ Challenge mode (geoguesser like)
 - [x] Time mode
 - [x] Mode avec beaucoup de mots déja révélés
 - [x] Définir mot protégés par page
-- [ ] Définir points par mots, comptabilité par page (si peu de mots, pas beaucoup de mots..)
+- [ ] Marquer mot protégés
+- [ ] Définir points par mots, comptabilité par page (si peu de mots, pas beaucoup de points..)
 - [ ] Ajouter bonus pathé
 - [ ] Ajouter possibilité reveler certains mots (pas importants) ou de donner mot proche (top 10) ?
 
