@@ -15,6 +15,7 @@ use super::login::Login;
 use super::preparation_page::PreparationPage;
 use super::random_page::RandomPage;
 use super::report_page::ReportPage;
+use super::roadmap_page::RoadMap;
 use super::signup::Signup;
 use crate::entities::interfaces::User;
 
@@ -64,6 +65,8 @@ pub enum Route {
     Challenge { opt_str: StringWrap },
     #[at("/challenge")]
     ChallengePage,
+    #[at("/challenge/roadmap")]
+    RoadMap,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -205,6 +208,11 @@ pub fn app() -> Html {
                 Route::ChallengePage => {
                     html! {
                         <ChallengePage {cb_route} {route}/>
+                    }
+                }
+                Route::RoadMap => {
+                    html! {
+                        <RoadMap />
                     }
                 }
                 Route::Challenge { opt_str } => {

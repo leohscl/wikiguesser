@@ -11,5 +11,6 @@ pub mod preparation_page;
 pub mod random_page;
 pub mod rating;
 pub mod report_page;
+pub mod roadmap_page;
 pub mod signup;
 pub mod timer;
