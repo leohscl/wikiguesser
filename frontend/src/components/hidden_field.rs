@@ -36,11 +36,12 @@ pub fn hidden_field(props: &HiddenFieldProps) -> Html {
     let onclick = {
         let state = state.clone();
         Callback::from(move |_| {
-            let _ = {
+            let handle = {
                 let state = state.clone();
                 Timeout::new(2000, move || {
                     state.set(HiddenFieldState { show_num: false });
                 })
+                .forget()
             };
             state.set(HiddenFieldState { show_num: true });
         })
@@ -50,9 +51,14 @@ pub fn hidden_field(props: &HiddenFieldProps) -> Html {
         string_with_padding.chars().count(),
     );
     let hidden_class = props.reveal_state.get_class();
+    let classes = if props.category == Category::Important {
+        String::from(hidden_class + " important")
+    } else {
+        hidden_class
+    };
     html! {
         <span
-        class={hidden_class}
+        class={classes}
         style={
             if state.show_num {
                 style_number

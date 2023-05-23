@@ -111,7 +111,7 @@ fn get_protected(opt_game_engine: &Option<GameEngine>, title_vec: &Vec<String>) 
         .collect();
     all_protected.retain(|protected| {
         let prot: &str = &*protected;
-        !common.contains(&prot)
+        !common.contains(&prot) && protected != " "
     });
     // log::info!("all protected: {:?}", all_protected);
     all_protected

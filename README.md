@@ -27,6 +27,7 @@ frontend bugs
 
 
 Features
+- [ ] Filter page on length of content (not too small) and on title (not too long ?)
 - [ ] Add team mode
 - [ ] Add tutorial ?
 - [ ] Add global score, median number of word to complete ?
@@ -35,7 +36,6 @@ Features
 - [ ] Add "important" word category, word that help complete the page
 - [ ] add url/link to wiki page
 - [ ] Add best words -- like previous words
-- [ ] Filter page on length of content (not too small) and on title (not too long ?)
 - [x] Add daily page !
 - [x] Test daily page !
 - [x] Make information page
@@ -48,9 +48,11 @@ Features
 Challenge mode (geoguesser like)
 
 - [x] Time mode
+- [ ] place timer on center
 - [x] Mode avec beaucoup de mots déja révélés
 - [x] Définir mot protégés par page
-- [ ] Marquer mot protégés
+- [x] Marquer mot protégés
+- [ ] améliorer mots protégés (ex: www.wikitrouve.fr/guess/3372)
 - [ ] Définir points par mots, comptabilité par page (si peu de mots, pas beaucoup de points..)
 - [ ] Ajouter bonus pathé
 - [ ] Ajouter possibilité reveler certains mots (pas importants) ou de donner mot proche (top 10) ?

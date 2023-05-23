@@ -70,6 +70,8 @@ p.content {
   background:white;
   padding:20px;
   border-radius: 6px;
+  line-height: 1.4;
+
 }
 
 
@@ -181,11 +183,10 @@ h1.navbar-item {
 .hidden_revealed {
     background-color: #90ee90;
 }
-.hidden_revealed, .hidden_field {
-    margin-left: 0.1em;
-    margin-right: 0em;
-    margin-bottom: 0.15em;
-    margin-top: 0.15em;
+.important {
+  border:0.2em solid red;
+}
+.hidden_revealed, .hidden_field, .important {
     border-radius: 4px;
     transition: color .2s linear, background-color .6s linear;
 }
