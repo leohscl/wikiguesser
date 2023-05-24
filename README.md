@@ -3,7 +3,6 @@ bash make.sh
 
 TODO: 
 
-
 Design
 - [ ] Add picture for random page
 - [ ] Update wikitty picture
@@ -19,6 +18,9 @@ Design
 - [x] translate text to french
 - [x] Add loading bar
 
+Database
+- [x] Add url/link to wiki page
+- [ ] Filter page on length of content (not too small) and on title (not too long ?) ex: (www.wikitrouve.fr/guess/684132)
 
 frontend bugs
 - [ ] picking rating resets page scroll
@@ -27,15 +29,13 @@ frontend bugs
 
 
 Features
-- [ ] Filter page on length of content (not too small) and on title (not too long ?)
 - [ ] Add team mode
 - [ ] Add tutorial ?
 - [ ] Add global score, median number of word to complete ?
-- [ ] Add easy mode - reveal some uncommon words ?
 - [ ] anglais -- equ britannique ?
-- [ ] Add "important" word category, word that help complete the page
-- [ ] add url/link to wiki page
 - [ ] Add best words -- like previous words
+- [x] Add easy mode - reveal some uncommon words ?
+- [x] Add "important" word category, word that help complete the page
 - [x] Add daily page !
 - [x] Test daily page !
 - [x] Make information page

@@ -20,6 +20,7 @@ use wiki_process::wiki_parse::create_string_vector;
 pub struct Article {
     pub id: i32,
     pub wiki_id: i32,
+    pub link: String,
     pub title: String,
     pub content: String,
     pub views: i32,
@@ -52,6 +53,7 @@ impl Article {
         Article {
             id: 1,
             wiki_id: 1,
+            link: "".to_string(),
             title: dummy_str.to_string(),
             content: dummy_str.to_string(),
             views: 1000000,
@@ -64,6 +66,7 @@ impl Article {
         Article {
             id: 1,
             wiki_id: 1,
+            link: "".to_string(),
             title: dummy_title,
             content: dummy_content,
             views: 1000000,
@@ -135,6 +138,7 @@ impl Article {
         let sel = filtered.select((
             articles::id,
             articles::wiki_id,
+            articles::link,
             articles::title,
             articles::content,
             articles::views,
@@ -178,6 +182,7 @@ impl Article {
             let sel = filtered.select((
                 articles::id,
                 articles::wiki_id,
+                articles::link,
                 articles::title,
                 articles::content,
                 articles::views,
@@ -190,6 +195,7 @@ impl Article {
             let sel = filtered.select((
                 articles::id,
                 articles::wiki_id,
+                articles::link,
                 articles::title,
                 articles::content,
                 articles::views,

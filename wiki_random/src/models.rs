@@ -9,6 +9,7 @@ pub struct Article {
     pub id: i32,
     pub wiki_id: i32,
     pub title: String,
+    pub link: String,
     pub content: String,
     pub views: i32,
 }

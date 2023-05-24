@@ -26,6 +26,7 @@ pub enum RevealState {
     OldHint(u8),
     Hidden,
 }
+
 impl RevealState {
     pub fn get_class(&self) -> String {
         match self {

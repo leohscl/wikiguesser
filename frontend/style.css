@@ -21,6 +21,9 @@ input::placeholder {
   border-radius: 4px;
 }
 
+.wikilink {
+  padding: 0.5em;
+}
 select {
   /* Reset Select */
   appearance: none;
@@ -293,6 +296,12 @@ input, #signin, #sync {
   position: relative;
   top: 0;
   right: 0;
+}
+.container {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  gap:0.4em;
 }
 .launch {
   margin-left: 1rem;

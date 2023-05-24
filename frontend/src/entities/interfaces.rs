@@ -14,6 +14,7 @@ pub struct Article {
     pub id: i32,
     pub wiki_id: i32,
     pub title: String,
+    pub link: String,
     pub content: String,
     pub views: i32,
 }
@@ -24,6 +25,7 @@ impl Article {
         Article {
             id: 1,
             wiki_id: 1,
+            link: "".to_string(),
             title: dummy_str.to_string(),
             content: dummy_str.to_string(),
             views: 1000000,

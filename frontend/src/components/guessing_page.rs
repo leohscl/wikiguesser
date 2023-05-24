@@ -408,18 +408,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                 handle_future(future, move |data: Result<GameEngine, Status>| {
                                     match data {
                                         Ok(game_engine) => {
-                                            // for word_res in game_engine
-                                            //     .list_results
-                                            //     .clone()
-                                            //     .into_iter()
-                                            //     .filter_map(|x| x)
-                                            // {
-                                            //     log::info!(
-                                            //         "word: {}, frequency: {:?}",
-                                            //         word_res.word,
-                                            //         word_res.frequency
-                                            //     );
-                                            // }
                                             let page = page_from_json(
                                                 article.clone(),
                                                 prereveal.clone(),
@@ -463,6 +451,7 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                     let article = Article {
                         id: 1,
                         wiki_id: 2,
+                        link: "".to_string(),
                         title: "thé".to_string(),
                         content: "thé".to_string(),
                         views: 0,
@@ -582,21 +571,23 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
 
             html! {
                 <div style="display: flex; flex-direction: column">
-                {
-                    if let TimeConstraint::Constraint(time) = props.constraint {
-                        let cb_time_up = Callback::from(move |_| {
-                            state_time.dispatch(ArticleAction::TimeOut);
-                            log::info!("Time is up !");
-                        });
-                        let num_secs = time;
-                        let stop_count = finished;
-                        html!{ <Timer {cb_time_up} {num_secs} {stop_count}/> }
-                    } else {
-                        html!{}
-                    }
-                }
+                    <div style="display: flex; flex-direction: row">
+                        {
+                            if let TimeConstraint::Constraint(time) = props.constraint {
+                                let cb_time_up = Callback::from(move |_| {
+                                    state_time.dispatch(ArticleAction::TimeOut);
+                                    log::info!("Time is up !");
+                                });
+                                let num_secs = time;
+                                let stop_count = finished;
+                                html!{ <Timer {cb_time_up} {num_secs} {stop_count}/> }
+                            } else {
+                                html!{}
+                            }
+                        }
+                    </div>
                     <div style="display: flex">
-                    <PastWords {past_words} />
+                        <PastWords {past_words} />
                         <p align="justified" class="content">
                             {
                                 ifcond!(
@@ -606,15 +597,29 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                     }
                                 )
                             }
-                            <div/>
-                            <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
+                            <div style="display: flex; flex-direction: row">
+                                <input type="text" value={page.input.clone()} {oninput} {onkeypress} id="input_reveal" name="input_reveal" size=10/>
+                                {
+                                    ifcond!(
+                                        finished,
+                                        html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
+                                    )
+                                }
+                            </div>
                             {
-                                ifcond!(
-                                    finished,
-                                    html! { <button class="launch reveal_all" onclick={onclick_reveal_all}> { "Révéler tous les mots" } </button> }
-                                )
+                                if finished {
+                                    let ongoing_game = state.opt_game.as_ref().expect("there has to be a game");
+                                    let display = "Voir sur wikipédia: ".to_string();
+                                    html!{
+                                        <div class="container">
+                                            <p> {display} </p>
+                                            <a href={ongoing_game.article.link.clone()} target="_blank"> {ongoing_game.article.link.clone()}</a>
+                                        </div>
+                                    }
+                                } else {
+                                    html!{}
+                                }
                             }
-                            <div/>
                             {
                                 if no_words {
                                     html!{}
@@ -630,8 +635,6 @@ pub fn guessing_page(props: &GuessingPageProps) -> Html {
                                     }
                                 }
                             }
-
-                            <div/>
                             <div id="title">
                                 { page.title.render() }
                             </div>

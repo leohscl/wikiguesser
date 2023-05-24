@@ -17,6 +17,7 @@ mod schema;
 struct JsonArticle {
     id: i32,
     title: String,
+    link: String,
     categories: Vec<String>,
     views: i32,
     summary: String,
@@ -33,7 +34,7 @@ struct PageInfo {
 
 #[tokio::main]
 async fn main() {
-    let file_path = "sample_cat.json";
+    let file_path = "sample_cat_link.json";
     // println!("In file {}", file_path);
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     // println!("With text:\n{contents}");
@@ -56,6 +57,7 @@ async fn insert_one_articles(jarticle: &JsonArticle, conn: &mut PgConnection, id
         id: jarticle.id,
         wiki_id: jarticle.id,
         title: jarticle.title.to_owned(),
+        link: jarticle.link.to_owned(),
         content: jarticle.summary.to_owned(),
         views: jarticle.views,
     };

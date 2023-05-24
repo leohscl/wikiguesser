@@ -36,7 +36,7 @@ pub fn hidden_field(props: &HiddenFieldProps) -> Html {
     let onclick = {
         let state = state.clone();
         Callback::from(move |_| {
-            let handle = {
+            let _handle = {
                 let state = state.clone();
                 Timeout::new(2000, move || {
                     state.set(HiddenFieldState { show_num: false });

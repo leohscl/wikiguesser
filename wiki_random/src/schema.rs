@@ -4,6 +4,7 @@ diesel::table! {
     articles (id) {
         id -> Int4,
         wiki_id -> Int4,
+        link -> Text,
         title -> Text,
         content -> Text,
         views -> Int4,
