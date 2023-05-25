@@ -47,6 +47,23 @@ pub struct GameEngine {
     list_results_content: Vec<Option<WordResult>>,
 }
 
+#[derive(Debug, Clone)]
+pub struct FilterParams {
+    min_view: i32,
+    min_content_word: usize,
+    max_title_word: usize,
+}
+
+impl FilterParams {
+    fn default() -> FilterParams {
+        FilterParams {
+            min_view: 10000,
+            min_content_word: 100,
+            max_title_word: 5,
+        }
+    }
+}
+
 impl Article {
     pub fn dummy() -> Self {
         let dummy_str = "thé";
@@ -102,9 +119,7 @@ impl Article {
         Ok(article)
     }
     pub fn get_one(connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
-        let vec_article = articles::table
-            .filter(articles::views.gt(10000))
-            .load::<Article>(connection)?;
+        let vec_article = Self::get_vec_articles(connection)?;
         let mut rng = rand::thread_rng();
         let index = rng.gen_range(0..vec_article.len());
         let article = vec_article
@@ -116,9 +131,7 @@ impl Article {
 
     pub fn get_daily(connection: &mut PgConnection) -> Result<Article, diesel::result::Error> {
         let num_noons: usize = count_noons_since_start();
-        let mut vec_article = articles::table
-            .filter(articles::views.gt(10000))
-            .load::<Article>(connection)?;
+        let mut vec_article = Self::get_vec_articles(connection)?;
         let mut r = rand::rngs::StdRng::seed_from_u64(0);
         vec_article.shuffle(&mut r);
         let article = vec_article
@@ -126,6 +139,32 @@ impl Article {
             .expect("There should be an element")
             .clone();
         Ok(article)
+    }
+
+    pub fn get_vec_articles(
+        connection: &mut PgConnection,
+    ) -> Result<Vec<Article>, diesel::result::Error> {
+        let filter = FilterParams::default();
+        let all_articles = articles::table
+            .filter(articles::views.gt(10000))
+            .load::<Article>(connection)?;
+        let filtered_list: Vec<_> = all_articles
+            .into_iter()
+            .filter_map(|article| {
+                let content_num_words = create_string_vector(&article.content).len();
+                let title_num_words = create_string_vector(&article.title).len();
+                if content_num_words >= filter.min_content_word
+                    && title_num_words <= filter.max_title_word
+                    && article.views >= filter.min_view
+                {
+                    Some(article)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        println!("Number of articles after filter: {}", filtered_list.len());
+        Ok(filtered_list)
     }
 
     pub fn get_one_with_id(

@@ -20,7 +20,7 @@ Design
 
 Database
 - [x] Add url/link to wiki page
-- [ ] Filter page on length of content (not too small) and on title (not too long ?) ex: (www.wikitrouve.fr/guess/684132)
+- [x] Filter page on length of content (not too small) and on title (not too long ?) ex: (www.wikitrouve.fr/guess/684132) (only 2700 remaining)
 
 frontend bugs
 - [ ] picking rating resets page scroll
@@ -67,6 +67,7 @@ Il faut en perdre le moins, si tu pert tout remis à 0
 
 
 Bugs backend
+- [ ] categories not affected by filters
 - [x] fix CORS
 - [x] Daily page should not be reloaded if already done
 - [x] Daily page can be random page if random page was created before
