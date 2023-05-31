@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 yew = "0.19.3"
+yew-canvas="0.2.4"
 yew-hooks = "0.1.56"
 yew-router = "0.16"
 wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
@@ -27,6 +28,8 @@ gloo-dialogs = "0.1.1"
 wiki_process = { path = "../utils/wiki_process" }
 material-yew = { version = "0.2", features = ["snackbar"] }
 rand = "0.8"
+gloo-console = "0.2.3"
+sorted-vec = "0.8.2"
 
 
 [dependencies.web-sys]
@@ -39,6 +42,10 @@ features = [
   "HtmlSelectElement",
   "Response",
   "Window",
+  "HtmlCanvasElement",
+  "CanvasRenderingContext2d",
+  "DomRect",
+  "Path2d",
 ]
 
 [dev-dependencies]
