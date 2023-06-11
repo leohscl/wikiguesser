@@ -303,6 +303,9 @@ input, #signin, #sync {
   flex-direction: row;
   gap:0.4em;
 }
+.timer_contain {
+  margin-left: 1rem;
+}
 .launch {
   margin-left: 1rem;
 }
