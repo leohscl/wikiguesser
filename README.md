@@ -1,3 +1,7 @@
+Clone of cemantix, with changed functionality
+https://cemantix.certitudes.org/pedantix
+
+
 launch application with:
 bash make.sh
 
